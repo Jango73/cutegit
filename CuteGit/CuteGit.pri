@@ -1,6 +1,6 @@
 
 HEADERS += \
-    ../qt-plus/source/cpp/CXMLNode.h \
+    #../qt-plus/source/cpp/CXMLNode.h \
     sources/CBranch.h \
     sources/CBranchModel.h \
     sources/CController.h \
@@ -35,7 +35,7 @@ HEADERS += \
     sources/commands/CSvnCommands.h \
 
 SOURCES += \
-    ../qt-plus/source/cpp/CXMLNode.cpp \
+    #../qt-plus/source/cpp/CXMLNode.cpp \
     sources/CBranchModel.cpp \
     sources/CController.cpp \
     sources/CDiffModel.cpp \
@@ -76,23 +76,23 @@ TRANSLATIONS = \
 
 unix {
     QT_LIB_NAMES = \
-        libicudata.so.56 \
-        libicui18n.so.56 \
-        libicuuc.so.56 \
-        libQt5Core.so.5 \
-        libQt5DBus.so.5 \
-        libQt5Gui.so.5 \
-        libQt5Network.so.5 \
-        libQt5OpenGL.so.5 \
-        libQt5Qml.so.5 \
-        libQt5Quick.so.5 \
-        libQt5QuickControls2.so.5 \
-        libQt5QuickTemplates2.so.5 \
-        libQt5QuickWidgets.so.5 \
-        libQt5Svg.so.5 \
-        libQt5Widgets.so.5 \
-        libQt5XcbQpa.so.5 \
-        libQt5Xml.so.5
+        libicudata.so \
+        libicui18n.so \
+        libicuuc.so \
+        libQt6Core.so.6 \
+        libQt6DBus.so.6 \
+        libQt6Gui.so.6 \
+        libQt6Network.so.6 \
+        libQt6OpenGL.so.6 \
+        libQt6Qml.so.6 \
+        libQt6Quick.so.6 \
+        libQt6QuickControls2.so.6 \
+        libQt6QuickTemplates2.so.6 \
+        libQt6QuickWidgets.so.6 \
+        libQt6Svg.so.6 \
+        libQt6Widgets.so.6 \
+        libQt6XcbQpa.so.6 \
+        libQt6Xml.so.6
 
     QT_PLUGIN_NAMES = \
         plugins/imageformats/libqico.so \
@@ -114,19 +114,19 @@ unix {
         libgcc_s_seh-1.dll \
 #        libstdc++-6.dll \
         libwinpthread-1.dll \
-        Qt5Core.dll \
-        Qt5DBus.dll \
-        Qt5Gui.dll \
-        Qt5Network.dll \
-        Qt5OpenGL.dll \
-        Qt5Qml.dll \
-        Qt5Quick.dll \
-        Qt5QuickControls2.dll \
-        Qt5QuickTemplates2.dll \
-        Qt5QuickWidgets.dll \
-        Qt5Svg.dll \
-        Qt5Widgets.dll \
-        Qt5Xml.dll
+        Qt6Core.dll \
+        Qt6DBus.dll \
+        Qt6Gui.dll \
+        Qt6Network.dll \
+        Qt6OpenGL.dll \
+        Qt6Qml.dll \
+        Qt6Quick.dll \
+        Qt6QuickControls2.dll \
+        Qt6QuickTemplates2.dll \
+        Qt6QuickWidgets.dll \
+        Qt6Svg.dll \
+        Qt6Widgets.dll \
+        Qt6Xml.dll
 
     QT_PLUGIN_NAMES = \
         plugins/imageformats/qico.dll \

@@ -14,6 +14,17 @@ DEFINES += QTPLUS_LIBRARY
 # Dependencies
 INCLUDEPATH += $$PWD/../qt-plus/source/cpp
 
+# Qt-plus library configuration
+QT_PLUS_DIR = $$PWD/../qt-plus
+CONFIG(debug, debug|release) {
+    QT_PLUS_LIB_DIR = $$QT_PLUS_DIR/build-debug/bin
+    QT_PLUS_LIB = -lqt-plusd
+} else {
+    QT_PLUS_LIB_DIR = $$QT_PLUS_DIR/build-release/bin
+    QT_PLUS_LIB = -lqt-plus
+}
+LIBS += -L$$QT_PLUS_LIB_DIR $$QT_PLUS_LIB
+
 # Sources
 include(CuteGit.pri)
 
