@@ -4,13 +4,11 @@
 
 // Application
 #include "CDiffModelProxy.h"
-#include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
 
 CDiffModelProxy::CDiffModelProxy(CRepository *pRepository, QObject* parent)
     : QSortFilterProxyModel(parent)
-    , m_pRepository(pRepository)
 {
 }
 

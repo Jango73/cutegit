@@ -25,6 +25,7 @@ APT_PACKAGES=(
   qml6-module-qtqml-workerscript
   qml6-module-qtquick-templates
   qml6-module-qtquick-window
+  libqt6serialport6-dev
 )
 
 if ! command -v apt-get >/dev/null 2>&1; then

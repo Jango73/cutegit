@@ -8,11 +8,7 @@
 #include "CRepoFile.h"
 #include "CLogLine.h"
 #include "commands/CCommands.h"
-
-//-------------------------------------------------------------------------------------------------
-// Forward declarations
-
-class CRepository;
+#include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
 

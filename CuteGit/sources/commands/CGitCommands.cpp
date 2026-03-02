@@ -2,7 +2,7 @@
 // Qt
 #include <QDebug>
 #include <QCoreApplication>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QDir>
 
 // Application
@@ -656,18 +656,19 @@ void CGitCommands::editSequenceFile(const QString& sFileName)
         case eRSSquashCommitEditSequence:
         {
             // Setup a "pick nnnn aaaa" reg exp
-            QRegExp tRegExp(sPickCommitRegExp);
+            QRegularExpression tRegExp(sPickCommitRegExp);
 
             for (QString sLine : lLines)
             {
                 // Process only non-comment lines
                 if (not sLine.startsWith(sComment))
                 {
-                    if (tRegExp.indexIn(sLine) != -1)
+                    QRegularExpressionMatch match = tRegExp.match(sLine);
+                    if (match.hasMatch())
                     {
-                        QString sWord = tRegExp.cap(1).trimmed();
-                        QString sCommitID = tRegExp.cap(2).trimmed();
-                        QString sMessage = tRegExp.cap(3).trimmed();
+                        QString sWord = match.captured(1).trimmed();
+                        QString sCommitID = match.captured(2).trimmed();
+                        QString sMessage = match.captured(3).trimmed();
 
                         if (sCommitID == m_sCommitId)
                         {
@@ -747,7 +748,7 @@ CRepoFile* CGitCommands::repoFileForLine(const QString &sPath, QString sLine, bo
 {
     if (not bSimple)
     {
-        QRegExp tRegExp(sStatusRegExp);
+        QRegularExpression tRegExp(sStatusRegExp);
 
     #ifdef HAVE_QSTRING_BACK
         if (not sLine.isEmpty() && sLine.back() == '/')
@@ -756,11 +757,12 @@ CRepoFile* CGitCommands::repoFileForLine(const QString &sPath, QString sLine, bo
 
         // TODO : Handle quoted file names
 
-        if (tRegExp.indexIn(sLine) != -1)
+        QRegularExpressionMatch match = tRegExp.match(sLine);
+        if (match.hasMatch())
         {
-            QString sStaged = tRegExp.cap(1).trimmed();
-            QString sUnstaged = tRegExp.cap(2).trimmed();
-            QString sRelativeName = tRegExp.cap(3).split("->").last().trimmed();
+            QString sStaged = match.captured(1).trimmed();
+            QString sUnstaged = match.captured(2).trimmed();
+            QString sRelativeName = match.captured(3).split("->").last().trimmed();
             QString sFullName = sPath + PATH_SEP + sRelativeName;
             QString sFileName = QFileInfo(sFullName).fileName();
             bool bStaged = false;
@@ -901,12 +903,13 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
                 {
                     QString sNewText = pDiffLine->text(); // .split(PATH_SEP).last();
 
-                    QRegExp tRegExp(sDiffLineRegExp);
+                    QRegularExpression tRegExp(sDiffLineRegExp);
 
-                    if (tRegExp.indexIn(sLine) != -1)
+                    QRegularExpressionMatch match = tRegExp.match(sLine);
+                    if (match.hasMatch())
                     {
-                        QString sFileA = tRegExp.cap(2).trimmed();
-                        QString sFileB = tRegExp.cap(3).trimmed();
+                        QString sFileA = match.captured(2).trimmed();
+                        QString sFileB = match.captured(3).trimmed();
 
                         sNewText = sFileB;
                     }
@@ -949,15 +952,16 @@ void CGitCommands::handleBlameOutput(const CProcessResult& tResult)
     {
         CDiffLine* pDiffLine = new CDiffLine();
 
-        QRegExp tRegExp(sBlameLineRegExp);
+        QRegularExpression tRegExp(sBlameLineRegExp);
 
-        if (tRegExp.indexIn(sLine) != -1)
+        QRegularExpressionMatch match = tRegExp.match(sLine);
+        if (match.hasMatch())
         {
-            QString sCommitID = tRegExp.cap(1).trimmed();
-            QString sAuthor = tRegExp.cap(2).trimmed();
-            QString sDate = tRegExp.cap(3).trimmed();
-            QString sLine = tRegExp.cap(4).trimmed();
-            QString sText = tRegExp.cap(5);
+            QString sCommitID = match.captured(1).trimmed();
+            QString sAuthor = match.captured(2).trimmed();
+            QString sDate = match.captured(3).trimmed();
+            QString sLine = match.captured(4).trimmed();
+            QString sText = match.captured(5);
 
             QString sFinalText = QString("%1: %2 %3 | %4")
                                .arg(sLine.toInt(), 5, 10, QChar('0'))

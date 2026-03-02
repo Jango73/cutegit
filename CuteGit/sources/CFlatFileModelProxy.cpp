@@ -5,7 +5,6 @@
 // Application
 #include "CFlatFileModelProxy.h"
 #include "CFlatFileModel.h"
-#include "CController.h"
 
 //-------------------------------------------------------------------------------------------------
 

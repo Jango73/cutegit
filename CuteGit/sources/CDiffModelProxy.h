@@ -9,11 +9,7 @@
 
 // Application
 #include "CDiffModel.h"
-
-//-------------------------------------------------------------------------------------------------
-// Forward declarations
-
-class CRepository;
+#include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -25,7 +21,6 @@ class CDiffModelProxy : public QSortFilterProxyModel
     // QML properties
     //-------------------------------------------------------------------------------------------------
 
-    Q_FAST_PROPERTY(CRepository*, p, repository, Repository)
     Q_FAST_PROPERTY(QString, s, textFilter, TextFilter)
 
 public:

@@ -21,7 +21,7 @@
 CExecution::CExecution()
     : m_tPool(this)
     , m_bStop(false)
-    , m_mMutex(QMutex::Recursive)
+    , m_mMutex()
     , m_eLastShownCommand(CEnums::eNothing)
 {
     start();

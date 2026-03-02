@@ -1,7 +1,7 @@
 
 // Qt
 #include <QDebug>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QDir>
 
 // Application
@@ -242,17 +242,18 @@ void CHgCommands::createBranchOnCommit(const QString& sPath, const QString& sCom
 
 CRepoFile* CHgCommands::repoFileForLine(const QString &sPath, QString sLine)
 {
-    QRegExp tRegExp(sStatusRegExp);
+    QRegularExpression tRegExp(sStatusRegExp);
 
 #ifdef HAVE_QSTRING_BACK
     if (not sLine.isEmpty() && sLine.back() == '/')
         sLine.chop(1);
 #endif
 
-    if (tRegExp.indexIn(sLine) != -1)
+    QRegularExpressionMatch match = tRegExp.match(sLine);
+    if (match.hasMatch())
     {
-        QString sStatus = tRegExp.cap(1).trimmed();
-        QString sRelativeName = tRegExp.cap(2).trimmed();
+        QString sStatus = match.captured(1).trimmed();
+        QString sRelativeName = match.captured(2).trimmed();
         QString sFullName = sPath + PATH_SEP + sRelativeName;
         QString sFileName = QFileInfo(sFullName).fileName();
         bool bStaged = true;

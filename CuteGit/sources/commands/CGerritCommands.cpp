@@ -1,7 +1,7 @@
 
 // Qt
 #include <QDebug>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QDir>
 #include <QCoreApplication>
 

@@ -4,6 +4,7 @@
 
 // Application
 #include "CLogModelProxy.h"
+#include "CLogModel.h"
 #include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------

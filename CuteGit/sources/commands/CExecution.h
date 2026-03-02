@@ -7,6 +7,7 @@
 #include <QMap>
 #include <QThread>
 #include <QMutex>
+#include <QRecursiveMutex>
 #include <QThreadPool>
 #include <QRunnable>
 
@@ -193,7 +194,7 @@ protected:
 private:
 
     bool                        m_bStop;
-    QMutex                      m_mMutex;
+    QRecursiveMutex             m_mMutex;
     CEnums::EProcessCommand     m_eLastShownCommand;
     QList<CProcessCommand*>     m_lCommandStack;
 };

@@ -61,6 +61,22 @@ if [[ "${BUILD_TYPE}" != "Debug" && "${BUILD_TYPE}" != "Release" ]]; then
   exit "${EXIT_FAILURE}"
 fi
 
+# Find qmake executable (prefer Qt6)
+QMAKE=""
+for candidate in qmake6 qmake-qt6 qmake; do
+  if command -v "${candidate}" >/dev/null 2>&1; then
+    QMAKE="${candidate}"
+    break
+  fi
+done
+
+if [[ -z "${QMAKE}" ]]; then
+  echo "Error: qmake not found. Install Qt development tools." >&2
+  exit 1
+fi
+
+echo "Using qmake: ${QMAKE}"
+
 BUILD_DIR="${ROOT_DIR}/build-${BUILD_TYPE,,}"
 
 # Build qt-plus if it exists
@@ -88,7 +104,7 @@ else
 fi
 
 echo "Running qmake with ${CONFIG_ARG}..."
-qmake "${ROOT_DIR}/CuteGit.pro" "${CONFIG_ARG}"
+"${QMAKE}" "${ROOT_DIR}/CuteGit.pro" "${CONFIG_ARG}"
 
 if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
   make VERBOSE=1

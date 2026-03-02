@@ -12,6 +12,9 @@
 
 class CController;
 
+// MOC needs complete type for Q_PROPERTY
+#include "CController.h"
+
 //-------------------------------------------------------------------------------------------------
 
 class CTreeFileModelProxy : public QSortFilterProxyModel

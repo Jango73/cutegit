@@ -12,22 +12,22 @@
 // Application
 #include "CEnums.h"
 #include "CLabel.h"
-#include "CBranchModel.h"
-#include "CFlatFileModel.h"
-#include "CFlatFileModelProxy.h"
-#include "CStagedFileModelProxy.h"
-#include "CRepoFile.h"
-#include "CLogModel.h"
-#include "CLogModelProxy.h"
-#include "CDiffModel.h"
-#include "CDiffModelProxy.h"
-#include "CGraphModel.h"
 #include "commands/CCommands.h"
 
 //-------------------------------------------------------------------------------------------------
 // Forward declarations
 
 class CController;
+class CFlatFileModel;
+class CFlatFileModelProxy;
+class CStagedFileModelProxy;
+class CBranchModel;
+class CRepoFile;
+class CLogModel;
+class CLogModelProxy;
+class CDiffModel;
+class CDiffModelProxy;
+class CGraphModel;
 
 //-------------------------------------------------------------------------------------------------
 

@@ -10,6 +10,16 @@
 // Application
 #include "CUtils.h"
 #include "CController.h"
+#include "CFlatFileModel.h"
+#include "CFlatFileModelProxy.h"
+#include "CStagedFileModelProxy.h"
+#include "CBranchModel.h"
+#include "CRepoFile.h"
+#include "CLogModel.h"
+#include "CLogModelProxy.h"
+#include "CDiffModel.h"
+#include "CDiffModelProxy.h"
+#include "CGraphModel.h"
 #include "commands/CGitCommands.h"
 #include "commands/CGerritCommands.h"
 #include "commands/CSvnCommands.h"
@@ -58,9 +68,9 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_pGraphModel(new CGraphModel(this, this))
     , m_pRefLogModel(new CLogModel(this, this))
     , m_pFileDiffModel(new CDiffModel(this))
-    , m_pFileDiffModelProxy(new CDiffModelProxy(this))
+    , m_pFileDiffModelProxy(new CDiffModelProxy(this, this))
     , m_pFileBlameModel(new CDiffModel(this))
-    , m_pFileBlameModelProxy(new CDiffModelProxy(this))
+    , m_pFileBlameModelProxy(new CDiffModelProxy(this, this))
     , m_pCommandOutputModel(new QStringListModel(this))
     , m_iMaxCommandOutputLines(100)
     , m_iCommitCountAhead(0)
