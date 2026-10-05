@@ -4,6 +4,7 @@
 #include <QApplication>
 #include <QDir>
 #include <QUrl>
+#include <QFileDialog>
 #include <QStandardPaths>
 
 // Application
@@ -638,6 +639,13 @@ QString CController::repositoryNameFromPath(const QString& sPath) const
         return "";
 
     return sPath.split(PATH_SEP).last();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+QString CController::browseForExistingFolder(QString sTitle)
+{
+    return QFileDialog::getExistingDirectory(nullptr, sTitle, lastBrowsedRepositoryPath());
 }
 
 //-------------------------------------------------------------------------------------------------

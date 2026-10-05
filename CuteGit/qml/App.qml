@@ -2,7 +2,6 @@ import QtQuick 2.12
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Material 2.12
-import Qt.labs.platform 1.1 as QLP
 import CuteGit 1.0
 import "components"
 import "pages"
@@ -43,7 +42,7 @@ ApplicationWindow {
         materialTheme: root.materialTheme
 
         onRequestCloneRepository: cloneDialog.open()
-        onRequestOpenRepository: openDialog.open()
+        onRequestOpenRepository: root.requestOpenRepository()
 
         onRequestFetch: root.currentRepositoryView.requestFetch()
         onRequestPull: root.currentRepositoryView.requestPull()
@@ -372,14 +371,6 @@ ApplicationWindow {
         ]
     }
 
-    QLP.FolderDialog {
-        id: openDialog
-
-        onAccepted: {
-            root.ctrl.openRepository(folder)
-        }
-    }
-
     //--------------------------------------------------------------------------------
     // Shortcuts
 
@@ -425,6 +416,12 @@ ApplicationWindow {
 
     //--------------------------------------------------------------------------------
     // Functions
+
+    function requestOpenRepository() {
+        var sFolder = root.ctrl.browseForExistingFolder(Const.selectRepositoryFolderText)
+        if (sFolder !== "")
+            root.ctrl.openRepository(sFolder)
+    }
 
     function setTheme(theme) {
         Material.theme = theme

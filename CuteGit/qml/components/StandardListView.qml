@@ -1,6 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.5
-import QtQml.Models 2.2
+import QtQml.Models
 import "."
 
 // This item is complex because it implements desktop behavior

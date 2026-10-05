@@ -2,10 +2,8 @@ import QtQuick 2.12
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Material 2.12
-import QtQuick.Dialogs 1.2
-import QtQml.Models 2.2
-import Qt.labs.platform 1.1 as QLP
-import Qt.labs.folderlistmodel 2.1
+import QtQuick.Dialogs
+import QtQml.Models
 import CuteGit 1.0
 import "../components"
 import "../pages"
@@ -398,7 +396,7 @@ Pane {
         onAccepted: {
             if (actionOnAccept)
             {
-                actionOnAccept.fileName = fileUrl
+                actionOnAccept.fileName = selectedFile
                 actionOnAccept.trigger()
             }
         }
@@ -547,7 +545,7 @@ Pane {
 
     function requestPatchSave() {
         fileDialog.title = Const.selectPatchToSaveText
-        fileDialog.selectExisting = false
+        fileDialog.fileMode = FileDialog.SaveFile
         fileDialog.actionOnAccept = savePatchAction
         fileDialog.nameFilters = [ "Patch files (*.patch)", "All files (*)" ]
         fileDialog.open()
@@ -555,7 +553,7 @@ Pane {
 
     function requestPatchApply() {
         fileDialog.title = Const.selectPatchToApplyText
-        fileDialog.selectExisting = true
+        fileDialog.fileMode = FileDialog.OpenFile
         fileDialog.actionOnAccept = applyPatchAction
         fileDialog.nameFilters = ["All files (*)" ]
         fileDialog.open()

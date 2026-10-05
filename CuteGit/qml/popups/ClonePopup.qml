@@ -25,6 +25,7 @@ StandardPopup {
             id: repositoryPath
             width: parent.width
             height: implicitHeight
+            controller: root.controller
 
             title: Const.destinationFolderText
         }

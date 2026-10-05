@@ -148,6 +148,9 @@ public:
     //! Opens a repository
     Q_INVOKABLE void openRepository(QString sRepositoryPath);
 
+    //! Opens a native folder selection dialog and returns the selected path
+    Q_INVOKABLE QString browseForExistingFolder(QString sTitle);
+
     //!
     Q_INVOKABLE void removeRepository(int iRepositoryIndex);
 

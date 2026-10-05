@@ -1,7 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.5
-import Qt.labs.platform 1.1 as QLP
 
 Item {
     id: root
@@ -10,6 +9,7 @@ Item {
 
     property alias title: title.text
     property alias text: folderName.text
+    property variant controller: null
 
     StandardLabel {
         id: title
@@ -39,16 +39,12 @@ Item {
             tipText: Const.tipBrowseButton
 
             onClicked: {
-                pathDialog.open()
+                if (root.controller !== null) {
+                    var sFolder = root.controller.browseForExistingFolder(root.title)
+                    if (sFolder !== "")
+                        folderName.text = sFolder
+                }
             }
-        }
-    }
-
-    QLP.FolderDialog {
-        id: pathDialog
-
-        onAccepted: {
-            folderName.text = folder
         }
     }
 }

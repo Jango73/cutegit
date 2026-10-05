@@ -188,6 +188,7 @@ Item {
     readonly property string cloneRepositoryText: qsTr("Clone repository")
     readonly property string enterMessageHereText: qsTr("Enter your message here...")
     readonly property string destinationFolderText: qsTr("Destination folder")
+    readonly property string selectRepositoryFolderText: qsTr("Select repository folder")
     readonly property string selectPatchToSaveText: qsTr("Select file for patch")
     readonly property string selectPatchToApplyText: qsTr("Select patch to apply")
     readonly property string enterBranchNameHereText: qsTr("Enter branch name here...")

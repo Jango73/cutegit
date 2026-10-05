@@ -1,8 +1,10 @@
 #!/bin/bash
 # Headless smoke test for the CuteGit GUI application.
 # Starts the binary offscreen, waits a few seconds, then kills it.
-# Success = the application stays alive (exit code 124 from timeout).
-# Any other exit code (crash, missing library, QML error at startup) = failure.
+# Success = the application stays alive (exit code 124 from timeout)
+# with no QML load error in the log.
+# Any other exit code (crash, missing library) or a QML load error
+# while staying alive = failure.
 set -euo pipefail
 
 ROOT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -74,6 +76,7 @@ if [[ "${WAIT_SECONDS}" -gt 15 ]]; then
 fi
 
 BUILD_FOLDER="${ROOT_FOLDER}/build-${BUILD_TYPE,,}"
+LOG_FILE="${ROOT_FOLDER}/tmp/smoke.log"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
   BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGitApp-dbg"
@@ -87,18 +90,25 @@ if [ ! -f "${BINARY}" ]; then
 fi
 
 echo "[smoke] Starting ${BINARY} offscreen for ${WAIT_SECONDS}s..."
+mkdir -p "$(dirname "${LOG_FILE}")"
 if QT_QPA_PLATFORM=offscreen \
   LD_LIBRARY_PATH="${ROOT_FOLDER}/qt-plus/bin" \
-  timeout "${WAIT_SECONDS}s" "${BINARY}" > /tmp/cutegit-smoke.log 2>&1; then
-  echo "[smoke] UNEXPECTED: application exited on its own (code 0)." >&2
+  timeout "${WAIT_SECONDS}s" "${BINARY}" > "${LOG_FILE}" 2>&1; then
+  echo "[smoke] FAILURE: application exited on its own (code 0). Log:" >&2
+  tail -20 "${LOG_FILE}" >&2
   exit "${EXIT_FAILURE}"
 else
   code="$?"
   if [ "${code}" -eq 124 ]; then
+    if grep -qiE "failed to load component|is not installed" "${LOG_FILE}"; then
+      echo "[smoke] FAILURE: QML load error detected. Log:" >&2
+      tail -20 "${LOG_FILE}" >&2
+      exit "${EXIT_FAILURE}"
+    fi
     echo "[smoke] OK: application stayed alive for ${WAIT_SECONDS}s."
     exit "${EXIT_SUCCESS}"
   fi
   echo "[smoke] FAILURE: application exited with code ${code}. Log:" >&2
-  tail -20 /tmp/cutegit-smoke.log >&2
+  tail -20 "${LOG_FILE}" >&2
   exit "${EXIT_FAILURE}"
 fi

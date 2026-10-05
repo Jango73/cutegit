@@ -6,18 +6,14 @@ ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
-VERBOSE_ENABLED=1
-VERBOSE_DISABLED=0
 
 BUILD_TYPE="Release"
-VERBOSE_BUILD="${VERBOSE_DISABLED}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./run.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release]
+Usage: ./run.sh [--debug|--release] [-d|-r] [-c Debug|Release]
   --debug,   -d  Build type Debug (default)
   --release, -r  Build type Release
-  --verbose, -v  Verbose build output
   -c             Build type (Debug or Release)
 USAGE
 }
@@ -30,10 +26,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --release|-r)
       BUILD_TYPE="Release"
-      shift
-      ;;
-    --verbose|-v)
-      VERBOSE_BUILD="${VERBOSE_ENABLED}"
       shift
       ;;
     -c)
@@ -66,12 +58,8 @@ BUILD_FOLDER="${ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 LOG_FILE="${ROOT_FOLDER}/tmp/run.log"
 
 if [ ! -d "${BUILD_FOLDER}" ]; then
-  echo "[run] ${BUILD_FOLDER} not found, running build first..."
-  if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
-    "${SCRIPT_FOLDER}/build.sh" -c "${BUILD_TYPE}" -v
-  else
-    "${SCRIPT_FOLDER}/build.sh" -c "${BUILD_TYPE}"
-  fi
+  echo "[run] ${BUILD_FOLDER} not found, run ./build.sh first." >&2
+  exit "${EXIT_FAILURE}"
 fi
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
