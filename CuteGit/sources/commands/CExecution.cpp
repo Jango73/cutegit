@@ -124,6 +124,19 @@ void CExecution::exec(CProcessCommand* pCommand)
 
 //-------------------------------------------------------------------------------------------------
 
+void CExecution::startProcess(QProcess& tProcess, const QString& sCommand)
+{
+    QStringList lArguments = QProcess::splitCommand(sCommand);
+
+    if (lArguments.isEmpty())
+        return;
+
+    QString sProgram = lArguments.takeFirst();
+    tProcess.start(sProgram, lArguments);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 QString CExecution::execNow(QString sWorkPath, QString sCommand, QMap<QString, QString> mEnvironment)
 {
     QProcess process;
@@ -141,7 +154,7 @@ QString CExecution::execNow(QString sWorkPath, QString sCommand, QMap<QString, Q
         process.setProcessEnvironment(env);
     }
 
-    process.start(sCommand);
+    startProcess(process, sCommand);
     process.waitForFinished();
 
     QString sOutput = process.readAllStandardOutput();
@@ -169,7 +182,7 @@ QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sW
         process.setProcessEnvironment(env);
     }
 
-    process.start(sCommand);
+    startProcess(process, sCommand);
     msleep(1000);
 
     while (process.state() == QProcess::Running)

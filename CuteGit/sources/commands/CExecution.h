@@ -10,6 +10,7 @@
 #include <QRecursiveMutex>
 #include <QThreadPool>
 #include <QRunnable>
+#include <QProcess>
 
 // Application
 #include "../CEnums.h"
@@ -149,6 +150,9 @@ private:
 
     //!
     virtual void run() override;
+
+    //! Starts a process from a command line, split like Qt5 did
+    static void startProcess(QProcess& tProcess, const QString& sCommand);
 
     //-------------------------------------------------------------------------------------------------
     // Signals
