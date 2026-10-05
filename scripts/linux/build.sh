@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
@@ -107,9 +107,9 @@ echo "Running qmake with ${CONFIG_ARG}..."
 "${QMAKE}" "${ROOT_DIR}/CuteGit.pro" "${CONFIG_ARG}"
 
 if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
-  make VERBOSE=1
+  make -j"$(nproc)" VERBOSE=1
 else
-  make
+  make -j"$(nproc)"
 fi
 
 printf '\nBuilt target in %s\n' "${BUILD_DIR}"

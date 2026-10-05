@@ -9,11 +9,11 @@
 
 // Application
 #include "CFlatFileModelProxy.h"
-#include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
 // Forward declarations
 
+class CRepository;
 class CController;
 
 //-------------------------------------------------------------------------------------------------

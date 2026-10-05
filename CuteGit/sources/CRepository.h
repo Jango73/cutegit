@@ -13,21 +13,25 @@
 #include "CEnums.h"
 #include "CLabel.h"
 #include "commands/CCommands.h"
+#include "CBranch.h"
+#include "CRepoFile.h"
+#include "CLogLineCollection.h"
+#include "CDiffLine.h"
+#include "CGraphLine.h"
+#include "CFlatFileModel.h"
+#include "CFlatFileModelProxy.h"
+#include "CStagedFileModelProxy.h"
+#include "CBranchModel.h"
+#include "CLogModel.h"
+#include "CLogModelProxy.h"
+#include "CDiffModel.h"
+#include "CDiffModelProxy.h"
+#include "CGraphModel.h"
 
 //-------------------------------------------------------------------------------------------------
 // Forward declarations
 
 class CController;
-class CFlatFileModel;
-class CFlatFileModelProxy;
-class CStagedFileModelProxy;
-class CBranchModel;
-class CRepoFile;
-class CLogModel;
-class CLogModelProxy;
-class CDiffModel;
-class CDiffModelProxy;
-class CGraphModel;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -51,8 +55,9 @@ public:
     Q_FAST_PROPERTY(QString, s, diffFromCommitId, DiffFromCommitId)
     Q_FAST_PROPERTY(QString, s, diffToCommitId, DiffToCommitId)
 
-    // Main controller
-    Q_FAST_PROPERTY(CController*, p, controller, Controller)
+    // Main controller (plain member: no Q_PROPERTY to avoid an inclusion cycle
+    // with CController, which exposes the repository to QML)
+    CController* controller() const { return m_pController; }
 
     // Versioning system interface
 	Q_FAST_PROPERTY(CCommands*, p, commands, Commands)
@@ -284,10 +289,17 @@ public:
     static CCommands* getCommandsForRepositoryType(CController* pController, CEnums::ERepositoryType eType);
 
     //-------------------------------------------------------------------------------------------------
-    // Protected control methods
+    // Protected members
     //-------------------------------------------------------------------------------------------------
 
 protected:
+
+    //! Main controller
+    CController* m_pController;
+
+    //-------------------------------------------------------------------------------------------------
+    // Protected control methods
+    //-------------------------------------------------------------------------------------------------
 
     //!
     void getBranches(QString sPath = "");

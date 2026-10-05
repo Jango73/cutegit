@@ -9,7 +9,11 @@
 
 // Application
 #include "CLabelModel.h"
-#include "CRepository.h"
+
+//-------------------------------------------------------------------------------------------------
+// Forward declarations
+
+class CRepository;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -29,12 +33,6 @@ public:
         eGraphSymbolRole,
         eMessageIsCompleteRole,
     };
-
-    //-------------------------------------------------------------------------------------------------
-    // QML properties
-    //-------------------------------------------------------------------------------------------------
-
-    Q_FAST_PROPERTY(CRepository*, p, repository, Repository)
 
 public:
 
@@ -78,6 +76,9 @@ public:
     //-------------------------------------------------------------------------------------------------
 
 private:
+
+    //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
+    CRepository* m_pRepository;
 
     //! Lines of the graph
     QList<CGraphLine*>  m_lLines;

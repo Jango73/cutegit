@@ -4,8 +4,13 @@
 // Qt
 #include <QAbstractListModel>
 
-// Application
-#include "CRepository.h"
+// qt-plus
+#include "Macros.h"
+
+//-------------------------------------------------------------------------------------------------
+// Forward declarations
+
+class CRepository;
 
 //-------------------------------------------------------------------------------------------------
 

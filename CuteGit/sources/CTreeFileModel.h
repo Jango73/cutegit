@@ -43,7 +43,6 @@ public:
 
     Q_PROPERTY(QModelIndex rootPathIndex READ rootPathIndex NOTIFY rootPathIndexChanged)
 
-    Q_FAST_PROPERTY(CRepository*, p, repository, Repository)
     Q_FAST_PROPERTY(QFileSystemWatcher*, p, fileSystemWatcher, FileSystemWatcher)
 
 public:
@@ -93,6 +92,9 @@ public:
     //-------------------------------------------------------------------------------------------------
 
 protected:
+
+    //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
+    CRepository* m_pRepository;
 
     //-------------------------------------------------------------------------------------------------
     // Signals

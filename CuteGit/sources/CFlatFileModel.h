@@ -8,7 +8,11 @@
 #include "CRepoFile.h"
 #include "CLogLine.h"
 #include "commands/CCommands.h"
-#include "CRepository.h"
+
+//-------------------------------------------------------------------------------------------------
+// Forward declarations
+
+class CRepository;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -33,7 +37,6 @@ public:
     // QML properties
     //-------------------------------------------------------------------------------------------------
 
-    Q_FAST_PROPERTY(CRepository*, p, repository, Repository)
     Q_FAST_PROPERTY(CRepoFileList, l, repoFiles, RepoFiles)
 
 public:
@@ -99,4 +102,13 @@ signals:
 
     //!
     void currentFileFullName(QString sFileFullName);
+
+    //-------------------------------------------------------------------------------------------------
+    // Properties
+    //-------------------------------------------------------------------------------------------------
+
+protected:
+
+    //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
+    CRepository* m_pRepository;
 };

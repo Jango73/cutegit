@@ -1,6 +1,7 @@
 
 // Application
 #include "CRepositoryModel.h"
+#include "CRepository.h"
 #include "CFlatFileModelProxy.h"
 
 //-------------------------------------------------------------------------------------------------

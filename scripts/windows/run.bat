@@ -6,7 +6,8 @@ set "EXIT_FAILURE=1"
 set "VERBOSE_ENABLED=1"
 set "VERBOSE_DISABLED=0"
 
-set "ROOT_FOLDER=%~dp0"
+set "SCRIPT_FOLDER=%~dp0"
+for %%I in ("%SCRIPT_FOLDER%..\..") do set "ROOT_FOLDER=%%~fI\"
 set "BUILD_TYPE=Release"
 set "VERBOSE_BUILD=%VERBOSE_DISABLED%"
 
@@ -80,25 +81,25 @@ if /I "%BUILD_TYPE%"=="Debug" (
   set "BUILD_FOLDER=%ROOT_FOLDER%build-release"
   set "EXECUTABLE_NAME=CuteGit"
 )
-set "LOG_FILE=%ROOT_FOLDER%temp\run.log"
+set "LOG_FILE=%ROOT_FOLDER%tmp\run.log"
 
 if not exist "%BUILD_FOLDER%" (
   echo [run] %BUILD_FOLDER% not found, running build first...
   if %VERBOSE_BUILD%==%VERBOSE_ENABLED% (
-    call "%ROOT_FOLDER%build.bat" -c "%BUILD_TYPE%" -v
+    call "%SCRIPT_FOLDER%build.bat" -c "%BUILD_TYPE%" -v
   ) else (
-    call "%ROOT_FOLDER%build.bat" -c "%BUILD_TYPE%"
+    call "%SCRIPT_FOLDER%build.bat" -c "%BUILD_TYPE%"
   )
 )
 
-set "EXECUTABLE_PATH=%BUILD_FOLDER%\bin\%EXECUTABLE_NAME%.exe"
+set "EXECUTABLE_PATH=%BUILD_FOLDER%\CuteGit\bin\%EXECUTABLE_NAME%.exe"
 if not exist "%EXECUTABLE_PATH%" (
   echo [run] Executable not found: %EXECUTABLE_PATH% 1>&2
   exit /b 1
 )
 
-if not exist "%ROOT_FOLDER%temp" (
-  mkdir "%ROOT_FOLDER%temp"
+if not exist "%ROOT_FOLDER%tmp" (
+  mkdir "%ROOT_FOLDER%tmp"
 )
 
 echo [run] Logging to %LOG_FILE%

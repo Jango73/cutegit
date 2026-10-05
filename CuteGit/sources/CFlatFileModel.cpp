@@ -5,6 +5,7 @@
 // Application
 #include "CFlatFileModel.h"
 #include "CController.h"
+#include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
 

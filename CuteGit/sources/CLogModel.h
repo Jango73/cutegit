@@ -9,7 +9,11 @@
 
 // Application
 #include "CLabelModel.h"
-#include "CRepository.h"
+
+//-------------------------------------------------------------------------------------------------
+// Forward declarations
+
+class CRepository;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -36,7 +40,6 @@ public:
     // QML properties
     //-------------------------------------------------------------------------------------------------
 
-    Q_FAST_PROPERTY(CRepository*, p, repository, Repository)
     Q_FAST_PROPERTY(int, i, potentialCount, PotentialCount)
     Q_FAST_PROPERTY(QString, s, fullSourceName, FullSourceName)
     Q_FAST_PROPERTY(QString, s, relativeSourceName, RelativeSourceName)
@@ -96,6 +99,9 @@ signals:
     void requestLogData(int iStartIndex, int iCount);
 
 private:
+
+    //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
+    CRepository* m_pRepository;
 
     //! Lines of the log
     QList<CLogLine*> m_lLines;

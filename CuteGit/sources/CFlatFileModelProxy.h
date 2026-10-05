@@ -10,7 +10,11 @@
 // Application
 #include "CEnums.h"
 #include "CRepoFile.h"
-#include "CController.h"
+
+//-------------------------------------------------------------------------------------------------
+// Forward declarations
+
+class CController;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -22,7 +26,6 @@ class CFlatFileModelProxy : public QSortFilterProxyModel
     // QML properties
     //-------------------------------------------------------------------------------------------------
 
-    Q_FAST_PROPERTY(CController*, p, controller, Controller)
     Q_FAST_PROPERTY_NO_SET_IMPL(QString, s, nameFilter, NameFilter)
     Q_FAST_PROPERTY_NO_SET_IMPL(CEnums::ESortField, e, sortField, SortField)
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, sortDirection, SortDirection)
@@ -78,4 +81,13 @@ protected:
 
     //!
     bool nameShown(const QString& sName) const;
+
+    //-------------------------------------------------------------------------------------------------
+    // Properties
+    //-------------------------------------------------------------------------------------------------
+
+protected:
+
+    //! Controlling controller (plain member: no Q_PROPERTY to avoid an inclusion cycle)
+    CController* m_pController;
 };

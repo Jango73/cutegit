@@ -9,7 +9,11 @@
 
 // Application
 #include "CLabelModel.h"
-#include "CRepository.h"
+
+//-------------------------------------------------------------------------------------------------
+// Forward declarations
+
+class CRepository;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -21,7 +25,6 @@ class CLogModelProxy : public QSortFilterProxyModel
     // QML properties
     //-------------------------------------------------------------------------------------------------
 
-    Q_FAST_PROPERTY(CRepository*, p, repository, Repository)
     Q_FAST_PROPERTY(QString, s, textFilter, TextFilter)
 
 public:
@@ -46,4 +49,13 @@ public:
 
     //!
     void filterChanged();
+
+    //-------------------------------------------------------------------------------------------------
+    // Properties
+    //-------------------------------------------------------------------------------------------------
+
+private:
+
+    //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
+    CRepository* m_pRepository;
 };

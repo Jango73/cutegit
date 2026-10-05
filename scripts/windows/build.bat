@@ -6,7 +6,8 @@ set "EXIT_FAILURE=1"
 set "VERBOSE_ENABLED=1"
 set "VERBOSE_DISABLED=0"
 
-set "ROOT_FOLDER=%~dp0"
+set "SCRIPT_FOLDER=%~dp0"
+for %%I in ("%SCRIPT_FOLDER%..\..") do set "ROOT_FOLDER=%%~fI\"
 set "BUILD_TYPE=Release"
 set "VERBOSE_BUILD=%VERBOSE_DISABLED%"
 

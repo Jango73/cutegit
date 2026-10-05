@@ -46,3 +46,6 @@ CMakeLists.txt.user*
 CuteGit/bin
 *.bak
 *.exe
+
+# Scratch files (never commit test or run output)
+tmp/

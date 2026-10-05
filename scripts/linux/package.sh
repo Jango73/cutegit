@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BUILD_TYPE="Release"
 BUILD_DIR="${ROOT_DIR}/build-${BUILD_TYPE,,}"
 DIST_DIR="${ROOT_DIR}/dist"

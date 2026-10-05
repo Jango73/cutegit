@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
@@ -62,14 +63,14 @@ if [[ "${BUILD_TYPE}" != "Debug" && "${BUILD_TYPE}" != "Release" ]]; then
 fi
 
 BUILD_FOLDER="${ROOT_FOLDER}/build-${BUILD_TYPE,,}"
-LOG_FILE="${ROOT_FOLDER}/temp/run.log"
+LOG_FILE="${ROOT_FOLDER}/tmp/run.log"
 
 if [ ! -d "${BUILD_FOLDER}" ]; then
   echo "[run] ${BUILD_FOLDER} not found, running build first..."
   if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
-    "${ROOT_FOLDER}/build.sh" -c "${BUILD_TYPE}" -v
+    "${SCRIPT_FOLDER}/build.sh" -c "${BUILD_TYPE}" -v
   else
-    "${ROOT_FOLDER}/build.sh" -c "${BUILD_TYPE}"
+    "${SCRIPT_FOLDER}/build.sh" -c "${BUILD_TYPE}"
   fi
 fi
 
@@ -79,7 +80,7 @@ else
   EXECUTABLE_NAME="CuteGitApp"
 fi
 
-EXECUTABLE_PATH="${BUILD_FOLDER}/bin/${EXECUTABLE_NAME}"
+EXECUTABLE_PATH="${BUILD_FOLDER}/CuteGit/bin/${EXECUTABLE_NAME}"
 
 if [ ! -f "${EXECUTABLE_PATH}" ]; then
   echo "[run] Executable not found: ${EXECUTABLE_PATH}" >&2
@@ -88,4 +89,5 @@ fi
 
 mkdir -p "$(dirname "${LOG_FILE}")"
 echo "[run] Logging to ${LOG_FILE}"
-exec "${EXECUTABLE_PATH}" 2>&1 | tee "${LOG_FILE}"
+LD_LIBRARY_PATH="${ROOT_FOLDER}/qt-plus/bin" \
+  exec "${EXECUTABLE_PATH}" 2>&1 | tee "${LOG_FILE}"

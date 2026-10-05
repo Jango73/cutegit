@@ -15,6 +15,7 @@
 
 // Application
 #include "CRepositoryModel.h"
+#include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
 
