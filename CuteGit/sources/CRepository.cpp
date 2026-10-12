@@ -1085,16 +1085,21 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
                     bHasCommitableFiles = true;
             }
 
-            // Delete any existing item using sNewKey
+            // Update any existing item using sNewKey
             if (m_lRepoFiles.containsKey(sNewKey))
             {
                 CRepoFile* pExistingFile = m_lRepoFiles.itemByKey(sNewKey);
-                m_lRepoFiles.removeItem(sNewKey);
-                delete pExistingFile;
-            }
+                pExistingFile->setStatus(pNewFile->status());
+                pExistingFile->setStaged(pNewFile->staged());
+                pExistingFile->setChanging(false);
 
-            // Add new item
-            m_lRepoFiles.addItem(sNewKey, pNewFile);
+                delete pNewFile;
+            }
+            else
+            {
+                // Add new item
+                m_lRepoFiles.addItem(sNewKey, pNewFile);
+            }
         }
 
         // For every file not existing in lNewFiles, mark 'not staged' and 'clean' if required

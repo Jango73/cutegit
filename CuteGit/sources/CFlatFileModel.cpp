@@ -160,7 +160,9 @@ void CFlatFileModel::handleRepoFilesChanged()
 {
     CRepoFileList lNewFiles = m_pRepository->repoFiles();
 
-    for (int iNewFileIndex = 0; iNewFileIndex < lNewFiles.count(); iNewFileIndex++)
+    int iNewFileIndex = 0;
+
+    while (iNewFileIndex < lNewFiles.count())
     {
         CRepoFile* pNewFile = lNewFiles[iNewFileIndex];
         QString sNewKey = pNewFile->fullName();
@@ -179,13 +181,28 @@ void CFlatFileModel::handleRepoFilesChanged()
 
                 emit dataChanged(qIndex, qIndex);
             }
+
+            iNewFileIndex++;
         }
         else
         {
-            beginInsertRows(QModelIndex(), iNewFileIndex, iNewFileIndex);
+            int iFirstNewIndex = iNewFileIndex;
+            QList<CRepoFile*> lPendingFiles;
 
-            CRepoFile* pNewFileForThis = new CRepoFile(*pNewFile, this);
-            m_lRepoFiles.addItem(sNewKey, pNewFileForThis, iNewFileIndex);
+            while (iNewFileIndex < lNewFiles.count()
+                   && not m_lRepoFiles.containsKey(lNewFiles[iNewFileIndex]->fullName()))
+            {
+                lPendingFiles << lNewFiles[iNewFileIndex];
+                iNewFileIndex++;
+            }
+
+            beginInsertRows(QModelIndex(), iFirstNewIndex, iNewFileIndex - 1);
+
+            for (CRepoFile* pPendingFile : lPendingFiles)
+            {
+                CRepoFile* pNewFileForThis = new CRepoFile(*pPendingFile, this);
+                m_lRepoFiles.addItem(pNewFileForThis->fullName(), pNewFileForThis);
+            }
 
             endInsertRows();
         }
