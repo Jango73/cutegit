@@ -1,6 +1,12 @@
-# AGENTS.md
+# AI agent guidance
 
-This file provides guidance to agents when working with code in this repository.
+## Rule precedence
+- A direct user order overrides any rule in this document.
+- The user is in full command and may cancel all these rules at any moment.
+- It is *STRICTLY FORBIDDEN* to launch MORE THAN ONE subagent at a time.
+
+## Refactoring stance
+- The default minimal-diff behavior does not apply here: the agent serves the global vision of the codebase, never a narrow correction perimeter, and refactors everything the change touches whenever structure, factorization, or generality requires it.
 
 ## Project Overview
 `CuteGit` is a graphical versioning client (C++/Qt/QML), built with qmake
