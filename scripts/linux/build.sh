@@ -101,6 +101,7 @@ cd "${BUILD_DIR}"
 # Written to the build folder (never to the source tree), consumed via INCLUDEPATH += $$OUT_PWD
 # main.cpp is touched so the new stamp is always compiled in
 BUILD_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+mkdir -p "${BUILD_DIR}/CuteGit"
 printf '#pragma once\n#define BUILD_TIMESTAMP "%s"\n' "${BUILD_STAMP}" > "${BUILD_DIR}/CuteGit/BuildInfo.h"
 touch "${ROOT_DIR}/CuteGit/sources/main.cpp"
 echo "Build stamp: ${BUILD_STAMP}"

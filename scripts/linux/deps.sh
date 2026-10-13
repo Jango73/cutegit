@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+ROOT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+git -C "${ROOT_FOLDER}" submodule update --init --recursive
+
 APT_PACKAGES=(
   build-essential
   cmake
