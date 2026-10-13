@@ -294,7 +294,7 @@ Item {
     readonly property string deleteIcon: "qrc:/qml/images/garbage-container.svg"
 
     readonly property string cloneIcon: "qrc:/qml/images/copy-documents-option.svg"
-    readonly property string openIcon: "qrc:/qml/images/open-folder-black-and-white-variant"
+    readonly property string openIcon: "qrc:/qml/images/open-folder-black-and-white-variant.svg"
     readonly property string pushIcon: "qrc:/qml/images/up-arrow.svg"
     readonly property string pullIcon: "qrc:/qml/images/down.svg"
     readonly property string fetchIcon: "qrc:/qml/images/loop.svg"

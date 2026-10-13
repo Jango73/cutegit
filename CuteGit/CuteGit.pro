@@ -1,5 +1,5 @@
 
-QT += core gui qml quick quickwidgets quickcontrols2 network xml
+QT += core gui qml quick quickwidgets quickcontrols2 network xml svg
 
 # CONFIG += lrelease
 # CONFIG += lrelease embed_translations

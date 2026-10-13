@@ -17,6 +17,7 @@ APT_PACKAGES=(
   libqt6shadertools6-dev
   qt6-shader-baker
   qt6-wayland
+  libqt6svg6-dev
   # NOTE: qtcreator is excluded on purpose. On Ubuntu 22.04 (jammy) the
   # unversioned qtcreator package (6.0.2) is Qt5-based and pulls libqt5*,
   # qml-module-*, qt5-doc and related packages as dependencies.
