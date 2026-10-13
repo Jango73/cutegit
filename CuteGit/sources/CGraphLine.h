@@ -4,6 +4,8 @@
 // Qt
 #include <QObject>
 #include <QDateTime>
+#include <QStringList>
+#include <QVariantList>
 
 // qt-plus
 #include "Macros.h"
@@ -21,5 +23,15 @@ class CGraphLine : public CLogLine
     // QML properties
     //-------------------------------------------------------------------------------------------------
 
-    Q_FAST_PROPERTY(QString, s, graphSymbol, GraphSymbol)
+    Q_FAST_PROPERTY(QStringList, l, parents, Parents)
+    Q_FAST_PROPERTY(QStringList, l, decorations, Decorations)
+    Q_FAST_PROPERTY(int, i, graphLane, GraphLane)
+    Q_FAST_PROPERTY(QVariantList, l, graphVerticals, GraphVerticals)
+    Q_FAST_PROPERTY(QVariantList, l, graphConnections, GraphConnections)
+
+public:
+
+    CGraphLine()
+        : m_iGraphLane(-1)
+    {}
 };

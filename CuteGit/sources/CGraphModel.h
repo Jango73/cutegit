@@ -30,8 +30,10 @@ public:
         eAuthorRole,
         eMessageRole,
         eLabelsRole,
-        eGraphSymbolRole,
         eMessageIsCompleteRole,
+        eGraphCommitLaneRole,
+        eGraphVerticalsRole,
+        eGraphConnectionsRole,
     };
 
 public:

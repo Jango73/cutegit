@@ -36,6 +36,12 @@ Item {
     property alias focusShown: focusIndicator.visible
     property alias mouseEnabled: mouse.enabled
 
+    /*! If true, a drawn graph gutter is shown on the left of the item */
+    property bool graphVisible: false
+    property int graphCommitLane: -1
+    property var graphVerticals: []
+    property var graphConnections: []
+
     signal clicked(var mouse, var previousIndex)
     signal doubleClicked(var mouse, var previousIndex)
     signal pressed(var mouse)
@@ -93,7 +99,25 @@ Item {
         }
 
         Item {
+            id: graphZone
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            width: root.graphVisible ? graphGutter.implicitWidth : 0
+
+            GraphGutter {
+                id: graphGutter
+                anchors.fill: parent
+                commitLane: root.graphCommitLane
+                verticals: root.graphVerticals
+                connections: root.graphConnections
+            }
+        }
+
+        Item {
             id: symbolZone
+            anchors.left: graphZone.right
+            anchors.top: parent.top
             width: (symbolText.text === "" || symbolText.text === Const.statusClean ) ? 0 : symbolText.width + Const.mainPadding
             height: primaryZone.height
 
@@ -111,7 +135,7 @@ Item {
         Item {
             id: primaryZone
             anchors.left: symbolZone.right
-            width: parent.width - symbolZone.width
+            width: parent.width - symbolZone.width - graphZone.width
             height: parent.height * 0.5
 
             TextOverSelection {
@@ -150,7 +174,7 @@ Item {
             id: secondaryZone
             anchors.top: primaryZone.bottom
             anchors.bottom: parent.bottom
-            anchors.left: parent.left
+            anchors.left: graphZone.right
             anchors.right: parent.right
 
             TextOverSelection {
@@ -207,7 +231,7 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.left: symbolZone.right
                 anchors.right: undefined
-                width: parent.width * 0.5
+                width: (parent.width - graphZone.width) * 0.5
             }
             PropertyChanges {
                 target: secondaryZone
@@ -232,7 +256,7 @@ Item {
                 target: secondaryZone
                 anchors.top: primaryZone.bottom
                 anchors.bottom: parent.bottom
-                anchors.left: parent.left
+                anchors.left: graphZone.right
                 anchors.right: parent.right
             }
         }

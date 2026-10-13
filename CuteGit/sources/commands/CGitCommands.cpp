@@ -31,7 +31,7 @@
 // Constants
 
 const int CGitCommands::iLogFormatValueCount            = 4;
-const int CGitCommands::iGraphFormatValueCount          = 5;
+const int CGitCommands::iGraphFormatValueCount          = 7;
 const int CGitCommands::iRefLogFormatValueCount         = 3;
 
 const QString CGitCommands::sCommandAbortMerge          = "git merge --abort";
@@ -60,7 +60,7 @@ const QString CGitCommands::sCommandFileLogCount        = "git rev-list --count 
 const QString CGitCommands::sCommandFileStatus          = "git status --porcelain --ignored --untracked-files=all \"%1\"";
 const QString CGitCommands::sCommandGetRebaseApplyPath  = "git rev-parse --git-path rebase-apply";
 const QString CGitCommands::sCommandGetRebaseMergePath  = "git rev-parse --git-path rebase-merge";
-const QString CGitCommands::sCommandGraph               = "git log --graph --all --pretty=format:\"&&& %h &&& %s &&& %an &&& %aI\" --max-count=50";
+    const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI\" --max-count=50";
 const QString CGitCommands::sCommandHeadCommit          = "git rev-parse --short \"%1\"";
 const QString CGitCommands::sCommandListOtherFiles      = "git ls-files --others";
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
@@ -1160,28 +1160,23 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
 
     for (QString sLine : lStrings)
     {
+        if (sLine.trimmed().isEmpty())
+            continue;
+
         QStringList sValues = sLine.split(sLogFormatSplitter);
 
         if (sValues.count() == iGraphFormatValueCount)
         {
             CGraphLine* pLine = new CGraphLine();
 
-            pLine->setGraphSymbol(sValues[0].trimmed());
             pLine->setCommitId(sValues[1].trimmed());
-            pLine->setMessage(sValues[2].trimmed());
-            pLine->setAuthor(sValues[3].trimmed());
-            pLine->setDate(QDateTime::fromString(sValues[4].trimmed(), Qt::ISODate));
+            pLine->setParents(sValues[2].trimmed().split(" ", Qt::SkipEmptyParts));
+            pLine->setDecorations(sValues[3].trimmed().split(",", Qt::SkipEmptyParts));
+            pLine->setMessage(sValues[4].trimmed());
+            pLine->setAuthor(sValues[5].trimmed());
+            pLine->setDate(QDateTime::fromString(sValues[6].trimmed(), Qt::ISODate));
 
             getFullCommitMessage(tResult.m_sPath, pLine->commitId());
-
-            lReturnValue << pLine;
-        }
-        else if (sValues.count() == 1)
-        {
-            CGraphLine* pLine = new CGraphLine();
-
-            pLine->setGraphSymbol(sValues[0].trimmed());
-            pLine->setMessageIsComplete(true);
 
             lReturnValue << pLine;
         }

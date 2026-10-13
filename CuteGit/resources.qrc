@@ -14,6 +14,7 @@
         <file>qml/components/ExtendablePane.qml</file>
         <file>qml/components/FocusIndicator.qml</file>
         <file>qml/components/FolderSelector.qml</file>
+        <file>qml/components/GraphGutter.qml</file>
         <file>qml/components/LogLabel.qml</file>
         <file>qml/components/SecondaryButton.qml</file>
         <file>qml/components/Selection.qml</file>

@@ -35,9 +35,13 @@ StandardListView {
         expanded: true
         dataLoading: !model.messageIsComplete
         listView: root
-        symbolText: root.hasSymbol ? model.graphSymbol : ""
+        symbolText: ""
+        graphVisible: root.hasSymbol
+        graphCommitLane: model.graphCommitLane !== undefined ? model.graphCommitLane : -1
+        graphVerticals: model.graphVerticals !== undefined ? model.graphVerticals : []
+        graphConnections: model.graphConnections !== undefined ? model.graphConnections : []
         primaryText: fullText
-        secondaryText: model.author + " - " + (isValidDate(model.date) ? model.date : "")
+        secondaryText: model.commitId === "" ? "" : model.author + " - " + (isValidDate(model.date) ? model.date : "")
         selectionShown: index === root.currentIndex
         focusShown: root.activeFocus && index === root.currentIndex
 
