@@ -997,7 +997,8 @@ void CGitCommands::handleBranchOutput(const CProcessResult& tResult)
 
     for (QString sLine : lLines)
     {
-        sLine = sLine.split("->").first();
+        if (sLine.contains("->"))
+            continue;
 
         if (not sLine.isEmpty())
         {
