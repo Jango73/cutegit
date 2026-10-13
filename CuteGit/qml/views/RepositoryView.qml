@@ -107,63 +107,63 @@ Pane {
                 root.repository.flatFileModelProxy.handleCurrentIndex(currentIndex)
             }
         }
+    }
 
-        FilePane {
-            id: filePane
-            objectName: "filePane"
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            width: parent.width * 0.5
-            anchors.margins: Const.paneMargins
+    FilePane {
+        id: filePane
+        objectName: "filePane"
+        anchors.top: centralPart.top
+        anchors.bottom: centralPart.bottom
+        anchors.left: centralPart.left
+        width: centralPart.width * 0.5
+        anchors.margins: Const.paneMargins
 
-            extensionParent: root
-            repository: root.repository
-            flatSelection: flatFileSelection
+        extensionParent: root
+        repository: root.repository
+        flatSelection: flatFileSelection
 
-            onRequestMenu: {
-                fileMenu.fileNames = fileNames
-                fileMenu.popup()
-            }
-
-            onRequestDeleteFiles: root.requestDeleteFiles(fileNames)
-            onRequestFileFilter: root.repository.setFileFilter(text)
-            onRequestFileSortField: root.repository.setFileSortField(field)
-            onRequestFileSortDirection: root.repository.setFileSortDirection(direction)
+        onRequestMenu: {
+            fileMenu.fileNames = fileNames
+            fileMenu.popup()
         }
 
-        ToolPane {
-            id: toolPane
-            objectName: "toolPane"
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: filePane.right
-            anchors.right: parent.right
-            anchors.margins: Const.paneMargins
+        onRequestDeleteFiles: root.requestDeleteFiles(fileNames)
+        onRequestFileFilter: function(text) { root.repository.setFileFilter(text) }
+        onRequestFileSortField: function(field) { root.repository.setFileSortField(field) }
+        onRequestFileSortDirection: function(direction) { root.repository.setFileSortDirection(direction) }
+    }
 
-            extensionParent: root
-            repository: root.repository
+    ToolPane {
+        id: toolPane
+        objectName: "toolPane"
+        anchors.top: centralPart.top
+        anchors.bottom: centralPart.bottom
+        anchors.left: filePane.right
+        anchors.right: centralPart.right
+        anchors.margins: Const.paneMargins
 
-            onRequestDiffMenu: {
-                diffMenu.operation = operation
-                diffMenu.text = text
-                diffMenu.popup()
-            }
+        extensionParent: root
+        repository: root.repository
 
-            onRequestSaveFileDiffAsPatch: {
-                root.requestPatchSave()
-            }
-
-            onRequestLogMenu: {
-                logMenu.commitId = commitId
-                logMenu.commitMessage = message
-                logMenu.popup()
-            }
-
-            onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-            onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-            onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
+        onRequestDiffMenu: {
+            diffMenu.operation = operation
+            diffMenu.text = text
+            diffMenu.popup()
         }
+
+        onRequestSaveFileDiffAsPatch: {
+            root.requestPatchSave()
+        }
+
+        onRequestLogMenu: {
+            logMenu.commitId = commitId
+            logMenu.commitMessage = message
+            logMenu.popup()
+        }
+
+        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
+        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
+        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
     }
 
     Item {
@@ -238,45 +238,45 @@ Pane {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: parent.height * 0.4
+    }
 
-        BranchLogPane {
-            id: branchLogPane
-            objectName: "branchLogPane"
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            width: parent.width * 0.6
+    BranchLogPane {
+        id: branchLogPane
+        objectName: "branchLogPane"
+        anchors.top: bottomPart.top
+        anchors.bottom: bottomPart.bottom
+        anchors.left: bottomPart.left
+        width: bottomPart.width * 0.6
 
-            extensionParent: root
-            repository: root.repository
+        extensionParent: root
+        repository: root.repository
 
-            onRequestMenu: {
-                logMenu.commitId = commitId
-                logMenu.commitMessage = message
-                logMenu.popup()
-            }
-
-            onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-            onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-            onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
-
-            onRequestTextFilter: {
-                root.repository.setBranchLogFilter(text)
-            }
+        onRequestMenu: {
+            logMenu.commitId = commitId
+            logMenu.commitMessage = message
+            logMenu.popup()
         }
 
-        OutputPane {
-            id: outputPane
-            objectName: "outputPane"
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: branchLogPane.right
-            anchors.right: parent.right
-            anchors.margins: Const.paneMargins
+        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
+        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
+        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
 
-            extensionParent: root
-            repository: root.repository
+        onRequestTextFilter: {
+            root.repository.setBranchLogFilter(text)
         }
+    }
+
+    OutputPane {
+        id: outputPane
+        objectName: "outputPane"
+        anchors.top: bottomPart.top
+        anchors.bottom: bottomPart.bottom
+        anchors.left: branchLogPane.right
+        anchors.right: bottomPart.right
+        anchors.margins: Const.paneMargins
+
+        extensionParent: root
+        repository: root.repository
     }
 
     //--------------------------------------------------------------------------------

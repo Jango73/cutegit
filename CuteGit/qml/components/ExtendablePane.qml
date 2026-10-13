@@ -5,7 +5,7 @@ import QtQuick.Controls.Material 2.12
 TitlePane {
     id: root
 
-    //! This is the item to which the pane is parented when extended
+    //! When set, the extend button is enabled and the pane fills its visual parent while extended
     property Item extensionParent: null
 
     StandardButton {
@@ -30,16 +30,15 @@ TitlePane {
         },
         State {
             name: "extended"
-            ParentChange {
+            AnchorChanges {
                 target: root
-                parent: root.extensionParent !== null ? root.extensionParent : parent
+                anchors.top: root.parent.top
+                anchors.bottom: root.parent.bottom
+                anchors.left: root.parent.left
+                anchors.right: root.parent.right
             }
             PropertyChanges {
                 target: root
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
                 z: 999999
             }
         }

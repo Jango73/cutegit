@@ -3,7 +3,6 @@
 ## Rule precedence
 - A direct user order overrides any rule in this document.
 - The user is in full command and may cancel all these rules at any moment.
-- It is *STRICTLY FORBIDDEN* to launch MORE THAN ONE subagent at a time.
 
 ## Refactoring stance
 - The default minimal-diff behavior does not apply here: the agent serves the global vision of the codebase, never a narrow correction perimeter, and refactors everything the change touches whenever structure, factorization, or generality requires it.
@@ -71,6 +70,10 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
     in its primary (literal) sense. Name things for what they are, not for
     what they resemble.
   - No "directory" : use "folder".
+
+## Forbidden Actions
+- It is *STRICTLY FORBIDDEN* to launch MORE THAN ONE subagent at a time.
+- Do NOT cut lines at 80 (or 100, or whatever) when writing plain text documents such as markdown. This does NOT apply to code.
 
 ### Commit message
 The agent always signs its commits: append a last line `Agent: <agent-name>`

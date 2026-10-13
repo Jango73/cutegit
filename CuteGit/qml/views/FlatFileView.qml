@@ -20,7 +20,7 @@ StandardListView {
 
     delegate: StandardListViewItem {
         objectName: "FlatFileView.delegate." + index
-        width: parent.width
+        width: ListView.view.width
         expanded: mustShowRelativeName
         selectionFillsItem: false
         listView: root

@@ -40,9 +40,9 @@ ExtendablePane {
                 }
             }
 
-            onRequestFilter: root.requestFileFilter(text)
-            onRequestSortField: root.requestFileSortField(field)
-            onRequestSortDirection: root.requestFileSortDirection(direction)
+            onRequestFilter: function(text) { root.requestFileFilter(text) }
+            onRequestSortField: function(field) { root.requestFileSortField(field) }
+            onRequestSortDirection: function(direction) { root.requestFileSortDirection(direction) }
         },
 
         StandardLabel {

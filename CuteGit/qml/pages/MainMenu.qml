@@ -108,7 +108,7 @@ MenuBar {
                     }
                 }
 
-                onObjectAdded: knownRepos.insertItem(index, object)
+                onObjectAdded: function(index, object) { knownRepos.insertItem(index, object) }
                 onObjectRemoved: knownRepos.removeItem(object)
             }
         }
@@ -444,7 +444,7 @@ MenuBar {
                     onClicked: root.requestLanguage(model.display)
                 }
 
-                onObjectAdded: language.insertItem(index, object)
+                onObjectAdded: function(index, object) { language.insertItem(index, object) }
                 onObjectRemoved: language.removeItem(object)
             }
         }

@@ -31,7 +31,7 @@ StandardListView {
     delegate: StandardListViewItem {
         id: delegateItem
         objectName: "root.delegate." + index
-        width: parent.width
+        width: ListView.view.width
         expanded: true
         dataLoading: !model.messageIsComplete
         listView: root
