@@ -12,6 +12,10 @@ Popup {
     closePolicy: Popup.CloseOnEscape
     padding: Const.mainPadding
 
+    Overlay.modal: Rectangle {
+        color: Const.popupDimColor
+    }
+
     Material.elevation: Const.popupElevation
 
     property alias title: title.text

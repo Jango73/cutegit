@@ -18,6 +18,7 @@ Item {
 
     // Colors
     readonly property color transparent: "transparent"
+    readonly property color popupDimColor: "#40FFFFFF"
 
     readonly property color fileStagedColor: "#80008000"
     readonly property color fileModifiedColor: "#80800000"
