@@ -99,6 +99,16 @@ if exist "%QT_PLUS_DIR%" if exist "%QT_PLUS_DIR%\build.bat" (
 if not exist "%BUILD_FOLDER%" mkdir "%BUILD_FOLDER%"
 cd /d "%BUILD_FOLDER%"
 
+rem Build stamp: regenerated on every build so a running binary can always be identified
+for /f "usebackq delims=" %%T in (`powershell -NoProfile -Command "Get-Date -Format o"`) do set "BUILD_STAMP=%%T"
+if not defined BUILD_STAMP set "BUILD_STAMP=unknown"
+(
+  echo #pragma once
+  echo #define BUILD_TIMESTAMP "%BUILD_STAMP%"
+) > "%BUILD_FOLDER%\CuteGit\BuildInfo.h"
+copy /b "%ROOT_FOLDER%CuteGit\sources\main.cpp" +,, >nul
+echo Build stamp: %BUILD_STAMP%
+
 echo Running qmake with %CONFIG_ARG%...
 qmake "%ROOT_FOLDER%\CuteGit.pro" %CONFIG_ARG%
 

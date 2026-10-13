@@ -97,6 +97,14 @@ fi
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
+# Build stamp: regenerated on every build so a running binary can always be identified
+# Written to the build folder (never to the source tree), consumed via INCLUDEPATH += $$OUT_PWD
+# main.cpp is touched so the new stamp is always compiled in
+BUILD_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+printf '#pragma once\n#define BUILD_TIMESTAMP "%s"\n' "${BUILD_STAMP}" > "${BUILD_DIR}/CuteGit/BuildInfo.h"
+touch "${ROOT_DIR}/CuteGit/sources/main.cpp"
+echo "Build stamp: ${BUILD_STAMP}"
+
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
   CONFIG_ARG="CONFIG+=debug"
 else

@@ -1,15 +1,28 @@
 
 // Qt
 #include <QApplication>
+#include <QDebug>
 
 // Application
 #include "CuteGit.h"
+
+#if defined(__has_include)
+#  if __has_include("BuildInfo.h")
+#    include "BuildInfo.h"
+#  endif
+#endif
+
+#ifndef BUILD_TIMESTAMP
+#define BUILD_TIMESTAMP "unknown"
+#endif
 
 // Available arguments
 static const char* sSwitch_stub = "--stub";
 
 int main(int argc, char *argv[])
 {
+    qInfo() << QString("CuteGit %1 built %2").arg(VERSION_STRING).arg(BUILD_TIMESTAMP);
+
     QApplication app(argc, argv);
     QStringList lArgList;
     QString sSequenceFile;
