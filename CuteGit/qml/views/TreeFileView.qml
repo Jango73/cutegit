@@ -98,7 +98,7 @@ TreeView {
         root.repository.openFile(currentFileFullName)
     }
 
-    Keys.onPressed: {
+    Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Space) {
             var currentFileFullName = model.fullNameForIndex(currentIndex)
             root.repository.toggleStaged(currentFileFullName)

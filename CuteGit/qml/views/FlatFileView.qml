@@ -35,7 +35,7 @@ StandardListView {
         property bool mustShowRelativeName: model.fileName !== model.relativeName
         property bool selected: indexSelected(index)
 
-        onClicked: {
+        onClicked: function(mouse, previousIndex) {
             root.itemClicked(mouse, index, previousIndex)
 
             if (mouse.button === Qt.RightButton) {

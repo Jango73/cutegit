@@ -76,7 +76,7 @@ ListView {
             positionViewAtIndex(currentIndex, ListView.Beginning)
     }
 
-    Keys.onPressed: {
+    Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Up) {
             handleKeyboardMovement(event, currentIndex - 1)
             event.accepted = true

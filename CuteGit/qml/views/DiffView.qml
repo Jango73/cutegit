@@ -11,7 +11,7 @@ StandardListView {
 
     delegate: StandardListViewItem {
         objectName: "root.delegate." + index
-        width: parent.width
+        width: ListView.view.width
         listView: root
         primaryText: model.text
         primaryColor: model.operation === CEnums.DiffFileName ? Material.background : Material.foreground
@@ -27,7 +27,7 @@ StandardListView {
                    else Const.transparent
         }
 
-        onClicked: {
+        onClicked: function(mouse) {
             if (mouse.button === Qt.RightButton) {
                 root.itemRightClicked(model.operation, model.text)
             }

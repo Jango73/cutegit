@@ -55,7 +55,7 @@ Item {
 
         delegate: StandardListViewItem {
             objectName: "list.delegate." + index
-            width: parent.width
+            width: ListView.view.width
             listView: list
             primaryText: model.text
             primaryColor: Material.foreground

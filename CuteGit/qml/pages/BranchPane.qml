@@ -59,12 +59,12 @@ StandardPane {
                 model: root.repository ? root.repository.remoteBranchModel : undefined
 
                 delegate: StandardListViewItem {
-                    width: parent.width
+                    width: ListView.view.width
                     listView: remoteBranchList
                     selectionShown: model.name === root.repository.currentBranch
                     primaryText: model.name
 
-                    onClicked: {
+                    onClicked: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
                             rightClickBranch(model.name)
                         }
@@ -101,12 +101,12 @@ StandardPane {
                 model: root.repository ? root.repository.localBranchModel : undefined
 
                 delegate: StandardListViewItem {
-                    width: parent.width
+                    width: ListView.view.width
                     listView: localBranchList
                     selectionShown: model.name === root.repository.currentBranch
                     primaryText: model.name
 
-                    onClicked: {
+                    onClicked: function(mouse) {
                         if (mouse.button === Qt.RightButton) {
                             rightClickBranch(model.name)
                         }
@@ -135,7 +135,7 @@ StandardPane {
                 model: root.repository ? root.repository.tagModel : undefined
 
                 delegate: StandardListViewItem {
-                    width: parent.width
+                    width: ListView.view.width
                     listView: tagList
                     selectionShown: false
                     primaryText: model.name

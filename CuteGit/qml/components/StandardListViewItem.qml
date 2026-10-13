@@ -53,7 +53,7 @@ Item {
             acceptedButtons: Qt.AllButtons
             hoverEnabled: true
 
-            onClicked: {
+            onClicked: function(mouse) {
                 if (root.listView) {
                     var previousIndex = root.listView.currentIndex
                     root.listView.changeCurrentIndex(index)
@@ -62,7 +62,7 @@ Item {
                 }
             }
 
-            onDoubleClicked: {
+            onDoubleClicked: function(mouse) {
                 if (root.listView) {
                     var previousIndex = root.listView.currentIndex
                     root.listView.changeCurrentIndex(index)
@@ -71,9 +71,9 @@ Item {
                 }
             }
 
-            onPressed: root.pressed(mouse)
-            onEntered: root.entered(mouse)
-            onExited: root.exited(mouse)
+            onPressed: function(mouse) { root.pressed(mouse) }
+            onEntered: function() { root.entered(mouse) }
+            onExited: function() { root.exited(mouse) }
         }
 
         Item {

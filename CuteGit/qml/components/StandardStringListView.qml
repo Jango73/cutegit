@@ -4,7 +4,7 @@ import "."
 
 StandardListView {
     delegate: ElideText {
-        width: parent.width
+        width: ListView.view.width
         height: Const.listViewItemHeight
         text: display
     }

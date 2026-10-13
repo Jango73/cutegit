@@ -77,7 +77,7 @@ StandardListView {
             }
         ]
 
-        onClicked: {
+        onClicked: function(mouse) {
             if (mouse.button === Qt.RightButton) {
                 root.itemRightClicked(model.commitId, model.fullMessage)
             }
