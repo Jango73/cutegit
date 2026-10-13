@@ -56,6 +56,10 @@ public:
     //! Creates a list of CRepoFile from the repo at sPath
     virtual void fileStatus(const QString& sPath, const QString& sFullName);
 
+    //! Enqueues a cheap sentinel command used to detect changes made behind our back
+    //! The result is thrown as ePollFingerprint and must stay silent (no output logging)
+    virtual void pollFingerprint(const QString& sPath);
+
     //! Creates a list of branches of the repo at sPath
     virtual void branches(const QString& sPath);
 

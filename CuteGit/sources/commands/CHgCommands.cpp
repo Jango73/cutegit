@@ -47,6 +47,7 @@ static const char* sCommandPush               = "hg push --new-branch";
 static const char* sCommandRevert             = "hg revert \"%1\"";
 static const char* sCommandStatus             = "hg status";
 static const char* sCommandStatusForFile      = "hg status \"%1\"";
+static const char* sCommandParentNode         = "hg log -r . --template \"{node}\"";
 static const char* sCommandResetOnCommit      = "hg update \"%1\"";
 
 //-------------------------------------------------------------------------------------------------
@@ -197,6 +198,15 @@ void CHgCommands::commit(const QString& sPath, const QString& sMessage)
     emit newOutputString(CEnums::eNotification, tr("Commiting..."));
     QString sCommand = QString(sCommandCommit).arg(sMessage);
     exec(new CProcessCommand(CEnums::eCommit, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CHgCommands::pollFingerprint(const QString& sPath)
+{
+    m_sPollStatusPart.clear();
+    exec(new CProcessCommand(CEnums::ePollFingerprint, sPath, sCommandStatus, true, QMap<QString, QString>(), "status"));
+    exec(new CProcessCommand(CEnums::ePollFingerprint, sPath, sCommandParentNode, true, QMap<QString, QString>(), "parent"));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -396,10 +406,22 @@ void CHgCommands::handleLogOutput(const CProcessResult& tResult)
 
 void CHgCommands::onExecFinished(const CProcessResult& tResult)
 {
-    Q_UNUSED(tResult.m_sUserData);
-
     switch (tResult.m_eCommand)
     {
+
+    case CEnums::ePollFingerprint:
+    {
+        if (tResult.m_sUserData == "status")
+        {
+            m_sPollStatusPart = tResult.m_sValue;
+        }
+        else
+        {
+            emit newOutputString(tResult.m_eCommand, m_sPollStatusPart + tResult.m_sValue);
+            m_sPollStatusPart.clear();
+        }
+        break;
+    }
 
     case CEnums::eStageFile:
     case CEnums::eStageAll:

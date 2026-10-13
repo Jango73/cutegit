@@ -84,6 +84,9 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_bHasPushableCommits(false)
     , m_bHasPullableCommits(false)
     , m_bHasStashableFiles(false)
+    , m_sPollFingerprint("")
+    , m_bNeedsRefresh(false)
+    , m_bPollPending(false)
 {
     if (eType == CEnums::UnknownRepositoryType)
     {
@@ -280,6 +283,7 @@ void CRepository::refresh()
 {
     setDiffFromCommitId("");
     setDiffToCommitId("");
+    setNeedsRefresh(false);
 
     checkRepositoryStatus();
     checkChangedFileStatus();
@@ -288,6 +292,20 @@ void CRepository::refresh()
     getBranchLog();
     getGraph();
     getRefLog();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::pollExternalChanges()
+{
+    if (m_bPollPending)
+        return;
+
+    if (m_pCommands == nullptr || m_pCommands->isBusy())
+        return;
+
+    m_bPollPending = true;
+    m_pCommands->pollFingerprint(m_sRepositoryPath);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -940,6 +958,33 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
         onNewOutput(sOutput, false);
 
         refresh();
+        break;
+    }
+
+    case CEnums::ePollFingerprint:
+    {
+        m_bPollPending = false;
+
+        // A poll result that arrives while own commands run is stale, drop it
+        if (m_pCommands != nullptr && m_pCommands->isBusy())
+            break;
+
+        // The first result sets the baseline silently
+        if (m_sPollFingerprint.isEmpty())
+        {
+            setPollFingerprint(sOutput);
+            break;
+        }
+
+        if (sOutput != m_sPollFingerprint)
+        {
+            setPollFingerprint(sOutput);
+
+            if (m_pController != nullptr && m_pController->currentRepository() == this)
+                refresh();
+            else
+                setNeedsRefresh(true);
+        }
         break;
     }
 

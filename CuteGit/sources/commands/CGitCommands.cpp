@@ -65,6 +65,7 @@ const QString CGitCommands::sCommandHeadCommit          = "git rev-parse --short
 const QString CGitCommands::sCommandListOtherFiles      = "git ls-files --others";
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
 const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
+const QString CGitCommands::sCommandPollFingerprint      = "git status --porcelain=v1 -b --ignored=no --untracked-files=normal";
 const QString CGitCommands::sCommandPull                = "git pull";
 const QString CGitCommands::sCommandPush                = "git push %1 %2";
 const QString CGitCommands::sCommandRebaseOnBranch      = "git rebase \"%1\"";
@@ -216,6 +217,13 @@ void CGitCommands::fileStatus(const QString& sPath, const QString& sFullName)
 {
     QString sFileStatusCommand = QString(sCommandFileStatus).arg(sFullName);
     exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sFileStatusCommand));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::pollFingerprint(const QString& sPath)
+{
+    exec(new CProcessCommand(CEnums::ePollFingerprint, sPath, sCommandPollFingerprint));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1236,6 +1244,13 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     {
         // Throw the returned string of the process
         emit newOutputKeyValue(tResult.m_eCommand, tResult.m_sUserData, tResult.m_sValue.trimmed());
+        break;
+    }
+
+    case CEnums::ePollFingerprint:
+    {
+        // Throw the raw sentinel output, the repository compares it with the previous one
+        emit newOutputString(tResult.m_eCommand, tResult.m_sValue);
         break;
     }
 

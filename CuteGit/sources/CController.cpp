@@ -92,6 +92,8 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_bMasterMode(true)
     , m_tShared(m_sSharedKey, this)
     , m_tSharedTimer(this)
+    , m_tPollTimer(this)
+    , m_iPollIndex(0)
     , m_pTranslator(new QTranslator(this))
 {
     QCoreApplication::installTranslator(m_pTranslator);
@@ -128,6 +130,9 @@ CController::CController(QString sStubFileName, QObject* parent)
             qWarning() << m_tShared.errorString();
         }
     }
+
+    connect(&m_tPollTimer, &QTimer::timeout, this, &CController::onPollTimerTick);
+    m_tPollTimer.start(REPOSITORY_POLL_INTERVAL_MS);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -149,6 +154,8 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_bMasterMode(false)
     , m_tShared(m_sSharedKey, this)
     , m_tSharedTimer(this)
+    , m_tPollTimer(this)
+    , m_iPollIndex(0)
     , m_pTranslator(new QTranslator(this))
 {
     if (m_tShared.attach())
@@ -218,7 +225,12 @@ void CController::setCurrentRepositoryIndex(int iValue)
             CRepository* pRepository = m_pOpenRepositoryModel->repositories()[m_iCurrentRepositoryIndex];
 
             if (pRepository != nullptr)
+            {
                 setCurrentRepository(pRepository);
+
+                if (pRepository->needsRefresh())
+                    pRepository->refresh();
+            }
         }
         else
         {
@@ -688,11 +700,36 @@ void CController::onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOu
 
 //-------------------------------------------------------------------------------------------------
 
+void CController::onPollTimerTick()
+{
+    if (m_pOpenRepositoryModel == nullptr)
+        return;
+
+    QList<CRepository*> lRepositories = m_pOpenRepositoryModel->repositories();
+
+    if (lRepositories.isEmpty())
+        return;
+
+    // The current repository is polled on every tick, other repositories round-robin
+    // so that any number of open repositories costs at most two cheap commands per tick
+    if (m_pCurrentRepository != nullptr)
+        m_pCurrentRepository->pollExternalChanges();
+
+    m_iPollIndex = m_iPollIndex % lRepositories.count();
+
+    CRepository* pRepository = lRepositories[m_iPollIndex];
+    m_iPollIndex++;
+
+    if (pRepository != nullptr && pRepository != m_pCurrentRepository)
+        pRepository->pollExternalChanges();
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CController::onSharedTimerTick()
 {
     if (m_bMasterMode)
-    {
-        // This code is executed by a master instance
+    {        // This code is executed by a master instance
 
         if (sharedOperation() == eSOSlaveRequestEdit)
         {

@@ -173,7 +173,8 @@ public:
         ePatchCreate,
         ePatchApply,
         eBlame,
-        eCleanUp
+        eCleanUp,
+        ePollFingerprint
     };
 
     // Status of a file in repository

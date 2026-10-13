@@ -70,6 +70,9 @@ public:
     virtual void fileStatus(const QString& sPath, const QString& sFullName) override;
 
     //!
+    virtual void pollFingerprint(const QString& sPath) override;
+
+    //!
     virtual void branches(const QString& sPath) override;
 
     //!
@@ -288,6 +291,7 @@ protected:
     static const QString sCommandListOtherFiles;
     static const QString sCommandMergeBranch;
     static const QString sCommandPatchApply;
+    static const QString sCommandPollFingerprint;
     static const QString sCommandPull;
     static const QString sCommandPush;
     static const QString sCommandRebaseOnBranch;

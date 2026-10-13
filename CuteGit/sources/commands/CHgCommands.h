@@ -67,6 +67,9 @@ public:
     virtual void commit(const QString& sPath, const QString& sMessage) override;
 
     //!
+    virtual void pollFingerprint(const QString& sPath) override;
+
+    //!
     virtual void amend(const QString& sPath) override;
 
     //!
@@ -107,4 +110,13 @@ protected slots:
 
     //!
     void onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, CRepoFileList lNewRepoFiles);
+
+    //-------------------------------------------------------------------------------------------------
+    // Properties
+    //-------------------------------------------------------------------------------------------------
+
+protected:
+
+    //! First half of the poll fingerprint, while the second half is running
+    QString m_sPollStatusPart;
 };

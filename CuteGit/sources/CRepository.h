@@ -109,6 +109,10 @@ public:
     Q_FAST_PROPERTY(bool, b, hasPullableCommits, HasPullableCommits)
     Q_FAST_PROPERTY(bool, b, hasStashableFiles, HasStashableFiles)
 
+    // External change detection (driven by the controller polling)
+    Q_FAST_PROPERTY(QString, s, pollFingerprint, PollFingerprint)
+    Q_FAST_PROPERTY(bool, b, needsRefresh, NeedsRefresh)
+
     Q_PROPERTY(QString repositoryTypeString READ repositoryTypeString NOTIFY repositoryTypeStringChanged)
 
 public:
@@ -166,6 +170,9 @@ public:
 
     //!
     Q_INVOKABLE void refresh();
+
+    //! Enqueues a poll fingerprint command, unless a command is already in flight
+    void pollExternalChanges();
 
     //! Toggles the 'staged' flag of files
     Q_INVOKABLE void toggleStaged(QStringList lFullNames);
@@ -296,6 +303,9 @@ protected:
 
     //! Main controller
     CController* m_pController;
+
+    //! True while a poll fingerprint command is waiting for its result
+    bool m_bPollPending;
 
     //-------------------------------------------------------------------------------------------------
     // Protected control methods

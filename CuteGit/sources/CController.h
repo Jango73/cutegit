@@ -23,6 +23,7 @@
 #define SHARED_MEMORY_MAX           65536
 #define SHARED_MEMORY_TEXT_MAX      60000
 #define SHARED_MEMORY_FILE_NAME_MAX 2000
+#define REPOSITORY_POLL_INTERVAL_MS 3000
 
 //-------------------------------------------------------------------------------------------------
 
@@ -172,6 +173,9 @@ protected slots:
     //! Triggered for shared memory operation sync
     void onSharedTimerTick();
 
+    //! Triggered to detect changes made to repositories behind our back
+    void onPollTimerTick();
+
     //-------------------------------------------------------------------------------------------------
     // Properties
     //-------------------------------------------------------------------------------------------------
@@ -181,6 +185,8 @@ protected:
     bool                    m_bMasterMode;
     QSharedMemory           m_tShared;
     QTimer                  m_tSharedTimer;
+    QTimer                  m_tPollTimer;
+    int                     m_iPollIndex;
     QString                 m_sCloneCommandsRepositoryPath;
     CCommands*              m_pCloneCommands;
     QTranslator*            m_pTranslator;

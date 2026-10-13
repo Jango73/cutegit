@@ -87,6 +87,13 @@ void CCommands::fileStatus(const QString& sPath, const QString& sFullName)
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::pollFingerprint(const QString& sPath)
+{
+    Q_UNUSED(sPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::branches(const QString& sPath)
 {
     Q_UNUSED(sPath);

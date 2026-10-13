@@ -21,6 +21,7 @@
 CExecution::CExecution()
     : m_tPool(this)
     , m_bStop(false)
+    , m_bRunning(false)
     , m_mMutex()
     , m_eLastShownCommand(CEnums::eNothing)
 {
@@ -33,6 +34,17 @@ CExecution::~CExecution()
 {
     m_bStop = true;
     wait();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+ // Returns true while a command is queued or running
+ // Used by the external change polling to never enqueue a poll while own commands are in flight
+bool CExecution::isBusy()
+{
+    QMutexLocker locker(&m_mMutex);
+
+    return m_bRunning || not m_lCommandStack.isEmpty();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -56,12 +68,14 @@ void CExecution::run()
                 bStackEmpty = false;
                 pCommand = m_lCommandStack[0];
                 m_lCommandStack.removeAt(0);
+                m_bRunning = true;
             }
         }
 
         if (pCommand != nullptr)
         {
-            if (m_eLastShownCommand != pCommand->m_eCommand)
+            if (m_eLastShownCommand != pCommand->m_eCommand
+                    && pCommand->m_eCommand != CEnums::ePollFingerprint)
             {
                 m_eLastShownCommand = pCommand->m_eCommand;
 
@@ -91,6 +105,11 @@ void CExecution::run()
             }
 
             delete pCommand;
+
+            {
+                QMutexLocker locker(&m_mMutex);
+                m_bRunning = false;
+            }
         }
 
         msleep(bStackEmpty ? 100 : 2);

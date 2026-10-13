@@ -120,6 +120,13 @@ public:
     virtual ~CExecution() override;
 
     //-------------------------------------------------------------------------------------------------
+    // Getters
+    //-------------------------------------------------------------------------------------------------
+
+    //! Returns true while a command is queued or running
+    bool isBusy();
+
+    //-------------------------------------------------------------------------------------------------
     // Protected control methods
     //-------------------------------------------------------------------------------------------------
 
@@ -198,6 +205,7 @@ protected:
 private:
 
     bool                        m_bStop;
+    bool                        m_bRunning;
     QRecursiveMutex             m_mMutex;
     CEnums::EProcessCommand     m_eLastShownCommand;
     QList<CProcessCommand*>     m_lCommandStack;
