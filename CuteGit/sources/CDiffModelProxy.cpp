@@ -5,7 +5,7 @@
 // Application
 #include "CDiffModelProxy.h"
 
-//-------------------------------------------------------------------------------------------------
+/***************************************************************************/
 
 CDiffModelProxy::CDiffModelProxy(CRepository *pRepository, QObject* parent)
     : QSortFilterProxyModel(parent)
@@ -13,48 +13,121 @@ CDiffModelProxy::CDiffModelProxy(CRepository *pRepository, QObject* parent)
     Q_UNUSED(pRepository)
 }
 
-//-------------------------------------------------------------------------------------------------
+/***************************************************************************/
+
+/*! Sets the source model and tracks its structure changes to keep the file name cache valid
+ * \param pSourceModel New source model
+ */
+void CDiffModelProxy::setSourceModel(QAbstractItemModel* pSourceModel)
+{
+    if (sourceModel() != nullptr)
+        sourceModel()->disconnect(this);
+
+    QSortFilterProxyModel::setSourceModel(pSourceModel);
+    invalidateFileNameCache();
+
+    if (pSourceModel != nullptr)
+    {
+        connect(pSourceModel, &QAbstractItemModel::modelReset, this, &CDiffModelProxy::invalidateFileNameCache);
+        connect(pSourceModel, &QAbstractItemModel::layoutChanged, this, &CDiffModelProxy::invalidateFileNameCache);
+        connect(pSourceModel, &QAbstractItemModel::rowsInserted, this, &CDiffModelProxy::invalidateFileNameCache);
+        connect(pSourceModel, &QAbstractItemModel::rowsRemoved, this, &CDiffModelProxy::invalidateFileNameCache);
+        connect(pSourceModel, &QAbstractItemModel::dataChanged, this, &CDiffModelProxy::invalidateFileNameCache);
+    }
+}
+
+/***************************************************************************/
 
 void CDiffModelProxy::filterChanged()
 {
     invalidateFilter();
 }
 
-//*************************************************************************
+/***************************************************************************/
 
-/*! Collapses or expands the file header
- * \param sFileName File name shown in the header line
+/*! Returns the source model casted to CDiffModel, nullptr when incompatible
  */
-void CDiffModelProxy::toggleCollapsedFile(const QString& sFileName)
+CDiffModel* CDiffModelProxy::sourceDiffModel() const
 {
-    if (m_CollapsedFileNames.contains(sFileName))
-        m_CollapsedFileNames.remove(sFileName);
-    else
-        m_CollapsedFileNames.insert(sFileName);
+    return dynamic_cast<CDiffModel*>(sourceModel());
+}
 
-    invalidateFilter();
+/***************************************************************************/
 
-    if (rowCount() > 0)
+/*! Rebuilds the source row to file name cache in a single forward pass
+ */
+void CDiffModelProxy::rebuildFileNameCache() const
+{
+    m_CachedFileNames.clear();
+
+    CDiffModel* pModel = sourceDiffModel();
+
+    if (pModel == nullptr || sourceModel() == nullptr)
+        return;
+
+    int iRowCount = sourceModel()->rowCount();
+    m_CachedFileNames.resize(iRowCount);
+
+    QString sCurrentFileName;
+
+    for (int iRow = 0; iRow < iRowCount; iRow++)
     {
-        QModelIndex tTopLeft = index(0, 0);
-        QModelIndex tBottomRight = index(rowCount() - 1, 0);
-        emit dataChanged(tTopLeft, tBottomRight, { eCollapsedRole });
+        QModelIndex tIndex = sourceModel()->index(iRow, 0);
+
+        if (pModel->data(tIndex, CDiffModel::eOperationRole).toInt() == CEnums::DiffFileName)
+            sCurrentFileName = pModel->data(tIndex, CDiffModel::eTextRole).toString();
+
+        m_CachedFileNames[iRow] = sCurrentFileName;
     }
-
-    emit collapsedChanged();
 }
 
-//*************************************************************************
+/***************************************************************************/
 
-/*! Returns true when the file header is collapsed
- * \param sFileName File name shown in the header line
+/*! Clears the source row to file name cache
  */
-bool CDiffModelProxy::isFileCollapsed(const QString& sFileName) const
+void CDiffModelProxy::invalidateFileNameCache()
 {
-    return m_CollapsedFileNames.contains(sFileName);
+    m_CachedFileNames.clear();
 }
 
-//*************************************************************************
+/***************************************************************************/
+
+/*! Returns the file name owning the source row
+ * \param iSourceRow Source row
+ */
+QString CDiffModelProxy::fileNameForSourceRow(int iSourceRow) const
+{
+    if (sourceModel() == nullptr)
+        return QString();
+
+    if (m_CachedFileNames.size() != sourceModel()->rowCount())
+        rebuildFileNameCache();
+
+    if (iSourceRow < 0 || iSourceRow >= m_CachedFileNames.size())
+        return QString();
+
+    return m_CachedFileNames.at(iSourceRow);
+}
+
+/***************************************************************************/
+
+/*! Returns true when the source row matches the text filter
+ * \param iSourceRow Source row
+ */
+bool CDiffModelProxy::textMatchesSourceRow(int iSourceRow) const
+{
+    CDiffModel* pModel = sourceDiffModel();
+
+    if (pModel == nullptr)
+        return true;
+
+    QModelIndex tIndex = sourceModel()->index(iSourceRow, 0);
+    QString sText = pModel->data(tIndex, CDiffModel::eTextRole).toString();
+
+    return sText.contains(m_sTextFilter, Qt::CaseInsensitive);
+}
+
+/***************************************************************************/
 
 /*! Returns role names
  */
@@ -65,7 +138,7 @@ QHash<int, QByteArray> CDiffModelProxy::roleNames() const
     return hRoleNames;
 }
 
-//*************************************************************************
+/***************************************************************************/
 
 /*! Returns data
  * \param index Proxy index
@@ -77,24 +150,8 @@ QVariant CDiffModelProxy::data(const QModelIndex& index, int role) const
     {
         QModelIndex tSourceIndex = mapToSource(index);
 
-        if (tSourceIndex.isValid() && sourceModel() != nullptr)
-        {
-            CDiffModel* pModel = dynamic_cast<CDiffModel*>(sourceModel());
-
-            if (pModel != nullptr)
-            {
-                int iOperation = pModel->data(tSourceIndex, CDiffModel::eOperationRole).toInt();
-
-                QString sFileName;
-
-                if (iOperation == CEnums::DiffFileName)
-                    sFileName = pModel->data(tSourceIndex, CDiffModel::eTextRole).toString();
-                else
-                    sFileName = fileNameForSourceRow(tSourceIndex.row());
-
-                return m_CollapsedFileNames.contains(sFileName);
-            }
-        }
+        if (tSourceIndex.isValid())
+            return m_CollapsedFileNames.contains(fileNameForSourceRow(tSourceIndex.row()));
 
         return false;
     }
@@ -102,13 +159,13 @@ QVariant CDiffModelProxy::data(const QModelIndex& index, int role) const
     return QSortFilterProxyModel::data(index, role);
 }
 
-//-------------------------------------------------------------------------------------------------
+/***************************************************************************/
 
 bool CDiffModelProxy::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
     Q_UNUSED(sourceParent)
 
-    CDiffModel* pModel = dynamic_cast<CDiffModel*>(sourceModel());
+    CDiffModel* pModel = sourceDiffModel();
 
     if (pModel == nullptr)
         return true;
@@ -117,6 +174,8 @@ bool CDiffModelProxy::filterAcceptsRow(int sourceRow, const QModelIndex &sourceP
     int iOperation = pModel->data(tIndex, CDiffModel::eOperationRole).toInt();
     bool bIsFileHeader = (iOperation == CEnums::DiffFileName);
 
+    // Text filter overrides collapse: headers stay visible to keep context,
+    // matching lines stay visible even inside collapsed files
     if (m_sTextFilter.isEmpty() == false)
     {
         if (bIsFileHeader)
@@ -136,43 +195,24 @@ bool CDiffModelProxy::filterAcceptsRow(int sourceRow, const QModelIndex &sourceP
     return true;
 }
 
-//*************************************************************************
+/***************************************************************************/
 
-/*! Returns the file name owning the source row
- * \param iSourceRow Source row
+/*! Collapses or expands the file header
+ * \param sFileName File name shown in the header line
  */
-QString CDiffModelProxy::fileNameForSourceRow(int iSourceRow) const
+void CDiffModelProxy::toggleCollapsedFile(const QString& sFileName)
 {
-    CDiffModel* pModel = dynamic_cast<CDiffModel*>(sourceModel());
+    if (m_CollapsedFileNames.contains(sFileName))
+        m_CollapsedFileNames.remove(sFileName);
+    else
+        m_CollapsedFileNames.insert(sFileName);
 
-    if (pModel == nullptr)
-        return QString();
+    invalidateFilter();
 
-    for (int iRow = iSourceRow; iRow >= 0; iRow--)
+    if (rowCount() > 0)
     {
-        QModelIndex tIndex = sourceModel()->index(iRow, 0);
-
-        if (pModel->data(tIndex, CDiffModel::eOperationRole).toInt() == CEnums::DiffFileName)
-            return pModel->data(tIndex, CDiffModel::eTextRole).toString();
+        QModelIndex tTopLeft = index(0, 0);
+        QModelIndex tBottomRight = index(rowCount() - 1, 0);
+        emit dataChanged(tTopLeft, tBottomRight, { eCollapsedRole });
     }
-
-    return QString();
-}
-
-//*************************************************************************
-
-/*! Returns true when the source row matches the text filter
- * \param iSourceRow Source row
- */
-bool CDiffModelProxy::textMatchesSourceRow(int iSourceRow) const
-{
-    CDiffModel* pModel = dynamic_cast<CDiffModel*>(sourceModel());
-
-    if (pModel == nullptr)
-        return true;
-
-    QModelIndex tIndex = sourceModel()->index(iSourceRow, 0);
-    QString sText = pModel->data(tIndex, CDiffModel::eTextRole).toString();
-
-    return sText.contains(m_sTextFilter, Qt::CaseInsensitive);
 }

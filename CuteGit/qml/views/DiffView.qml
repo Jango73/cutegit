@@ -9,11 +9,17 @@ StandardListView {
 
     signal itemRightClicked(var operation, var text)
 
+    function headerText(isCollapsed, text) {
+        return (isCollapsed ? "▶ " : "▼ ") + text
+    }
+
     delegate: StandardListViewItem {
         objectName: "root.delegate." + index
         width: ListView.view.width
         listView: root
-        primaryText: model.operation === CEnums.DiffFileName ? (model.collapsed ? "▶ " + model.text : "▼ " + model.text) : model.text
+        primaryText: model.operation === CEnums.DiffFileName
+            ? root.headerText(model.collapsed, model.text)
+            : model.text
         primaryColor: model.operation === CEnums.DiffFileName ? Material.background : Material.foreground
         primaryFont.family: Const.fixedWidthFontFamily
         primaryFont.pixelSize: Const.fixedWidthFontSize
