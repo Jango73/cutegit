@@ -171,9 +171,12 @@ void CFlatFileModel::handleRepoFilesChanged()
         {
             CRepoFile* pExistingFile = m_lRepoFiles.itemByKey(sNewKey);
 
-            if (pExistingFile->staged() != pNewFile->staged() || pExistingFile->status() != pNewFile->status())
+            if (pExistingFile->staged() != pNewFile->staged()
+                    || pExistingFile->status() != pNewFile->status()
+                    || pExistingFile->changing())
             {
-                QModelIndex qIndex = createIndex(iNewFileIndex, 0);
+                int iSourceIndex = m_lRepoFiles.indexOf(pExistingFile);
+                QModelIndex qIndex = createIndex(iSourceIndex, 0);
 
                 pExistingFile->setStaged(pNewFile->staged());
                 pExistingFile->setStatus(pNewFile->status());
@@ -198,10 +201,13 @@ void CFlatFileModel::handleRepoFilesChanged()
 
             beginInsertRows(QModelIndex(), iFirstNewIndex, iNewFileIndex - 1);
 
+            int iInsertIndex = iFirstNewIndex;
+
             for (CRepoFile* pPendingFile : lPendingFiles)
             {
                 CRepoFile* pNewFileForThis = new CRepoFile(*pPendingFile, this);
-                m_lRepoFiles.addItem(pNewFileForThis->fullName(), pNewFileForThis);
+                m_lRepoFiles.addItem(pNewFileForThis->fullName(), pNewFileForThis, iInsertIndex);
+                iInsertIndex++;
             }
 
             endInsertRows();
