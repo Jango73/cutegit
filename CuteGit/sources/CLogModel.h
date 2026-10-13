@@ -100,6 +100,12 @@ signals:
 
 private:
 
+    //! Deletes the labels of a commit when no remaining line shows it
+    void pruneUnusedLabels(const QString& sCommitId);
+
+    //! Returns true when both lines show the same commit
+    bool isSameLogLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const;
+
     //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
     CRepository* m_pRepository;
 

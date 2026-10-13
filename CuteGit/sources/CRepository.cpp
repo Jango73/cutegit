@@ -798,9 +798,8 @@ void CRepository::getBranchLog(QString sPath)
     if (sPath.isEmpty())
         sPath = m_sRepositoryPath;
 
-    m_pBranchLogModel->clear();
-    m_pBranchLogModel->invalidate();
-
+    // Loaded rows stay visible while the new log loads: CLogModel::setLines()
+    // reconciles the content without rebuilding when nothing changed
     m_pCommands->branchLog(sPath);
 }
 
@@ -811,9 +810,8 @@ void CRepository::getRefLog(QString sPath)
     if (sPath.isEmpty())
         sPath = m_sRepositoryPath;
 
-    m_pRefLogModel->clear();
-    m_pRefLogModel->invalidate();
-
+    // Loaded rows stay visible while the new log loads: CLogModel::setLines()
+    // reconciles the content without rebuilding when nothing changed
     m_pCommands->refLog(sPath);
 }
 
@@ -829,21 +827,27 @@ QString CRepository::relativeFileName(const QString& sFullName)
 
 void CRepository::onCurrentFileFullName(QString sFileFullName)
 {
-    m_pFileLogModel->clear();
-    m_pFileLogModel->invalidate();
-    m_pFileLogModel->setFullSourceName("");
-    m_pFileLogModel->setRelativeSourceName("");
+    if (sFileFullName == m_pFileLogModel->fullSourceName())
+        return;
 
-    if (not sFileFullName.isEmpty())
+    // Loaded rows stay visible while the new log loads: CLogModel::setLines()
+    // reconciles the content without rebuilding when nothing changed
+    m_pFileLogModel->setFullSourceName(sFileFullName);
+    m_pFileLogModel->setRelativeSourceName(sFileFullName.isEmpty() ? QString("") : relativeFileName(sFileFullName));
+
+    if (sFileFullName.isEmpty())
     {
-        m_pFileLogModel->setFullSourceName(sFileFullName);
-        m_pFileLogModel->setRelativeSourceName(relativeFileName(sFileFullName));
-        m_pFileDiffModel->setFullSourceName(sFileFullName);
-        m_pFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
+        m_pFileLogModel->clear();
+        m_pFileLogModel->invalidate();
 
-        m_pCommands->unstagedFileDiff(m_sRepositoryPath, sFileFullName);
-        m_pCommands->fileLog(m_sRepositoryPath, sFileFullName);
+        return;
     }
+
+    m_pFileDiffModel->setFullSourceName(sFileFullName);
+    m_pFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
+
+    m_pCommands->unstagedFileDiff(m_sRepositoryPath, sFileFullName);
+    m_pCommands->fileLog(m_sRepositoryPath, sFileFullName);
 }
 
 //-------------------------------------------------------------------------------------------------

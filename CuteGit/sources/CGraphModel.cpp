@@ -32,15 +32,45 @@ void CGraphModel::clear()
 
 void CGraphModel::setLines(QList<CGraphLine*> lNewLines)
 {
-    beginResetModel();
+    // Reconcile in place so refreshes without changes cause no view update at all
+    int iCommonCount = qMin(m_lLines.count(), lNewLines.count());
 
-    qDeleteAll(m_lLines);
-    m_lLines.clear();
+    for (int iIndex = 0; iIndex < iCommonCount; iIndex++)
+    {
+        if (isSameGraphLine(m_lLines[iIndex], lNewLines[iIndex]))
+        {
+            delete lNewLines[iIndex];
+        }
+        else
+        {
+            delete m_lLines[iIndex];
+            m_lLines[iIndex] = lNewLines[iIndex];
+            emit dataChanged(createIndex(iIndex, 0), createIndex(iIndex, 0));
+        }
+    }
 
-    for (CGraphLine* pLine : lNewLines)
-        m_lLines << pLine;
+    if (lNewLines.count() > m_lLines.count())
+    {
+        int iFirstIndex = m_lLines.count();
+        int iLastIndex = lNewLines.count() - 1;
+        beginInsertRows(QModelIndex(), iFirstIndex, iLastIndex);
 
-    endResetModel();
+        while (m_lLines.count() < lNewLines.count())
+            m_lLines << lNewLines[m_lLines.count()];
+
+        endInsertRows();
+    }
+    else if (m_lLines.count() > lNewLines.count())
+    {
+        int iFirstIndex = lNewLines.count();
+        int iLastIndex = m_lLines.count() - 1;
+        beginRemoveRows(QModelIndex(), iFirstIndex, iLastIndex);
+
+        while (m_lLines.count() > lNewLines.count())
+            delete m_lLines.takeLast();
+
+        endRemoveRows();
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -118,6 +148,11 @@ void CGraphModel::setCommitMessage(const QString& sCommitId, const QString& sMes
 
         if (pLine->commitId() == sCommitId)
         {
+            // Same full message already shown: skip the notification so refreshes
+            // without changes cause no view update
+            if (pLine->messageIsComplete() && pLine->message() == sMessage)
+                break;
+
             pLine->setMessage(sMessage);
             pLine->setMessageIsComplete(true);
             emit dataChanged(index(iLineIndex), index(iLineIndex));
@@ -140,4 +175,31 @@ void CGraphModel::commitChanged(const QString& sCommitId)
             break;
         }
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool CGraphModel::isSameGraphLine(const CGraphLine* pExistingLine, const CGraphLine* pIncomingLine) const
+{
+    if (pExistingLine == nullptr || pIncomingLine == nullptr)
+        return pExistingLine == pIncomingLine;
+
+    if (pExistingLine->commitId() != pIncomingLine->commitId())
+        return false;
+
+    if (pExistingLine->graphSymbol() != pIncomingLine->graphSymbol())
+        return false;
+
+    if (pExistingLine->commitId().isEmpty())
+        return true;
+
+    if (pExistingLine->author() != pIncomingLine->author())
+        return false;
+
+    if (pExistingLine->date() != pIncomingLine->date())
+        return false;
+
+    // Existing lines may hold the full message while incoming lines hold the subject:
+    // compare the first line only
+    return pExistingLine->message().split(NEW_LINE).first() == pIncomingLine->message().split(NEW_LINE).first();
 }

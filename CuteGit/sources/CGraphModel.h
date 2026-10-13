@@ -71,6 +71,9 @@ public:
     //!
     void commitChanged(const QString& sCommitId);
 
+    //! Returns true when both lines show the same commit
+    bool isSameGraphLine(const CGraphLine* pExistingLine, const CGraphLine* pIncomingLine) const;
+
     //-------------------------------------------------------------------------------------------------
     // Properties
     //-------------------------------------------------------------------------------------------------
