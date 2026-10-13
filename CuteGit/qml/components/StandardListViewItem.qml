@@ -41,6 +41,7 @@ Item {
     property int graphCommitLane: -1
     property var graphVerticals: []
     property var graphConnections: []
+    readonly property int graphGutterWidth: graphVisible ? graphGutter.implicitWidth : 0
 
     signal clicked(var mouse, var previousIndex)
     signal doubleClicked(var mouse, var previousIndex)
@@ -103,7 +104,7 @@ Item {
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: parent.bottom
-            width: root.graphVisible ? graphGutter.implicitWidth : 0
+            width: root.graphGutterWidth
 
             GraphGutter {
                 id: graphGutter
@@ -135,7 +136,7 @@ Item {
         Item {
             id: primaryZone
             anchors.left: symbolZone.right
-            width: parent.width - symbolZone.width - graphZone.width
+            width: parent.width - symbolZone.width - root.graphGutterWidth
             height: parent.height * 0.5
 
             TextOverSelection {
@@ -231,7 +232,7 @@ Item {
                 anchors.bottom: parent.bottom
                 anchors.left: symbolZone.right
                 anchors.right: undefined
-                width: (parent.width - graphZone.width) * 0.5
+                width: (parent.width - root.graphGutterWidth) * 0.5
             }
             PropertyChanges {
                 target: secondaryZone

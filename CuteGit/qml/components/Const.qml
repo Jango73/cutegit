@@ -29,6 +29,23 @@ Item {
     readonly property color labelRemoteColor: "lightsalmon"
     readonly property color labelTagColor: "deepskyblue"
 
+    readonly property var graphLaneColors: [
+        "#e67e22",
+        "#3498db",
+        "#2ecc71",
+        "#9b59b6",
+        "#e74c3c",
+        "#1abc9c",
+        "#f1c40f",
+        "#fd79a8"
+    ]
+    readonly property int graphLaneWidth: 12
+    readonly property int graphLaneMaximumCount: 8
+    readonly property int graphCornerRadius: 6
+    readonly property int graphLineWidth: 2
+    readonly property int graphDotRadius: 4
+    readonly property real graphDotFraction: 0.25
+
     // Margins and padding
     readonly property int mainPadding: mainFontSize * 0.6666
     readonly property int mainRadius: mainPadding * 0.5

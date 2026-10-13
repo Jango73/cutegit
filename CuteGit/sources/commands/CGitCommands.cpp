@@ -60,7 +60,7 @@ const QString CGitCommands::sCommandFileLogCount        = "git rev-list --count 
 const QString CGitCommands::sCommandFileStatus          = "git status --porcelain --ignored --untracked-files=all \"%1\"";
 const QString CGitCommands::sCommandGetRebaseApplyPath  = "git rev-parse --git-path rebase-apply";
 const QString CGitCommands::sCommandGetRebaseMergePath  = "git rev-parse --git-path rebase-merge";
-    const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI\" --max-count=50";
+const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI\" --max-count=50";
 const QString CGitCommands::sCommandHeadCommit          = "git rev-parse --short \"%1\"";
 const QString CGitCommands::sCommandListOtherFiles      = "git ls-files --others";
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
@@ -1151,6 +1151,42 @@ void CGitCommands::handleRefLogOutput(const CProcessResult& tResult)
 
 //-------------------------------------------------------------------------------------------------
 
+/*! Splits parent ids of a graph field, trimming tokens and skipping empties */
+static QStringList splitParentIds(const QString& sValue)
+{
+    QStringList lReturnValue;
+
+    for (QString sToken : sValue.split(" ", Qt::SkipEmptyParts))
+    {
+        sToken = sToken.trimmed();
+
+        if (!sToken.isEmpty())
+            lReturnValue << sToken;
+    }
+
+    return lReturnValue;
+}
+
+/***************************************************************************/
+
+/*! Splits decorations of a graph field, trimming tokens and skipping empties */
+static QStringList splitDecorations(const QString& sValue)
+{
+    QStringList lReturnValue;
+
+    for (QString sToken : sValue.split(",", Qt::SkipEmptyParts))
+    {
+        sToken = sToken.trimmed();
+
+        if (!sToken.isEmpty())
+            lReturnValue << sToken;
+    }
+
+    return lReturnValue;
+}
+
+/***************************************************************************/
+
 void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
 {
     // Create CGraphLines with the returned string of the process
@@ -1167,11 +1203,16 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
 
         if (sValues.count() == iGraphFormatValueCount)
         {
+            QString sCommitId = sValues[1].trimmed();
+
+            if (sCommitId.isEmpty())
+                continue;
+
             CGraphLine* pLine = new CGraphLine();
 
-            pLine->setCommitId(sValues[1].trimmed());
-            pLine->setParents(sValues[2].trimmed().split(" ", Qt::SkipEmptyParts));
-            pLine->setDecorations(sValues[3].trimmed().split(",", Qt::SkipEmptyParts));
+            pLine->setCommitId(sCommitId);
+            pLine->setParents(splitParentIds(sValues[2]));
+            pLine->setDecorations(splitDecorations(sValues[3]));
             pLine->setMessage(sValues[4].trimmed());
             pLine->setAuthor(sValues[5].trimmed());
             pLine->setDate(QDateTime::fromString(sValues[6].trimmed(), Qt::ISODate));

@@ -13,36 +13,27 @@ Item {
     property var connections: []
 
     /*! Vertical position of the commit dot, as a fraction of height */
-    property real dotFraction: 0.25
+    property real dotFraction: Const.graphDotFraction
 
     /*! Width of a single lane */
-    property int laneWidth: 12
+    property int laneWidth: Const.graphLaneWidth
 
     /*! Maximum lanes drawn, keeps text aligned with a fixed gutter */
-    property int maximumLaneCount: 8
+    property int maximumLaneCount: Const.graphLaneMaximumCount
 
     implicitWidth: laneWidth * maximumLaneCount
 
     /*! Radius of fork and merge elbows */
-    property int cornerRadius: 6
+    property int cornerRadius: Const.graphCornerRadius
 
     /*! Width of drawn lines */
-    property int lineWidth: 2
+    property int lineWidth: Const.graphLineWidth
 
     /*! Radius of the commit dot */
-    property int dotRadius: 4
+    property int dotRadius: Const.graphDotRadius
 
     /*! One color per lane, reused cyclically */
-    property var laneColors: [
-        "#e67e22",
-        "#3498db",
-        "#2ecc71",
-        "#9b59b6",
-        "#e74c3c",
-        "#1abc9c",
-        "#f1c40f",
-        "#fd79a8"
-    ]
+    property var laneColors: Const.graphLaneColors
 
     function laneColor(lane) {
         if (laneColors.length === 0)
@@ -53,6 +44,16 @@ Item {
 
     function laneCenter(lane) {
         return lane * laneWidth + laneWidth * 0.5
+    }
+
+    /*! Returns true when the lane ends or starts a horizontal connection at the dot */
+    function isElbow(lane, columnIndex) {
+        for (var connectionIndex = 0; connectionIndex < root.connections.length; connectionIndex++) {
+            var connection = root.connections[connectionIndex]
+            if (connection[2] === lane && connection[columnIndex] === lane)
+                return true
+        }
+        return false
     }
 
     Canvas {
@@ -66,33 +67,13 @@ Item {
             var dotY = height * root.dotFraction
             var cornerRadius = Math.min(root.cornerRadius, root.laneWidth * 0.5)
 
-            function isForkElbow(lane) {
-                var connectionIndex = 0
-                for (connectionIndex = 0; connectionIndex < root.connections.length; connectionIndex++) {
-                    var connection = root.connections[connectionIndex]
-                    if (connection[2] === lane && connection[1] === lane)
-                        return true
-                }
-                return false
-            }
-
-            function isMergeElbow(lane) {
-                var connectionIndex = 0
-                for (connectionIndex = 0; connectionIndex < root.connections.length; connectionIndex++) {
-                    var connection = root.connections[connectionIndex]
-                    if (connection[2] === lane && connection[0] === lane)
-                        return true
-                }
-                return false
-            }
-
             var verticalIndex = 0
             for (verticalIndex = 0; verticalIndex < root.verticals.length; verticalIndex++) {
                 var segment = root.verticals[verticalIndex]
                 var lane = segment[0]
                 var centerX = root.laneCenter(lane)
-                var topY = segment[1] ? dotY + (isForkElbow(lane) ? cornerRadius : 0) : 0
-                var bottomY = segment[2] ? dotY - (isMergeElbow(lane) ? cornerRadius : 0) : height
+                var topY = segment[1] ? dotY + (root.isElbow(lane, 1) ? cornerRadius : 0) : 0
+                var bottomY = segment[2] ? dotY - (root.isElbow(lane, 0) ? cornerRadius : 0) : height
                 painter.strokeStyle = root.laneColor(lane)
                 painter.beginPath()
                 painter.moveTo(centerX, topY)

@@ -4,10 +4,8 @@
 // Qt
 #include <QAbstractListModel>
 
-// qt-plus
-#include "CGraphLine.h"
-
 // Application
+#include "CGraphLine.h"
 #include "CLabelModel.h"
 
 //-------------------------------------------------------------------------------------------------

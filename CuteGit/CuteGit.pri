@@ -44,6 +44,7 @@ SOURCES += \
     sources/CFlatFileModel.cpp \
     sources/CFlatFileModelProxy.cpp \
     sources/CGraphModel.cpp \
+    sources/CGraphLine.cpp \
     sources/CGraphLayout.cpp \
     sources/CLabelModel.cpp \
     sources/CLogLineCollection.cpp \

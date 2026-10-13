@@ -1,8 +1,10 @@
 
+// Qt
+#include <QSet>
+
 // Application
 #include "CGraphModel.h"
 #include "CGraphLayout.h"
-#include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -31,63 +33,11 @@ void CGraphModel::clear()
 
 /***************************************************************************/
 
-/*! Builds the label list of a graph line from its git decorations */
-static QList<CLabel*> labelsFromDecorations(const QStringList& lDecorations)
-{
-    QList<CLabel*> lReturnValue;
-
-    for (QString sToken : lDecorations)
-    {
-        sToken = sToken.trimmed();
-
-        if (sToken.isEmpty())
-            continue;
-
-        CLabel* pLabel = new CLabel();
-
-        if (sToken.startsWith("HEAD -> "))
-        {
-            pLabel->setName(sToken.mid(8).trimmed());
-            pLabel->setType(CEnums::LocalBranchLabel);
-        }
-        else if (sToken.startsWith("tag: "))
-        {
-            pLabel->setName(sToken.mid(5).trimmed());
-            pLabel->setType(CEnums::TagLabel);
-        }
-        else if (sToken == "HEAD")
-        {
-            pLabel->setName(sToken);
-            pLabel->setType(CEnums::LocalBranchLabel);
-        }
-        else if (sToken.contains(PATH_SEP))
-        {
-            pLabel->setName(sToken);
-            pLabel->setType(CEnums::RemoteBranchLabel);
-        }
-        else
-        {
-            pLabel->setName(sToken);
-            pLabel->setType(CEnums::LocalBranchLabel);
-        }
-
-        lReturnValue << pLabel;
-    }
-
-    return lReturnValue;
-}
-
-/***************************************************************************/
-
-/*! Replaces the label model of a commit with its decorations */
-static void syncLabelModel(QMap<QString, CLabelModel*>& mLabels, const QString& sCommitId, const QStringList& lDecorations)
+/*! Replaces the label model of a commit with owned labels */
+static void syncLabelModel(QMap<QString, CLabelModel*>& mLabels, const QString& sCommitId, QList<CLabel*> lLabels)
 {
     if (mLabels.contains(sCommitId))
-    {
         delete mLabels.take(sCommitId);
-    }
-
-    QList<CLabel*> lLabels = labelsFromDecorations(lDecorations);
 
     if (!lLabels.isEmpty())
     {
@@ -103,17 +53,51 @@ static void syncLabelModel(QMap<QString, CLabelModel*>& mLabels, const QString& 
 
 /***************************************************************************/
 
-/*! Removes the label model of a commit when no remaining line shows it */
-static void removeLabelModel(QMap<QString, CLabelModel*>& mLabels, const QList<CGraphLine*>& lLines, const QString& sCommitId)
+/*! Returns the commit ids shown by lines */
+static QSet<QString> commitIdsOfLines(const QList<CGraphLine*>& lLines)
 {
+    QSet<QString> sReturnValue;
+
     for (const CGraphLine* pLine : lLines)
     {
-        if (pLine != nullptr && pLine->commitId() == sCommitId)
-            return;
+        if (pLine != nullptr && !pLine->commitId().isEmpty())
+            sReturnValue << pLine->commitId();
     }
 
-    if (mLabels.contains(sCommitId))
+    return sReturnValue;
+}
+
+/***************************************************************************/
+
+/*! Removes the label model of a commit when no remaining line shows it */
+static void removeLabelModelIfOrphaned(QMap<QString, CLabelModel*>& mLabels, const QList<CGraphLine*>& lLines, const QString& sCommitId)
+{
+    if (sCommitId.isEmpty() || !mLabels.contains(sCommitId))
+        return;
+
+    if (!commitIdsOfLines(lLines).contains(sCommitId))
         delete mLabels.take(sCommitId);
+}
+
+/***************************************************************************/
+
+/*! Removes label models of commits shown by no remaining line */
+static void pruneOrphanedLabels(QMap<QString, CLabelModel*>& mLabels, const QList<CGraphLine*>& lLines)
+{
+    QSet<QString> sRemainingCommits = commitIdsOfLines(lLines);
+
+    for (auto iIterator = mLabels.begin(); iIterator != mLabels.end();)
+    {
+        if (!sRemainingCommits.contains(iIterator.key()))
+        {
+            delete iIterator.value();
+            iIterator = mLabels.erase(iIterator);
+        }
+        else
+        {
+            iIterator++;
+        }
+    }
 }
 
 /***************************************************************************/
@@ -134,12 +118,13 @@ void CGraphModel::setLines(QList<CGraphLine*> lNewLines)
         else
         {
             QString sOldCommitId = m_lLines[iIndex]->commitId();
-            QString sNewCommitId = lNewLines[iIndex]->commitId();
-            QStringList lNewDecorations = lNewLines[iIndex]->decorations();
+            CGraphLine* pNewLine = lNewLines[iIndex];
+            QString sNewCommitId = pNewLine->commitId();
+            QList<CLabel*> lNewLabels = pNewLine->createLabels();
             delete m_lLines[iIndex];
-            m_lLines[iIndex] = lNewLines[iIndex];
-            removeLabelModel(m_mLabels, m_lLines, sOldCommitId);
-            syncLabelModel(m_mLabels, sNewCommitId, lNewDecorations);
+            m_lLines[iIndex] = pNewLine;
+            removeLabelModelIfOrphaned(m_mLabels, m_lLines, sOldCommitId);
+            syncLabelModel(m_mLabels, sNewCommitId, lNewLabels);
             emit dataChanged(createIndex(iIndex, 0), createIndex(iIndex, 0));
         }
     }
@@ -150,7 +135,7 @@ void CGraphModel::setLines(QList<CGraphLine*> lNewLines)
         int iLastIndex = lNewLines.count() - 1;
 
         for (int iIndex = iFirstIndex; iIndex <= iLastIndex; iIndex++)
-            syncLabelModel(m_mLabels, lNewLines[iIndex]->commitId(), lNewLines[iIndex]->decorations());
+            syncLabelModel(m_mLabels, lNewLines[iIndex]->commitId(), lNewLines[iIndex]->createLabels());
 
         beginInsertRows(QModelIndex(), iFirstIndex, iLastIndex);
 
@@ -170,26 +155,7 @@ void CGraphModel::setLines(QList<CGraphLine*> lNewLines)
 
         endRemoveRows();
 
-        QStringList lRemainingCommits;
-
-        for (const CGraphLine* pLine : m_lLines)
-        {
-            if (pLine != nullptr && !lRemainingCommits.contains(pLine->commitId()))
-                lRemainingCommits << pLine->commitId();
-        }
-
-        for (auto iIterator = m_mLabels.begin(); iIterator != m_mLabels.end();)
-        {
-            if (!lRemainingCommits.contains(iIterator.key()))
-            {
-                delete iIterator.value();
-                iIterator = m_mLabels.erase(iIterator);
-            }
-            else
-            {
-                iIterator++;
-            }
-        }
+        pruneOrphanedLabels(m_mLabels, m_lLines);
     }
 }
 

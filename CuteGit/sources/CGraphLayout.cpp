@@ -20,26 +20,178 @@ static int freeLane(const QStringList& lExpectedCommits)
 
 /***************************************************************************/
 
-/*! Appends one vertical segment to the line */
-static void addVertical(CGraphLine* pLine, int iLane, bool bTopAtDot, bool bBottomAtDot)
+/*! Allocates the lane of a commit, reusing a free lane when possible */
+static int assignLane(QStringList& lExpectedCommits, const QString& sCommitId)
 {
-    QVariantList lVertical;
-    lVertical << QVariant(iLane) << QVariant(bTopAtDot) << QVariant(bBottomAtDot);
-    QVariantList lVerticals = pLine->graphVerticals();
-    lVerticals << QVariant(lVertical);
-    pLine->setGraphVerticals(lVerticals);
+    int iLane = -1;
+
+    if (!sCommitId.isEmpty())
+        iLane = laneAwaitingCommit(lExpectedCommits, sCommitId);
+
+    if (iLane == -1)
+    {
+        iLane = freeLane(lExpectedCommits);
+
+        if (iLane == -1)
+        {
+            iLane = lExpectedCommits.count();
+            lExpectedCommits << QString();
+        }
+    }
+
+    return iLane;
 }
 
 /***************************************************************************/
 
-/*! Appends one dot-height connection to the line */
-static void addConnection(CGraphLine* pLine, int iFromLane, int iToLane, int iColorLane)
+/*! Returns true when the lane already holds a vertical segment */
+static bool hasVertical(const QList<SGraphVertical>& lVerticals, int iLane)
 {
-    QVariantList lConnection;
-    lConnection << QVariant(iFromLane) << QVariant(iToLane) << QVariant(iColorLane);
-    QVariantList lConnections = pLine->graphConnections();
-    lConnections << QVariant(lConnection);
-    pLine->setGraphConnections(lConnections);
+    for (const SGraphVertical& tVertical : lVerticals)
+    {
+        if (tVertical.iLane == iLane)
+            return true;
+    }
+
+    return false;
+}
+
+/***************************************************************************/
+
+/*! Converts vertical segments to the variant form exposed to QML */
+static QVariantList verticalsToVariant(const QList<SGraphVertical>& lVerticals)
+{
+    QVariantList lReturnValue;
+
+    for (const SGraphVertical& tVertical : lVerticals)
+    {
+        QVariantList lVertical;
+        lVertical << QVariant(tVertical.iLane) << QVariant(tVertical.bTopAtDot) << QVariant(tVertical.bBottomAtDot);
+        lReturnValue << QVariant(lVertical);
+    }
+
+    return lReturnValue;
+}
+
+/***************************************************************************/
+
+/*! Converts dot-height connections to the variant form exposed to QML */
+static QVariantList connectionsToVariant(const QList<SGraphConnection>& lConnections)
+{
+    QVariantList lReturnValue;
+
+    for (const SGraphConnection& tConnection : lConnections)
+    {
+        QVariantList lConnection;
+        lConnection << QVariant(tConnection.iFromLane) << QVariant(tConnection.iToLane) << QVariant(tConnection.iColorLane);
+        lReturnValue << QVariant(lConnection);
+    }
+
+    return lReturnValue;
+}
+
+/***************************************************************************/
+
+/*! Joins other lanes awaiting the same commit into the commit lane */
+static void joinMergingLanes(QStringList& lExpectedCommits, const QString& sCommitId, int iLane, QList<SGraphVertical>& lVerticals, QList<SGraphConnection>& lConnections)
+{
+    for (int iOtherLane = 0; iOtherLane < lExpectedCommits.count(); iOtherLane++)
+    {
+        if (iOtherLane != iLane && lExpectedCommits[iOtherLane] == sCommitId)
+        {
+            lVerticals << SGraphVertical{iOtherLane, false, true};
+            lConnections << SGraphConnection{iOtherLane, iLane, iOtherLane};
+            lExpectedCommits[iOtherLane] = QString();
+        }
+    }
+}
+
+/***************************************************************************/
+
+/*! Makes the first parent continue the commit lane */
+static void continueFirstParent(QStringList& lExpectedCommits, const QStringList& lParents, int iLane)
+{
+    if (!lParents.isEmpty())
+        lExpectedCommits[iLane] = lParents.first();
+    else
+        lExpectedCommits[iLane] = QString();
+}
+
+/***************************************************************************/
+
+/*! Forks new lanes for additional parents, or joins lanes already awaiting them */
+static void forkAdditionalParents(QStringList& lExpectedCommits, const QStringList& lParents, int iLane, QList<SGraphVertical>& lVerticals, QList<SGraphConnection>& lConnections)
+{
+    for (int iParentIndex = 1; iParentIndex < lParents.count(); iParentIndex++)
+    {
+        QString sParentId = lParents[iParentIndex];
+        int iParentLane = laneAwaitingCommit(lExpectedCommits, sParentId);
+
+        if (iParentLane != -1 && iParentLane != iLane)
+        {
+            lVerticals << SGraphVertical{iParentLane, false, true};
+            lConnections << SGraphConnection{iParentLane, iLane, iParentLane};
+            lExpectedCommits[iParentLane] = QString();
+        }
+        else if (iParentLane == -1)
+        {
+            int iNewLane = freeLane(lExpectedCommits);
+
+            if (iNewLane == -1)
+            {
+                iNewLane = lExpectedCommits.count();
+                lExpectedCommits << QString();
+            }
+
+            lExpectedCommits[iNewLane] = sParentId;
+            lVerticals << SGraphVertical{iNewLane, true, false};
+            lConnections << SGraphConnection{iLane, iNewLane, iNewLane};
+        }
+    }
+}
+
+/***************************************************************************/
+
+/*! Draws full height verticals for pass-through lanes awaiting other commits */
+static void addPassThroughVerticals(const QStringList& lExpectedCommits, int iLane, QList<SGraphVertical>& lVerticals)
+{
+    for (int iPassLane = 0; iPassLane < lExpectedCommits.count(); iPassLane++)
+    {
+        if (iPassLane == iLane)
+            continue;
+
+        if (lExpectedCommits[iPassLane].isEmpty())
+            continue;
+
+        if (!hasVertical(lVerticals, iPassLane))
+            lVerticals << SGraphVertical{iPassLane, false, false};
+    }
+}
+
+/***************************************************************************/
+
+/*! Computes lane, verticals and connections of a single line */
+static void layoutSingleLine(QStringList& lExpectedCommits, CGraphLine* pLine)
+{
+    QString sCommitId = pLine->commitId();
+    QStringList lParents = pLine->parents();
+
+    int iLane = assignLane(lExpectedCommits, sCommitId);
+    bool bTopAtDot = lExpectedCommits[iLane].isEmpty();
+    pLine->setGraphLane(iLane);
+
+    QList<SGraphVertical> lVerticals;
+    QList<SGraphConnection> lConnections;
+
+    joinMergingLanes(lExpectedCommits, sCommitId, iLane, lVerticals, lConnections);
+    continueFirstParent(lExpectedCommits, lParents, iLane);
+    forkAdditionalParents(lExpectedCommits, lParents, iLane, lVerticals, lConnections);
+
+    lVerticals << SGraphVertical{iLane, bTopAtDot, lExpectedCommits[iLane].isEmpty()};
+    addPassThroughVerticals(lExpectedCommits, iLane, lVerticals);
+
+    pLine->setGraphVerticals(verticalsToVariant(lVerticals));
+    pLine->setGraphConnections(connectionsToVariant(lConnections));
 }
 
 /***************************************************************************/
@@ -54,98 +206,6 @@ void CGraphLayout::layoutLines(const QList<CGraphLine*>& lLines)
         if (pLine == nullptr)
             continue;
 
-        QString sCommitId = pLine->commitId();
-        QStringList lParents = pLine->parents();
-
-        int iLane = -1;
-
-        if (!sCommitId.isEmpty())
-            iLane = laneAwaitingCommit(lExpectedCommits, sCommitId);
-
-        if (iLane == -1)
-        {
-            iLane = freeLane(lExpectedCommits);
-
-            if (iLane == -1)
-            {
-                iLane = lExpectedCommits.count();
-                lExpectedCommits << QString();
-            }
-        }
-
-        bool bTopAtDot = lExpectedCommits[iLane].isEmpty();
-        pLine->setGraphLane(iLane);
-
-        // Other lanes awaiting this commit join it here
-        for (int iOtherLane = 0; iOtherLane < lExpectedCommits.count(); iOtherLane++)
-        {
-            if (iOtherLane != iLane && lExpectedCommits[iOtherLane] == sCommitId)
-            {
-                addVertical(pLine, iOtherLane, false, true);
-                addConnection(pLine, iOtherLane, iLane, iOtherLane);
-                lExpectedCommits[iOtherLane] = QString();
-            }
-        }
-
-        // First parent continues this lane
-        if (!lParents.isEmpty())
-            lExpectedCommits[iLane] = lParents.first();
-        else
-            lExpectedCommits[iLane] = QString();
-
-        // Additional parents fork new lanes, or join lanes already awaiting them
-        for (int iParentIndex = 1; iParentIndex < lParents.count(); iParentIndex++)
-        {
-            QString sParentId = lParents[iParentIndex];
-            int iParentLane = laneAwaitingCommit(lExpectedCommits, sParentId);
-
-            if (iParentLane != -1 && iParentLane != iLane)
-            {
-                addVertical(pLine, iParentLane, false, true);
-                addConnection(pLine, iParentLane, iLane, iParentLane);
-                lExpectedCommits[iParentLane] = QString();
-            }
-            else if (iParentLane == -1)
-            {
-                int iNewLane = freeLane(lExpectedCommits);
-
-                if (iNewLane == -1)
-                {
-                    iNewLane = lExpectedCommits.count();
-                    lExpectedCommits << QString();
-                }
-
-                lExpectedCommits[iNewLane] = sParentId;
-                addVertical(pLine, iNewLane, true, false);
-                addConnection(pLine, iLane, iNewLane, iNewLane);
-            }
-        }
-
-        // Vertical of this lane
-        addVertical(pLine, iLane, bTopAtDot, lExpectedCommits[iLane].isEmpty());
-
-        // Pass-through lanes await other commits: draw them full height
-        for (int iPassLane = 0; iPassLane < lExpectedCommits.count(); iPassLane++)
-        {
-            if (iPassLane == iLane)
-                continue;
-
-            if (lExpectedCommits[iPassLane].isEmpty())
-                continue;
-
-            bool bAlreadyDrawn = false;
-
-            for (const QVariant& vVertical : pLine->graphVerticals())
-            {
-                if (vVertical.toList().first().toInt() == iPassLane)
-                {
-                    bAlreadyDrawn = true;
-                    break;
-                }
-            }
-
-            if (!bAlreadyDrawn)
-                addVertical(pLine, iPassLane, false, false);
-        }
+        layoutSingleLine(lExpectedCommits, pLine);
     }
 }
