@@ -13,7 +13,7 @@ StandardListView {
         objectName: "root.delegate." + index
         width: ListView.view.width
         listView: root
-        primaryText: model.text
+        primaryText: model.operation === CEnums.DiffFileName ? (model.collapsed ? "▶ " + model.text : "▼ " + model.text) : model.text
         primaryColor: model.operation === CEnums.DiffFileName ? Material.background : Material.foreground
         primaryFont.family: Const.fixedWidthFontFamily
         primaryFont.pixelSize: Const.fixedWidthFontSize
@@ -28,7 +28,9 @@ StandardListView {
         }
 
         onClicked: function(mouse) {
-            if (mouse.button === Qt.RightButton) {
+            if (mouse.button === Qt.LeftButton && model.operation === CEnums.DiffFileName) {
+                ListView.view.model.toggleCollapsedFile(model.text)
+            } else if (mouse.button === Qt.RightButton) {
                 root.itemRightClicked(model.operation, model.text)
             }
         }
