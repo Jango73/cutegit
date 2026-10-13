@@ -22,12 +22,12 @@ StandardPopup {
             width: parent.width
             height: implicitHeight
 
-            TabButton {
+            StandardTabButton {
                 width: implicitWidth
                 text: Const.generalText
             }
 
-            TabButton {
+            StandardTabButton {
                 width: implicitWidth
                 text: Const.shortcutsText
             }

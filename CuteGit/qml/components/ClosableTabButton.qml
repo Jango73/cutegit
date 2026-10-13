@@ -6,6 +6,11 @@ import "."
 
 TabButton {
     id: root
+    implicitHeight: Const.toolButtonHeight
+    topPadding: 0
+    bottomPadding: 0
+    topInset: 0
+    bottomInset: 0
 
     property Action closeAction: null
     property int tabIndex: 0

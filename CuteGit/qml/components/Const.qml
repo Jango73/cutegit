@@ -59,7 +59,8 @@ Item {
     readonly property int microButtonWidth: elementHeight * 1.2
     readonly property int microButtonHeight: elementHeight * 1.8
     readonly property int listViewItemHeight: elementHeight + smallPadding
-    readonly property int buttonHeight: mainFontSize * 3
+    readonly property int buttonHeight: mainFontSize * 2.25
+    readonly property int toolButtonHeight: mainFontSize * 3
 
     readonly property real popupWidthNorm: 0.50
     readonly property real popupHeightNorm: 0.75

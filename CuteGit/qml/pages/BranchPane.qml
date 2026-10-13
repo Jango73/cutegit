@@ -19,12 +19,12 @@ StandardPane {
         id: tabBar
         anchors.top: parent.top
 
-        TabButton {
+        StandardTabButton {
             width: implicitWidth
             text: Const.branchesText
         }
 
-        TabButton {
+        StandardTabButton {
             width: implicitWidth
             text: Const.tagsText
         }

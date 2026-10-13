@@ -50,7 +50,8 @@ Item {
     StandardButton {
         id: sortDirection
         width: height
-        height: filter.height
+        height: Const.toolButtonHeight
+        anchors.verticalCenter: parent.verticalCenter
         anchors.right: parent.right
         anchors.rightMargin: Const.mainPadding
         text: root.sortDirection === false ? "v" : "^"

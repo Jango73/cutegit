@@ -26,6 +26,7 @@
         <file>qml/components/StandardPopup.qml</file>
         <file>qml/components/StandardStringListView.qml</file>
         <file>qml/components/StandardSortFilter.qml</file>
+        <file>qml/components/StandardTabButton.qml</file>
         <file>qml/components/StandardTabView.qml</file>
         <file>qml/components/StandardText.qml</file>
         <file>qml/components/StandardTextEdit.qml</file>

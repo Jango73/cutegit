@@ -22,17 +22,17 @@ ExtendablePane {
             id: tabBar
             anchors.top: parent.top
 
-            TabButton {
+            StandardTabButton {
                 width: implicitWidth
                 text: Const.diffText
             }
 
-            TabButton {
+            StandardTabButton {
                 width: implicitWidth
                 text: Const.logText
             }
 
-            TabButton {
+            StandardTabButton {
                 width: implicitWidth
                 text: Const.blameText
             }

@@ -22,19 +22,19 @@ ExtendablePane {
         id: tabBar
         anchors.top: parent.top
 
-        TabButton {
+        StandardTabButton {
             id: branchLogTab
             width: implicitWidth
             text: Const.branchLogText
         }
 
-        TabButton {
+        StandardTabButton {
             id: graphTab
             width: implicitWidth
             text: Const.graphText
         }
 
-        TabButton {
+        StandardTabButton {
             id: refLogTab
             width: implicitWidth
             text: Const.refLogText
