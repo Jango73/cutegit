@@ -28,7 +28,7 @@ ApplicationWindow {
         })
 
         Material.theme = Material.Dark  // This is to force material change (else font is white in light theme)
-        setTheme(ctrl.theme === Const.themeMaterialDark ? Material.Dark : Material.Light)
+        setTheme(ctrl.theme === Const.themeMaterialLight ? Material.Light : Material.Dark)
     }
 
     //--------------------------------------------------------------------------------

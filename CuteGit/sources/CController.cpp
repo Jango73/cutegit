@@ -65,6 +65,8 @@ const QString sParamLastBrowsedRepositoryURL = "LastBrowsedRepositoryURL";
 const QString sParamLastBrowsedRepositoryPath = "LastBrowsedRepositoryPath";
 const QString sParamLanguage = "Language";
 const QString sParamTheme = "Theme";
+const QString sThemeMaterialDark = "MaterialDark";
+const QString sThemeMaterialLight = "MaterialLight";
 
 const QString CController::m_sSharedKey = "CuteGitSharedMemory";
 
@@ -79,6 +81,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_pCurrentRepository(nullptr)
     , m_pLangModel(new QStringListModel(this))
     , m_sLanguage("en")
+    , m_sTheme(sThemeMaterialDark)
     , m_sStubFileName(sStubFileName)
     , m_iCurrentRepositoryIndex(-1)
     , m_bShowClean(false)
@@ -509,6 +512,8 @@ void CController::loadConfiguration()
     // Load theme
     CXMLNode xTheme = xConfig.getNodeByTagName(sParamTheme);
     m_sTheme = xTheme.attributes()[sParamName];
+    if (m_sTheme != sThemeMaterialDark && m_sTheme != sThemeMaterialLight)
+        m_sTheme = sThemeMaterialDark;
 }
 
 //-------------------------------------------------------------------------------------------------
