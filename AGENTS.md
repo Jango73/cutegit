@@ -10,7 +10,7 @@
 ## Project Overview
 `CuteGit` is a graphical versioning client (C++/Qt/QML), built with qmake
 for Qt6 (see `README.md`). Layout:
-- `qt-plus/` (git submodule, branch `qt6`): shared Qt utility library. Check
+- `qt-plus/` (git submodule): shared Qt utility library. Check
   here first before adding helpers. Consumed as a compiled library
   (`libqt-plus[d].so`, built in-source into `qt-plus/bin/` by
   `qt-plus/build.sh`) plus headers (`INCLUDEPATH`), and via `functions.pri`.

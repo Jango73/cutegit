@@ -1,79 +1,93 @@
 # CuteGit
 
-![alt text](https://github.com/Jango73/CuteGit/blob/master/Media/Screenshot01.jpg)
+[![Build](https://github.com/Jango73/cutegit/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Jango73/cutegit/actions/workflows/build.yml)
 
-This is a simple multi-document UI for the Git executable (and other versioning systems in a near future).
+![alt text](https://github.com/Jango73/cutegit/blob/main/Media/Screenshot01.jpg)
+
+This is a simple multi-document UI for versioning system executables (Git, Gerrit, Mercurial, Subversion).
 It is not meant to compete with paywares, just provide minimal versioning functionality.
 
 ## Dependencies
 
-* Qt 5.13
-* QtCreator 4.9.1
-* qt-plus - Copyright myself
-  * https://github.com/Jango73/qt-plus
+* Qt 6 development packages (exact list in `scripts/linux/deps.sh`)
+* `qmake6` and `make`
+* `qt-plus` submodule (https://github.com/Jango73/qt-plus), initialized by `scripts/linux/deps.sh`
+* At runtime, the versioning executables driven by the UI (`git`, plus `hg` and `svn` for those repository types)
 
 ## Building
 
-* Make sure to update submodules
+* Install dependencies and initialize submodules (prompts for `sudo`):
 ```
-    git submodule init
-    git submodule update
+./scripts/linux/deps.sh
 ```
-* Open /CuteGit.pro in QtCreator
-* Build and run
+* Build the library and the application:
+```
+./scripts/linux/build.sh [--debug|--release]
+```
+* Run the automated tests:
+```
+./scripts/linux/tests.sh [--debug|--release]
+```
+* Run the application:
+```
+./scripts/linux/run.sh [--debug|--release]
+```
 
 ## Things it does
 
-* Open one or more repositories
+* Open one or more repositories, clone from URL
 * Refresh view
-* For repositories of type Git and Gerrit:
-  * Show repository status (clean, merge, rebase, ...)
-  * Show repository files as a flat list, colored according to status
-  * Show the branches and tags
-  * Show the branch log
-  * Show the graph as output by Git (might be graphical some day)
-  * Show the selected file's log
-  * Show the unstaged diffs in the selected item (folder or file)
-  * Show the output of the executed commands
-  * Change current branch
-  * Mark files as staged / unstaged
-  * Remove files form tracking
-  * Revert files
-  * Commit
-  * Amend (on interactive rebase, commit is always amend)
-  * Fetch, pull and push
-  * Modify a commit message
-  * Rebase current branch on another one
-  * Merge current branch with another one
-  * Begin rebase on a commit, continue and abort rebase
-  * Reset on a commit
-  * Save and pop stash (no selectable stash yet)
-  * Branch from a commit
-  * Tag a commit
-  * View diff with previous commit
-  * View diff between any two commits
-* For repositories of type Mercurial:
-  * Show the branches
-  * Show repository files as a flat list, colored according to status
-  * Mark files as staged / unstaged
-  * Show the branch log
-  * Show the selected file's log
-  * Commit
-  * Branch from a commit
-* For repositories of type SVN:
-  * Show repository files as a flat list, colored according to status
-  * Show the branches (trunk + branches folder)
-  * Show the branch log
-  * Show the selected file's log
-  * Show the unstaged diffs in the selected item (folder or file)
-  * Schedule new files (add) and unschedule them
-  * Revert files
-  * Commit
-  * Update (pull)
-  * Switch current branch
-  * Branch and tag from a revision
-  * View diff of a revision and between two revisions
-  * Blame
+
+### Git and Gerrit
+
+* Show repository status (clean, merge, rebase, ...) with ahead/behind counts
+* Show repository files as a flat list or a tree, colored according to status, with filter and sorting
+* Show the branches and tags
+* Show the branch log and the graphical commit graph
+* Show the reflog
+* Show the selected file's log
+* Show staged and unstaged diffs, stage/unstage whole files, hunks or single lines
+* Show the output of the executed commands
+* Switch current branch, create a branch from a commit, delete a branch
+* Stage, unstage and revert files
+* Delete files (`git rm`)
+* Commit, amend, change a commit message, squash a commit
+* Fetch, pull, push and force push (Gerrit: push for review or as WIP)
+* Rebase a branch on another one, rebase on a commit, continue and abort rebase
+* Merge a branch into the current one
+* Reset the current branch on a commit
+* Save and pop stash
+* Tag a commit
+* View the diff of a commit and the diff with its previous commit
+* Blame a file
+* Save a file diff as a patch file and apply patch files
+* Clean up the repository
+
+### Mercurial
+
+* Show the branches
+* Show repository files as a flat list or a tree, colored according to status
+* Show the branch log and the global graph
+* Show the selected file's log
+* Mark files as staged / unstaged
+* Commit, amend, branch from a commit
+* Pull, push and force push
+
+### Subversion
+
+* Show repository files as a flat list or a tree, colored according to status
+* Show the branches (trunk + branches folder)
+* Show the branch log and the global graph
+* Show the selected file's log
+* Show the unstaged diffs in the selected item (folder or file)
+* Schedule new files (add) and unschedule them
+* Revert files
+* Commit
+* Update (pull)
+* Switch current branch
+* Branch and tag from a revision
+* View the diff of a revision
+* Blame
 
 ## Classes
 
@@ -85,27 +99,34 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 
 ### CController
 
-* Creates and provides access to
-  * the list of known repositories
-  * the list of open repositories
-  * the current repository
-  * the Git interactive rebase editing
+* Owns the known and open repositories and the current repository
+* Opens, clones and removes repositories, quits the application
 
 ### CRepository
 
-* Represents a repository
-* Creates and provides access to
-  * the corresponding versioning system commands
-  * the file system model
-  * the filter for the file system model
-  * the model for lines of output when executing a process
-  * the name of the current branch
-  * the repository status (normal, rebasing, merging, ...)
-  * the list of branches
-  * the log of the current branch
-  * the diff of the selected file
-  * the log of the selected file
-* Exposes to QML / JS the versioning methods: stage, unstage, commit, push, ...
+* Represents one open repository
+* Owns the repository status, the models (files, branches, log, graph, diff, blame, output) and the versioning backend
+* Exposes the versioning actions to QML: stage, unstage, commit, push, ...
+
+### CRepositoryModel
+
+* List model of the open repositories
+
+### CBranch
+
+* The properties of a branch
+
+### CBranchModel
+
+* List model of the branches
+
+### CLabel
+
+* A marker on a commit (local branch, remote branch, tag)
+
+### CLabelModel
+
+* List model of the commit labels
 
 ### CTreeFileModel
 
@@ -119,7 +140,7 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 * Encapsulates CTreeFileModel
 * Enables filtering files on
   * file name
-  * GIT status property
+  * status property
 
 ### CFlatFileModel
 
@@ -133,7 +154,15 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 * Encapsulates CFlatFileModel
 * Enables filtering files on
   * file name
-  * GIT status property
+  * status property
+
+### CStagedFileModelProxy
+
+* Proxy exposing the staged files
+
+### CBaseListModel
+
+* Minimal list-model interface exposed to QML (count, get, append, remove, move)
 
 ### CRepoFile
 
@@ -146,20 +175,37 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 * A (kind of) interface for a versioning system
 * Makes the versioning system abstract
 
+### CExecution
+
+* Runs the versioning executables and reports process output
+
 ### CGitCommands
 
 * Inherits CCommands
 * Implements Git versioning commands
+
+### CGerritCommands
+
+* Inherits CCommands
+* Implements Gerrit commands (push for review, push as WIP)
 
 ### CSvnCommands
 
 * Inherits CCommands
 * Implements SVN versioning commands
 
-### CHGCommands
+### CHgCommands
 
 * Inherits CCommands
-* Partially implements Mercurial versioning commands
+* Implements Mercurial versioning commands
+
+### CLogLine
+
+* A line of log : commit id, date, author, message
+
+### CLogLineCollection
+
+* An owned collection of log lines
 
 ### CLogModel
 
@@ -173,9 +219,25 @@ It is not meant to compete with paywares, just provide minimal versioning functi
   * commit author
   * commit message
 
-### CLogLine
+### CGraphLine
 
-* A line of log : commit id, date, author, message
+* A line of the commit graph
+
+### CGraphLineCollection
+
+* An owned collection of graph lines
+
+### CGraphModel
+
+* The commit graph model
+
+### CGraphLayout
+
+* Computes the commit graph layout
+
+### CDiffLine
+
+* A line of diff between two files
 
 ### CDiffModel
 
@@ -187,31 +249,30 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 * Encapsulates CDiffModel
 * Enables filtering a diff
 
-### CDiffLine
+### CDiffConstants
 
-* A line of diff between two files
+* Shared diff constants
+
+### CPatchBuilder
+
+* Builds a patch from selected diff lines and hunks
+
+### CLayout
+
+* Loads the descriptive UI layouts (`layouts.json`)
+
+### CUtils
+
+* Miscellaneous helpers
+
+### Strings
+
+* Shared user-visible strings
+
+### CEnums
+
+* Shared enumerations and repository capabilities exposed to QML
 
 ## Code summary
 
-As of 2019-09-20:
-
-```
-     151 text files.
-     150 unique files.                                          
-      27 files ignored.
-
-http://cloc.sourceforge.net v 1.64  T=0.33 s (370.7 files/s, 52317.1 lines/s)
--------------------------------------------------------------------------------
-Language                     files          blank        comment           code
--------------------------------------------------------------------------------
-C++                             27           1422            661           4270
-QML                             57            839            142           4094
-TypeScript                       3             59              0           2794
-C/C++ Header                    33            898            930           1293
-Qt Project                       1             13             17             35
-XML                              2              0              0             23
-Bourne Shell                     1              0              6              6
--------------------------------------------------------------------------------
-SUM:                           124           3231           1756          12515
--------------------------------------------------------------------------------
-```
+`CuteGit/sources` + `CuteGit/qml`: 146 files (35 C++, 38 C++ headers, 73 QML), 20402 lines (10025 C++, 3997 headers, 6380 QML).
