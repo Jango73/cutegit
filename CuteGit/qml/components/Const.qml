@@ -96,6 +96,7 @@ Item {
     readonly property string fetchMenuText: qsTr("&Fetch")
     readonly property string pullMenuText: qsTr("&Pull")
     readonly property string pushMenuText: qsTr("Pus&h")
+    readonly property string forcePushMenuText: qsTr("Fo&rce push")
     readonly property string pushAsWIPMenuText: qsTr("Push as &WIP")
 
     readonly property string cleanUpMenuText: qsTr("Clea&n up")
@@ -190,6 +191,7 @@ Item {
     readonly property string flatText: qsTr("Flat")
     readonly property string diffText: qsTr("Diff")
     readonly property string pushText: qsTr("Push")
+    readonly property string forcePushText: qsTr("Force push")
     readonly property string pullText: qsTr("Pull")
     readonly property string closeText: qsTr("Close")
     readonly property string clearText: qsTr("Clear")
@@ -438,6 +440,7 @@ Item {
         ListElement { name: qsTr("Fetch"); sequence: "Control F" }
         ListElement { name: qsTr("Pull"); sequence: "Control L" }
         ListElement { name: qsTr("Push"); sequence: "Control P" }
+        ListElement { name: qsTr("Force push"); sequence: "Control Shift P" }
         ListElement { name: ""; sequence: "" }
         ListElement { name: qsTr("Activate file view"); sequence: "Alt Shift F" }
         ListElement { name: qsTr("Activate graph view"); sequence: "Alt Shift G" }

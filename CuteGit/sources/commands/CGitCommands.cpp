@@ -71,6 +71,7 @@ const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
 const QString CGitCommands::sCommandPollFingerprint      = "git status --porcelain=v1 -b --ignored=no --untracked-files=normal";
 const QString CGitCommands::sCommandPull                = "git pull";
 const QString CGitCommands::sCommandPush                = "git push %1 %2";
+const QString CGitCommands::sCommandPushForce           = "git push --force-with-lease %1 %2";
 const QString CGitCommands::sCommandRebaseOnBranch      = "git rebase \"%1\"";
 const QString CGitCommands::sCommandRebaseOnCommit      = "git rebase --interactive %1~1";
 const QString CGitCommands::sCommandRefLog              = "git reflog show --pretty=format:\"%h &&& %gD &&& %gs\" --skip=%1 --max-count=%2";
@@ -423,6 +424,23 @@ void CGitCommands::push(const QString& sPath)
     {
         QString sCommand = QString(sCommandPush).arg(sRemoteBranchPrefix).arg(sCurrentBranch);
         exec(new CProcessCommand(CEnums::ePush, sPath, sCommand, true));
+    }
+    else
+    {
+        emit newOutputString(CEnums::eNotification, Strings::s_sUnableToGetBranch);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::forcePush(const QString& sPath)
+{
+    emit newOutputString(CEnums::eNotification, tr("Force pushing..."));
+    QString sCurrentBranch = execNow(sPath, sCommandCurrentBranch).trimmed();
+    if (not sCurrentBranch.isEmpty())
+    {
+        QString sCommand = QString(sCommandPushForce).arg(sRemoteBranchPrefix).arg(sCurrentBranch);
+        exec(new CProcessCommand(CEnums::eForcePush, sPath, sCommand, true));
     }
     else
     {
@@ -1359,6 +1377,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eCommit:
     case CEnums::eAmend:
     case CEnums::ePush:
+    case CEnums::eForcePush:
     case CEnums::ePushAsWIP:
     case CEnums::ePull:
     case CEnums::eFetch:

@@ -473,6 +473,15 @@ void CRepository::push()
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::forcePush()
+{
+    setStatusText(Strings::s_sPushStarted);
+
+    m_pCommands->forcePush(m_sRepositoryPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::pushAsWIP()
 {
     setStatusText(Strings::s_sPushStarted);

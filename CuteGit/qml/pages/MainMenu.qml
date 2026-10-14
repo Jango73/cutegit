@@ -23,6 +23,7 @@ MenuBar {
     property alias fetchAction: fetch
     property alias pullAction: pull
     property alias pushAction: push
+    property alias forcePushAction: forcePush
     property alias stageSelectionAction: stageSelection
     property alias revertSelectionAction: revertSelection
     property alias commitAction: commit
@@ -36,6 +37,7 @@ MenuBar {
     signal requestFetch()
     signal requestPull()
     signal requestPush()
+    signal requestForcePush()
     signal requestPushAsWIP()
 
     signal requestCleanUp()
@@ -150,6 +152,14 @@ MenuBar {
         }
 
         Action {
+            id: forcePush
+            text: Const.forcePushMenuText
+            shortcut: "Ctrl+Shift+P"
+            enabled: root.repository ? root.repository.can(CEnums.ForcePush) && root.repository.hasPushableCommits : false
+            onTriggered: root.requestForcePush()
+        }
+
+        Action {
             id: pushAsWIP
             text: Const.pushAsWIPMenuText
             shortcut: "Ctrl+W"
@@ -243,7 +253,7 @@ MenuBar {
                        (
                            (root.repository.repositoryStatus !== CEnums.NoMerge)
                            ||
-                           (root.repository.repositoryStatus === CEnums.NoMerge && root.repository.hasCommitableFiles && root.repository.commitCountAhead > 0)
+                           (root.repository.repositoryStatus === CEnums.NoMerge && root.repository.hasCommitableFiles)
                            )
                      : false
             onTriggered: root.requestAmend()

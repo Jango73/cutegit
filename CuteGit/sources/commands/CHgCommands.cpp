@@ -44,6 +44,7 @@ static const char* sCommandFileLog            = "hg log -f --template \"{node} &
 // static const char* sCommandGraph  = "hg log -G";
 static const char* sCommandPull               = "hg pull";
 static const char* sCommandPush               = "hg push --new-branch";
+static const char* sCommandPushForce          = "hg push --force --new-branch";
 static const char* sCommandRevert             = "hg revert \"%1\"";
 static const char* sCommandStatus             = "hg status";
 static const char* sCommandStatusForFile      = "hg status \"%1\"";
@@ -100,6 +101,7 @@ bool CHgCommands::can(CEnums::ECapability eWhat) const
     case CEnums::Amend:
     case CEnums::Pull:
     case CEnums::Push:
+    case CEnums::ForcePush:
     case CEnums::BranchFromCommit:
     case CEnums::Stage:
     case CEnums::Unstage:
@@ -227,6 +229,15 @@ void CHgCommands::push(const QString& sPath)
     emit newOutputString(CEnums::eNotification, tr("Pushing..."));
     QString sCommand = QString(sCommandPush);
     exec(new CProcessCommand(CEnums::ePush, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CHgCommands::forcePush(const QString& sPath)
+{
+    emit newOutputString(CEnums::eNotification, tr("Force pushing..."));
+    QString sCommand = QString(sCommandPushForce);
+    exec(new CProcessCommand(CEnums::eForcePush, sPath, sCommand, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -431,6 +442,7 @@ void CHgCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eCommit:
     case CEnums::eAmend:
     case CEnums::ePush:
+    case CEnums::eForcePush:
     case CEnums::ePull:
     case CEnums::eCreateBranchOnCommit:
     {

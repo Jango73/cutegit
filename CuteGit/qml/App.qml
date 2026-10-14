@@ -47,6 +47,7 @@ ApplicationWindow {
         onRequestFetch: root.currentRepositoryView.requestFetch()
         onRequestPull: root.currentRepositoryView.requestPull()
         onRequestPush: root.currentRepositoryView.requestPush()
+        onRequestForcePush: root.currentRepositoryView.requestForcePush()
         onRequestPushAsWIP: root.currentRepositoryView.requestPushAsWIP()
 
         onRequestCleanUp: root.currentRepositoryView.requestCleanUp()
@@ -107,6 +108,10 @@ ApplicationWindow {
             }
             StandardToolButton {
                 action: menu.pushAction
+                icon.source: Const.pushIcon
+            }
+            StandardToolButton {
+                action: menu.forcePushAction
                 icon.source: Const.pushIcon
             }
 

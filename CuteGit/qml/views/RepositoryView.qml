@@ -360,6 +360,10 @@ Pane {
         root.repository.push()
     }
 
+    function requestForcePush() {
+        root.repository.forcePush()
+    }
+
     function requestPushAsWIP() {
         root.repository.pushAsWIP()
     }

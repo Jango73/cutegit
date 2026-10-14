@@ -115,6 +115,9 @@ public:
     //!
     virtual void push(const QString& sPath);
 
+    //! Pushes local commits to remote, rewriting remote history when it diverged
+    virtual void forcePush(const QString& sPath);
+
     //!
     virtual void pushAsWIP(const QString& sPath);
 

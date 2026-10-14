@@ -73,6 +73,7 @@ void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iE
         break;
 
     case CEnums::ePush:
+    case CEnums::eForcePush:
     case CEnums::ePushAsWIP:
         setStatusText(bSucceeded ? Strings::s_sPushFinished : Strings::s_sPushFailed);
         break;
@@ -166,6 +167,7 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     case CEnums::eCommit:
     case CEnums::eAmend:
     case CEnums::ePush:
+    case CEnums::eForcePush:
     case CEnums::ePushAsWIP:
     case CEnums::ePull:
     case CEnums::eFetch:

@@ -240,6 +240,13 @@ void CCommands::push(const QString& sPath)
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::forcePush(const QString& sPath)
+{
+    Q_UNUSED(sPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::pushAsWIP(const QString& sPath)
 {
     Q_UNUSED(sPath);

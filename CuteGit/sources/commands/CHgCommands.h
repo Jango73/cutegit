@@ -76,6 +76,9 @@ public:
     virtual void push(const QString& sPath) override;
 
     //!
+    virtual void forcePush(const QString& sPath) override;
+
+    //!
     virtual void pull(const QString& sPath) override;
 
     //!

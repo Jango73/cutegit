@@ -217,6 +217,9 @@ public:
     //! Pushes local commits to remote
     Q_INVOKABLE void push();
 
+    //! Pushes local commits to remote, rewriting remote history when it diverged
+    Q_INVOKABLE void forcePush();
+
     //! Pushes local commits to remote, as work in progress
     Q_INVOKABLE void pushAsWIP();
 
