@@ -101,6 +101,8 @@ bool CHgCommands::can(CEnums::ECapability eWhat) const
     case CEnums::Pull:
     case CEnums::Push:
     case CEnums::BranchFromCommit:
+    case CEnums::Stage:
+    case CEnums::Unstage:
         return true;
 
     default:

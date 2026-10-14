@@ -61,7 +61,19 @@ It is not meant to compete with paywares, just provide minimal versioning functi
   * Commit
   * Branch from a commit
 * For repositories of type SVN:
-  * Nothing yet
+  * Show repository files as a flat list, colored according to status
+  * Show the branches (trunk + branches folder)
+  * Show the branch log
+  * Show the selected file's log
+  * Show the unstaged diffs in the selected item (folder or file)
+  * Schedule new files (add) and unschedule them
+  * Revert files
+  * Commit
+  * Update (pull)
+  * Switch current branch
+  * Branch and tag from a revision
+  * View diff of a revision and between two revisions
+  * Blame
 
 ## Classes
 
@@ -139,10 +151,10 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 * Inherits CCommands
 * Implements Git versioning commands
 
-### CSVNCommands
+### CSvnCommands
 
 * Inherits CCommands
-* Will implement SVN versioning commands
+* Implements SVN versioning commands
 
 ### CHGCommands
 

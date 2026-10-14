@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Layouts 1.3
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Material 2.12
+import CuteGit 1.0
 import "../components"
 import ".."
 
@@ -70,7 +71,11 @@ StandardPane {
                         }
                     }
 
-                    onDoubleClicked: root.repository.currentBranch = model.name
+                    onDoubleClicked: {
+                        if (root.repository.can(CEnums.SwitchBranch)) {
+                            root.repository.currentBranch = model.name
+                        }
+                    }
                 }
             }
 
@@ -112,12 +117,17 @@ StandardPane {
                         }
                     }
 
-                    onDoubleClicked: root.repository.currentBranch = model.name
+                    onDoubleClicked: {
+                        if (root.repository.can(CEnums.SwitchBranch)) {
+                            root.repository.currentBranch = model.name
+                        }
+                    }
                 }
             }
 
             BranchMenu {
                 id: branchMenu
+                repository: root.repository
 
                 onRequestSwitchToBranch: root.repository.currentBranch = root.branchName
                 onRequestRebaseOnBranch: root.requestRebaseOnBranch(root.branchName)

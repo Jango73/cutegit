@@ -60,7 +60,11 @@ public:
         CreatePatch,
         ApplyPatch,
         Blame,
-        CleanUp
+        CleanUp,
+        Stage,
+        Unstage,
+        SwitchBranch,
+        RebaseOnBranch
     };
 
     // Type of versioning system

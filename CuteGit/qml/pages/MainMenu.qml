@@ -177,7 +177,7 @@ MenuBar {
             text: Const.stageAllMenuText
             shortcut: "Ctrl+Shift++"
             enabled: root.repository
-                     ? root.repository.hasModifiedFiles
+                     ? root.repository.can(CEnums.Stage) && root.repository.hasModifiedFiles
                      : false
             onTriggered: root.requestStageAll()
         }
@@ -186,7 +186,7 @@ MenuBar {
             text: Const.unstageAllMenuText
             shortcut: "Ctrl+Shift+-"
             enabled: root.repository
-                     ? root.repository.hasModifiedFiles
+                     ? root.repository.can(CEnums.Unstage) && root.repository.hasModifiedFiles
                      : false
             onTriggered: root.requestUnstageAll()
         }
@@ -196,7 +196,7 @@ MenuBar {
             text: Const.stageSelectionMenuText
             shortcut: "Ctrl++"
             enabled: root.repository
-                     ? root.repository.hasModifiedFiles
+                     ? root.repository.can(CEnums.Stage) && root.repository.hasModifiedFiles
                      : false
             onTriggered: root.requestStageSelection()
         }
@@ -205,7 +205,7 @@ MenuBar {
             text: Const.unstageSelectionMenuText
             shortcut: "Ctrl+-"
             enabled: root.repository
-                     ? root.repository.hasModifiedFiles
+                     ? root.repository.can(CEnums.Unstage) && root.repository.hasModifiedFiles
                      : false
             onTriggered: root.requestUnstageSelection()
         }
