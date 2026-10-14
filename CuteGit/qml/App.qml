@@ -265,27 +265,24 @@ ApplicationWindow {
             onMayFetchChanged: checkMagicAction()
 
             function checkMagicAction() {
-                visible = true
+                var magicActions = [
+                    { isAllowed: mayCommit, buttonText: Const.commitText, buttonIcon: Const.commitIcon, buttonAction: menu.commitAction },
+                    { isAllowed: mayPull, buttonText: Const.pullText, buttonIcon: Const.pullIcon, buttonAction: menu.pullAction },
+                    { isAllowed: mayPush, buttonText: Const.pushText, buttonIcon: Const.pushIcon, buttonAction: menu.pushAction },
+                    { isAllowed: mayFetch, buttonText: Const.fetchText, buttonIcon: Const.fetchIcon, buttonAction: menu.fetchAction }
+                ];
 
-                if (mayCommit) {
-                    currentText = Const.commitText
-                    currentIconSource = Const.commitIcon
-                    currentAction = menu.commitAction
-                } else if (mayPush) {
-                    currentText = Const.pushText
-                    currentIconSource = Const.pushIcon
-                    currentAction = menu.pushAction
-                } else if (mayPull) {
-                    currentText = Const.pullText
-                    currentIconSource = Const.pullIcon
-                    currentAction = menu.pullAction
-                } else  if (mayFetch) {
-                    currentText = Const.fetchText
-                    currentIconSource = Const.fetchIcon
-                    currentAction = menu.fetchAction
-                } else {
-                    visible = false
+                for (var actionIndex = 0; actionIndex < magicActions.length; actionIndex++) {
+                    if (magicActions[actionIndex].isAllowed) {
+                        currentText = magicActions[actionIndex].buttonText;
+                        currentIconSource = magicActions[actionIndex].buttonIcon;
+                        currentAction = magicActions[actionIndex].buttonAction;
+                        visible = true;
+                        return;
+                    }
                 }
+
+                visible = false;
             }
         }
     }
