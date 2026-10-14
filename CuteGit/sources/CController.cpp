@@ -702,6 +702,7 @@ void CController::openRepository(QString sRepositoryPath)
 
                 // Create a new repository item
                 CRepository* pRepository = new CRepository(sRepositoryPath, this, this);
+                connect(pRepository, &CRepository::statusTextRequested, this, &CController::setStatusText);
 
                 m_pOpenRepositoryModel->addRepository(pRepository);
 

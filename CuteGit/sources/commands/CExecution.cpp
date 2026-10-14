@@ -84,24 +84,28 @@ void CExecution::run()
 
             if (pCommand->m_eEndSignal == CEnums::eNothing)
             {
+                int iExitCode = 0;
                 QString sOutput = execNow(
                             pCommand->m_sWorkPath,
                             pCommand->m_sCommand,
-                            pCommand->m_mEnvironment
+                            pCommand->m_mEnvironment,
+                            &iExitCode
                             );
 
-                emit execFinished(CProcessResult(pCommand->m_sWorkPath, pCommand->m_eCommand, sOutput, pCommand->m_sUserData));
+                emit execFinished(CProcessResult(pCommand->m_sWorkPath, pCommand->m_eCommand, sOutput, pCommand->m_sUserData, iExitCode));
             }
             else
             {
+                int iExitCode = 0;
                 QString sOutput = execNowLiveFeed(
                             pCommand->m_eCommand,
                             pCommand->m_sWorkPath,
                             pCommand->m_sCommand,
-                            pCommand->m_mEnvironment
+                            pCommand->m_mEnvironment,
+                            &iExitCode
                             );
 
-                emit execFinished(CProcessResult(pCommand->m_sWorkPath, pCommand->m_eEndSignal, sOutput, pCommand->m_sUserData));
+                emit execFinished(CProcessResult(pCommand->m_sWorkPath, pCommand->m_eEndSignal, sOutput, pCommand->m_sUserData, iExitCode));
             }
 
             delete pCommand;
@@ -156,7 +160,7 @@ void CExecution::startProcess(QProcess& tProcess, const QString& sCommand)
 
 //-------------------------------------------------------------------------------------------------
 
-QString CExecution::execNow(QString sWorkPath, QString sCommand, QMap<QString, QString> mEnvironment)
+QString CExecution::execNow(QString sWorkPath, QString sCommand, QMap<QString, QString> mEnvironment, int* pExitCode)
 {
     QProcess process;
 
@@ -176,6 +180,11 @@ QString CExecution::execNow(QString sWorkPath, QString sCommand, QMap<QString, Q
     startProcess(process, sCommand);
     process.waitForFinished();
 
+    // A zero exit code means success, anything else means failure
+    // A crashed process has no meaningful exit code and counts as failure
+    if (pExitCode != nullptr)
+        *pExitCode = process.exitStatus() == QProcess::NormalExit ? process.exitCode() : 1;
+
     QString sOutput = process.readAllStandardOutput();
     sOutput += process.readAllStandardError();
 
@@ -184,7 +193,7 @@ QString CExecution::execNow(QString sWorkPath, QString sCommand, QMap<QString, Q
 
 //-------------------------------------------------------------------------------------------------
 
-QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sWorkPath, QString sCommand, QMap<QString, QString> mEnvironment)
+QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sWorkPath, QString sCommand, QMap<QString, QString> mEnvironment, int* pExitCode)
 {
     QProcess process;
 
@@ -223,6 +232,9 @@ QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sW
     }
 
     process.waitForFinished();
+    if (pExitCode != nullptr)
+        *pExitCode = process.exitStatus() == QProcess::NormalExit ? process.exitCode() : 1;
+
     QString sOutput = process.readAllStandardOutput();
     sOutput += process.readAllStandardError();
 

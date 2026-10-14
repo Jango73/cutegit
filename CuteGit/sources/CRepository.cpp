@@ -11,6 +11,7 @@
 // Application
 #include "CUtils.h"
 #include "CController.h"
+#include "Strings.h"
 #include "CFlatFileModel.h"
 #include "CFlatFileModelProxy.h"
 #include "CStagedFileModelProxy.h"
@@ -435,6 +436,8 @@ void CRepository::revertSelection(QStringList lFullNames)
 
 void CRepository::commit(const QString& sMessage, bool bAmend)
 {
+    setStatusText(bAmend ? Strings::s_sAmendStarted : Strings::s_sCommitStarted);
+
     if (not bAmend)
     {
         m_pCommands->commit(m_sRepositoryPath, sMessage);
@@ -463,6 +466,8 @@ void CRepository::abortRebase()
 
 void CRepository::push()
 {
+    setStatusText(Strings::s_sPushStarted);
+
     m_pCommands->push(m_sRepositoryPath);
 }
 
@@ -470,6 +475,8 @@ void CRepository::push()
 
 void CRepository::pushAsWIP()
 {
+    setStatusText(Strings::s_sPushStarted);
+
     m_pCommands->pushAsWIP(m_sRepositoryPath);
 }
 
@@ -477,6 +484,8 @@ void CRepository::pushAsWIP()
 
 void CRepository::pull()
 {
+    setStatusText(Strings::s_sPullStarted);
+
     m_pCommands->pull(m_sRepositoryPath);
 }
 
@@ -484,6 +493,8 @@ void CRepository::pull()
 
 void CRepository::fetch()
 {
+    setStatusText(Strings::s_sFetchStarted);
+
     m_pCommands->fetch(m_sRepositoryPath);
 }
 

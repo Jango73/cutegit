@@ -76,11 +76,13 @@ public:
             QString sPath,
             CEnums::EProcessCommand eCommand,
             QString sValue,
-            QString sUserData)
+            QString sUserData,
+            int iExitCode = 0)
         : m_sPath(sPath)
         , m_eCommand(eCommand)
         , m_sValue(sValue)
         , m_sUserData(sUserData)
+        , m_iExitCode(iExitCode)
     {
     }
 
@@ -91,6 +93,7 @@ public:
         , m_eCommand(target.m_eCommand)
         , m_sValue(target.m_sValue)
         , m_sUserData(target.m_sUserData)
+        , m_iExitCode(target.m_iExitCode)
     {
     }
 
@@ -98,6 +101,7 @@ public:
     CEnums::EProcessCommand m_eCommand;
     QString                 m_sValue;
     QString                 m_sUserData;
+    int                     m_iExitCode;
 };
 
 Q_DECLARE_METATYPE(CProcessResult)
@@ -139,7 +143,8 @@ protected:
     //!
     QString execNow(QString sWorkPath,
                     QString sCommand,
-                    QMap<QString, QString> mEnvironment = QMap<QString, QString>()
+                    QMap<QString, QString> mEnvironment = QMap<QString, QString>(),
+                    int* pExitCode = nullptr
                     );
 
     //!
@@ -147,7 +152,8 @@ protected:
             CEnums::EProcessCommand eCommand,
             QString sWorkPath,
             QString sCommand,
-            QMap<QString, QString> mEnvironment = QMap<QString, QString>()
+            QMap<QString, QString> mEnvironment = QMap<QString, QString>(),
+            int* pExitCode = nullptr
             );
 
     //-------------------------------------------------------------------------------------------------
@@ -172,7 +178,7 @@ signals:
     void execFinished(const CProcessResult& tResult);
 
     //!
-    void newOutputString(CEnums::EProcessCommand eCommand, QString sValue, QString sUserData = QString());
+    void newOutputString(CEnums::EProcessCommand eCommand, QString sValue, QString sUserData = QString(), int iExitCode = 0);
 
     //!
     void newOutputKeyValue(CEnums::EProcessCommand eCommand, QString sKey, QString sValue);

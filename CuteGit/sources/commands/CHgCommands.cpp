@@ -435,7 +435,7 @@ void CHgCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eCreateBranchOnCommit:
     {
         // Throw the returned string of the process
-        emit newOutputString(tResult.m_eCommand, tResult.m_sValue);
+        emit newOutputString(tResult.m_eCommand, tResult.m_sValue, QString(), tResult.m_iExitCode);
         break;
     }
 

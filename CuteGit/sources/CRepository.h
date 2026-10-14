@@ -381,6 +381,12 @@ protected:
     //! Returns the staged or unstaged diff model for a working tree diff command
     CDiffModel* workingTreeDiffModel(CEnums::EProcessCommand eCommand) const;
 
+    //! Forwards a text to the status bar, through the statusTextRequested signal
+    void setStatusText(const QString& sText);
+
+    //! Shows the finished or failed status text of a commit, amend, push, pull or fetch operation
+    void reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode);
+
     //! Stores the raw output of a staged or unstaged diff
     void setWorkingTreeDiffString(CEnums::EProcessCommand eCommand, const QString& sOutput, const QString& sUserData);
 
@@ -392,6 +398,9 @@ protected:
     //-------------------------------------------------------------------------------------------------
 
 signals:
+
+    //! Emitted when a text should be shown in the status bar
+    void statusTextRequested(const QString& sText);
 
     void repositoryTypeStringChanged();
 
@@ -408,7 +417,7 @@ protected slots:
     void onNewOutput(QString sOutput, bool bSeparation);
 
     //! Call when an issued command throws a string
-    void onNewOutputString(CEnums::EProcessCommand eCommand, QString sValue, QString sUserData = QString());
+    void onNewOutputString(CEnums::EProcessCommand eCommand, QString sValue, QString sUserData = QString(), int iExitCode = 0);
 
     //! Call when an issued command throws a key/value
     void onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString sKey, QString sValue);

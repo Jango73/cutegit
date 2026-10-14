@@ -8,6 +8,7 @@
 // Application
 #include "CRepository.h"
 #include "CController.h"
+#include "Strings.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -39,7 +40,59 @@ void CRepository::onNewOutput(QString sOutput, bool bSeparation)
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sOutput, QString sUserData)
+/************************************************************************/
+/*!
+    \fn void CRepository::setStatusText(const QString& sText)
+    Forwards a text to the status bar, through the statusTextRequested signal.
+*/
+void CRepository::setStatusText(const QString& sText)
+{
+    emit statusTextRequested(sText);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/************************************************************************/
+/*!
+    \fn void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode)
+    Shows the finished or failed status text of a commit, amend, push, pull or fetch operation.
+    A zero exit code means success, anything else means failure.
+*/
+void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode)
+{
+    bool bSucceeded = (iExitCode == 0);
+
+    switch (eCommand)
+    {
+    case CEnums::eCommit:
+        setStatusText(bSucceeded ? Strings::s_sCommitFinished : Strings::s_sCommitFailed);
+        break;
+
+    case CEnums::eAmend:
+        setStatusText(bSucceeded ? Strings::s_sAmendFinished : Strings::s_sAmendFailed);
+        break;
+
+    case CEnums::ePush:
+    case CEnums::ePushAsWIP:
+        setStatusText(bSucceeded ? Strings::s_sPushFinished : Strings::s_sPushFailed);
+        break;
+
+    case CEnums::ePull:
+        setStatusText(bSucceeded ? Strings::s_sPullFinished : Strings::s_sPullFailed);
+        break;
+
+    case CEnums::eFetch:
+        setStatusText(bSucceeded ? Strings::s_sFetchFinished : Strings::s_sFetchFailed);
+        break;
+
+    default:
+        break;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sOutput, QString sUserData, int iExitCode)
 {
     switch (eCommand)
     {
@@ -109,13 +162,23 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
         break;
     }
 
-        // Following commands need output and general refresh
+        // Following commands need output, general refresh and operation status
     case CEnums::eCommit:
     case CEnums::eAmend:
     case CEnums::ePush:
     case CEnums::ePushAsWIP:
     case CEnums::ePull:
     case CEnums::eFetch:
+    {
+        onNewOutput(sOutput, false);
+
+        refresh();
+
+        reportOperationStatus(eCommand, iExitCode);
+        break;
+    }
+
+        // Following commands need output and general refresh
     case CEnums::eSetCurrentBranch:
     case CEnums::eResetToCommit:
     case CEnums::eRebaseOnCommit:

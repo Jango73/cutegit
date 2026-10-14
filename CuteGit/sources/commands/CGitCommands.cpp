@@ -1382,7 +1382,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eCleanUp:
     {
         // Throw the returned string of the process
-        emit newOutputString(tResult.m_eCommand, tResult.m_sValue);
+        emit newOutputString(tResult.m_eCommand, tResult.m_sValue, QString(), tResult.m_iExitCode);
         break;
     }
 
