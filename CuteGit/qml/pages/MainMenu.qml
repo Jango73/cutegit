@@ -457,7 +457,7 @@ MenuBar {
                 model: root.controller.layoutNames
 
                 MenuItem {
-                    text: modelData
+                    text: root.layoutDisplayName(modelData)
                     checkable: true
                     checked: root.controller.currentLayoutIndex === index
                     onClicked: root.controller.currentLayoutIndex = index
@@ -474,5 +474,15 @@ MenuBar {
                 onClicked: root.controller.reloadLayouts()
             }
         }
+    }
+
+    function layoutDisplayName(layoutName) {
+        if (layoutName === "Classic")
+            return Const.classicLayoutText
+        if (layoutName === "BranchesLeft")
+            return Const.branchesLeftLayoutText
+        if (layoutName === "Fallback")
+            return Const.fallbackLayoutText
+        return layoutName
     }
 }

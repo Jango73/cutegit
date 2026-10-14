@@ -16,114 +16,129 @@
     relative geometry, each panel holds an ordered list of tab identifiers.
 */
 
-const char* CLayout::sFileName = "layouts.json";
-const char* CLayout::sResourceFileName = ":/deploy/layouts.json";
-const char* CLayout::sTagLayout = "Layout";
-const char* CLayout::sTagPanel = "Panel";
-const char* CLayout::sTagTab = "Tab";
-const char* CLayout::sAttributeName = "Name";
-const char* CLayout::sAttributeId = "Id";
-const char* CLayout::sAttributePosX = "X";
-const char* CLayout::sAttributePosY = "Y";
-const char* CLayout::sAttributeWidth = "Width";
-const char* CLayout::sAttributeHeight = "Height";
-const char* CLayout::sKeyPanelId = "panelId";
-const char* CLayout::sKeyPosX = "posX";
-const char* CLayout::sKeyPosY = "posY";
-const char* CLayout::sKeyWidth = "width";
-const char* CLayout::sKeyHeight = "height";
-const char* CLayout::sKeyTabs = "tabs";
-const char* CLayout::sKeyTabId = "tabId";
+const QString CLayout::sFileName = "layouts.json";
+const QString CLayout::sResourceFileName = ":/deploy/layouts.json";
+const QString CLayout::sTagLayout = "Layout";
+const QString CLayout::sTagPanel = "Panel";
+const QString CLayout::sTagTab = "Tab";
+const QString CLayout::sAttributeName = "Name";
+const QString CLayout::sAttributeIdentifier = "Id";
+const QString CLayout::sAttributePositionX = "X";
+const QString CLayout::sAttributePositionY = "Y";
+const QString CLayout::sAttributeWidth = "Width";
+const QString CLayout::sAttributeHeight = "Height";
+const QString CLayout::sKeyPanelIdentifier = "panelId";
+const QString CLayout::sKeyPositionX = "posX";
+const QString CLayout::sKeyPositionY = "posY";
+const QString CLayout::sKeyWidth = "width";
+const QString CLayout::sKeyHeight = "height";
+const QString CLayout::sKeyTabs = "tabs";
+const QString CLayout::sKeyTabIdentifier = "tabId";
+
+const double CLayout::fMinimumPercent = 0.0;
+const double CLayout::fMaximumPercent = 100.0;
+
+const QString CLayout::sDefaultPositionText = "0";
+const QString CLayout::sDefaultSizeText = "100";
+const QString CLayout::sInvalidLayoutMessage = "No valid layout found in %1, using defaults";
 
 //-------------------------------------------------------------------------------------------------
 
-/************************************************************************/
+/*************************************************************************/
+/*!
+    \fn static double toPercent(const QString& sValue, double fFallback)
+    Converts a text geometry value to a percent value clamped to the valid range.
+*/
 static double toPercent(const QString& sValue, double fFallback)
 {
     bool bConversionSucceeded = false;
     double fValue = sValue.toDouble(&bConversionSucceeded);
     if (bConversionSucceeded == false)
         return fFallback;
-    if (fValue < 0.0)
-        return 0.0;
-    if (fValue > 100.0)
-        return 100.0;
+    if (fValue < CLayout::fMinimumPercent)
+        return CLayout::fMinimumPercent;
+    if (fValue > CLayout::fMaximumPercent)
+        return CLayout::fMaximumPercent;
     return fValue;
 }
 
-//************************************************************************
+/*************************************************************************/
+/*!
+    \fn static SLayoutPanel toPanel(const CXMLNode& xPanelNode)
+    Builds a single panel definition from a Panel node of the layout file.
+*/
 static SLayoutPanel toPanel(const CXMLNode& xPanelNode)
 {
     SLayoutPanel tPanel;
-    tPanel.sId = xPanelNode.attributes().value(CLayout::sAttributeId, "");
-    tPanel.fPosX = toPercent(xPanelNode.attributes().value(CLayout::sAttributePosX, "0"), 0.0);
-    tPanel.fPosY = toPercent(xPanelNode.attributes().value(CLayout::sAttributePosY, "0"), 0.0);
-    tPanel.fWidth = toPercent(xPanelNode.attributes().value(CLayout::sAttributeWidth, "100"), 100.0);
-    tPanel.fHeight = toPercent(xPanelNode.attributes().value(CLayout::sAttributeHeight, "100"), 100.0);
-    const QStringList lKnownTabIds = CLayout::knownTabIds();
+    tPanel.sIdentifier = xPanelNode.attributes().value(CLayout::sAttributeIdentifier, "");
+    tPanel.fPositionX = toPercent(xPanelNode.attributes().value(CLayout::sAttributePositionX, CLayout::sDefaultPositionText), CLayout::fMinimumPercent);
+    tPanel.fPositionY = toPercent(xPanelNode.attributes().value(CLayout::sAttributePositionY, CLayout::sDefaultPositionText), CLayout::fMinimumPercent);
+    tPanel.fWidth = toPercent(xPanelNode.attributes().value(CLayout::sAttributeWidth, CLayout::sDefaultSizeText), CLayout::fMaximumPercent);
+    tPanel.fHeight = toPercent(xPanelNode.attributes().value(CLayout::sAttributeHeight, CLayout::sDefaultSizeText), CLayout::fMaximumPercent);
+    const QStringList& lKnownTabIdentifiers = CLayout::knownTabIds();
     CXMLNodeList lTabNodes = xPanelNode.getNodesByTagName(CLayout::sTagTab);
     for (const CXMLNode& xTabNode : lTabNodes)
     {
-        QString sTabId = xTabNode.attributes().value(CLayout::sAttributeId, "");
-        if (sTabId.isEmpty())
+        QString sTabIdentifier = xTabNode.attributes().value(CLayout::sAttributeIdentifier, "");
+        if (sTabIdentifier.isEmpty())
             continue;
-        if (lKnownTabIds.contains(sTabId) == false)
+        if (lKnownTabIdentifiers.contains(sTabIdentifier) == false)
         {
-            qWarning() << QString("CLayout: unknown tab identifier [%1] ignored").arg(sTabId);
+            qWarning() << QString("CLayout: unknown tab identifier [%1] ignored").arg(sTabIdentifier);
             continue;
         }
-        tPanel.lTabIds << sTabId;
+        tPanel.lTabIdentifiers << sTabIdentifier;
     }
     return tPanel;
 }
 
-/************************************************************************/
+/*************************************************************************/
 /*!
-    \fn static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRoot)
+    \fn static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRootNode)
     Parses layout definitions from an already loaded JSON root node.
 */
-static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRoot)
+static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRootNode)
 {
-    QVector<SLayoutDefinition> vLayouts;
-    CXMLNodeList lLayoutNodes = xRoot.getNodesByTagName(CLayout::sTagLayout);
+    QVector<SLayoutDefinition> vLayoutDefinitions;
+    CXMLNodeList lLayoutNodes = xRootNode.getNodesByTagName(CLayout::sTagLayout);
     for (const CXMLNode& xLayoutNode : lLayoutNodes)
     {
-        SLayoutDefinition tLayout;
-        tLayout.sName = xLayoutNode.attributes().value(CLayout::sAttributeName, "");
-        if (tLayout.sName.isEmpty())
+        SLayoutDefinition tLayoutDefinition;
+        tLayoutDefinition.sName = xLayoutNode.attributes().value(CLayout::sAttributeName, "");
+        if (tLayoutDefinition.sName.isEmpty())
             continue;
         CXMLNodeList lPanelNodes = xLayoutNode.getNodesByTagName(CLayout::sTagPanel);
         for (const CXMLNode& xPanelNode : lPanelNodes)
         {
             SLayoutPanel tPanel = toPanel(xPanelNode);
-            if (tPanel.lTabIds.isEmpty())
+            if (tPanel.lTabIdentifiers.isEmpty())
                 continue;
-            tLayout.vPanels << tPanel;
+            tLayoutDefinition.vPanels << tPanel;
         }
-        if (tLayout.vPanels.isEmpty() == false)
-            vLayouts << tLayout;
+        if (tLayoutDefinition.vPanels.isEmpty() == false)
+            vLayoutDefinitions << tLayoutDefinition;
     }
-    return vLayouts;
+    return vLayoutDefinitions;
 }
 
-/************************************************************************/
+/*************************************************************************/
 /*!
-    \fn static SLayoutPanel createPanel(const QString& sId, double fPosX, double fPosY, double fWidth, double fHeight, const QStringList& lTabIds)
+    \fn static SLayoutPanel createPanel(const QString& sIdentifier, double fPositionX, double fPositionY, double fWidth, double fHeight, const QStringList& lTabIdentifiers)
     Builds a single panel without repeating member assignments at every call site.
 */
-static SLayoutPanel createPanel(const QString& sId, double fPosX, double fPosY, double fWidth, double fHeight, const QStringList& lTabIds)
+static SLayoutPanel createPanel(const QString& sIdentifier, double fPositionX, double fPositionY, double fWidth, double fHeight, const QStringList& lTabIdentifiers)
 {
     SLayoutPanel tPanel;
-    tPanel.sId = sId;
-    tPanel.fPosX = fPosX;
-    tPanel.fPosY = fPosY;
+    tPanel.sIdentifier = sIdentifier;
+    tPanel.fPositionX = fPositionX;
+    tPanel.fPositionY = fPositionY;
     tPanel.fWidth = fWidth;
     tPanel.fHeight = fHeight;
-    tPanel.lTabIds = lTabIds;
+    tPanel.lTabIdentifiers = lTabIdentifiers;
     return tPanel;
 }
 
-/************************************************************************/
+/*************************************************************************/
 /*!
     \fn static QVector<SLayoutDefinition> minimalFallbackLayouts()
     Last resort layouts when neither the file next to the binary nor the embedded
@@ -134,45 +149,45 @@ static QVector<SLayoutDefinition> minimalFallbackLayouts()
 {
     SLayoutDefinition tFallback;
     tFallback.sName = "Fallback";
-    tFallback.vPanels << createPanel("Fallback", 0.0, 0.0, 100.0, 100.0, CLayout::knownTabIds());
+    tFallback.vPanels << createPanel("Fallback", CLayout::fMinimumPercent, CLayout::fMinimumPercent, CLayout::fMaximumPercent, CLayout::fMaximumPercent, CLayout::knownTabIds());
     return QVector<SLayoutDefinition>() << tFallback;
 }
 
-/************************************************************************/
-QVector<SLayoutDefinition> CLayout::loadLayouts(const QString& sFileName, QString* pErrorString)
+/*************************************************************************/
+QVector<SLayoutDefinition> CLayout::loadLayouts(const QString& sLayoutFileName, QString* pErrorMessage)
 {
     QString sError;
-    CXMLNode xRoot = CXMLNode::loadJSONFromFile(sFileName, &sError);
+    CXMLNode xRootNode = CXMLNode::loadJSONFromFile(sLayoutFileName, &sError);
 
-    if (xRoot.isEmpty())
+    if (xRootNode.isEmpty())
     {
-        if (pErrorString != nullptr)
-            *pErrorString = sError;
+        if (pErrorMessage != nullptr)
+            *pErrorMessage = sError;
         return defaultLayouts();
     }
 
-    QVector<SLayoutDefinition> vLayouts = parseLayoutNodes(xRoot);
+    QVector<SLayoutDefinition> vLayoutDefinitions = parseLayoutNodes(xRootNode);
 
-    if (vLayouts.isEmpty())
+    if (vLayoutDefinitions.isEmpty())
     {
-        if (pErrorString != nullptr)
-            *pErrorString = QString("No valid layout found in %1, using defaults").arg(sFileName);
+        if (pErrorMessage != nullptr)
+            *pErrorMessage = sInvalidLayoutMessage.arg(sLayoutFileName);
         return defaultLayouts();
     }
 
-    return vLayouts;
+    return vLayoutDefinitions;
 }
 
-/************************************************************************/
+/*************************************************************************/
 QVector<SLayoutDefinition> CLayout::defaultLayouts()
 {
     QString sError;
-    CXMLNode xRoot = CXMLNode::loadJSONFromFile(sResourceFileName, &sError);
-    if (xRoot.isEmpty() == false)
+    CXMLNode xRootNode = CXMLNode::loadJSONFromFile(CLayout::sResourceFileName, &sError);
+    if (xRootNode.isEmpty() == false)
     {
-        QVector<SLayoutDefinition> vLayouts = parseLayoutNodes(xRoot);
-        if (vLayouts.isEmpty() == false)
-            return vLayouts;
+        QVector<SLayoutDefinition> vLayoutDefinitions = parseLayoutNodes(xRootNode);
+        if (vLayoutDefinitions.isEmpty() == false)
+            return vLayoutDefinitions;
         qWarning() << QString("CLayout: embedded layouts invalid, using minimal fallback (%1)").arg(sError);
     }
     else
@@ -183,23 +198,23 @@ QVector<SLayoutDefinition> CLayout::defaultLayouts()
     return minimalFallbackLayouts();
 }
 
-/************************************************************************/
-QVariantList CLayout::toVariantPanels(const SLayoutDefinition& tLayout)
+/*************************************************************************/
+QVariantList CLayout::toVariantPanels(const SLayoutDefinition& tLayoutDefinition)
 {
     QVariantList lPanels;
-    for (const SLayoutPanel& tPanel : tLayout.vPanels)
+    for (const SLayoutPanel& tPanel : tLayoutDefinition.vPanels)
     {
         QVariantMap mPanel;
-        mPanel[sKeyPanelId] = tPanel.sId;
-        mPanel[sKeyPosX] = tPanel.fPosX;
-        mPanel[sKeyPosY] = tPanel.fPosY;
+        mPanel[sKeyPanelIdentifier] = tPanel.sIdentifier;
+        mPanel[sKeyPositionX] = tPanel.fPositionX;
+        mPanel[sKeyPositionY] = tPanel.fPositionY;
         mPanel[sKeyWidth] = tPanel.fWidth;
         mPanel[sKeyHeight] = tPanel.fHeight;
         QVariantList lTabs;
-        for (const QString& sTabId : tPanel.lTabIds)
+        for (const QString& sTabIdentifier : tPanel.lTabIdentifiers)
         {
             QVariantMap mTab;
-            mTab[sKeyTabId] = sTabId;
+            mTab[sKeyTabIdentifier] = sTabIdentifier;
             lTabs << mTab;
         }
         mPanel[sKeyTabs] = lTabs;
@@ -208,11 +223,11 @@ QVariantList CLayout::toVariantPanels(const SLayoutDefinition& tLayout)
     return lPanels;
 }
 
-/************************************************************************/
-QStringList CLayout::knownTabIds()
+/*************************************************************************/
+const QStringList& CLayout::knownTabIds()
 {
-    static const QStringList lTabIds = QStringList()
+    static const QStringList lTabIdentifiers = QStringList()
         << "Files" << "Branches" << "Tags" << "BranchLog" << "Graph" << "RefLog"
         << "Diff" << "FileLog" << "Blame" << "Output";
-    return lTabIds;
+    return lTabIdentifiers;
 }

@@ -10,7 +10,7 @@ StandardPane {
     id: root
 
     property variant repository: null
-    property string branchName: ""
+    property string menuBranchName: ""
 
     signal requestRebaseOnBranch(var name)
     signal requestMergeBranch(var name)
@@ -54,7 +54,7 @@ StandardPane {
                 id: remoteBranchList
                 anchors.top: remoteBranchesLabel.bottom
                 width: parent.width
-                height: parent.height * 0.5 - remoteBranchesLabel.height
+                height: parent.height * Const.branchListHeightFraction - remoteBranchesLabel.height
                 visible: count > 0
 
                 model: root.repository ? root.repository.remoteBranchModel : undefined
@@ -82,7 +82,7 @@ StandardPane {
             Rectangle {
                 id: separator
                 width: parent.width
-                height: 2
+                height: Const.branchSeparatorHeight
                 anchors.top: remoteBranchList.bottom
                 anchors.topMargin: Const.mainPadding
                 color: Material.accent
@@ -129,10 +129,10 @@ StandardPane {
                 id: branchMenu
                 repository: root.repository
 
-                onRequestSwitchToBranch: root.repository.currentBranch = root.branchName
-                onRequestRebaseOnBranch: root.requestRebaseOnBranch(root.branchName)
-                onRequestMergeBranch: root.requestMergeBranch(root.branchName)
-                onRequestDeleteBranch: root.requestDeleteBranch(root.branchName)
+                onRequestSwitchToBranch: root.repository.currentBranch = root.menuBranchName
+                onRequestRebaseOnBranch: root.requestRebaseOnBranch(root.menuBranchName)
+                onRequestMergeBranch: root.requestMergeBranch(root.menuBranchName)
+                onRequestDeleteBranch: root.requestDeleteBranch(root.menuBranchName)
             }
         }
 
@@ -154,11 +154,11 @@ StandardPane {
         }
     }
 
-    function rightClickBranch(name) {
-        root.branchName = name
+    function rightClickBranch(branchName) {
+        root.menuBranchName = branchName
 
-        branchMenu.canRebaseOn = (name !== root.repository.currentBranch)
-        branchMenu.canMerge = (name !== root.repository.currentBranch)
+        branchMenu.canRebaseOn = (branchName !== root.repository.currentBranch)
+        branchMenu.canMerge = (branchName !== root.repository.currentBranch)
         branchMenu.popup()
     }
 }

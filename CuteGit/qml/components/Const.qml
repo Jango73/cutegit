@@ -69,6 +69,15 @@ Item {
     readonly property real popupWidthSmall: 0.25
     readonly property real popupHeightSmall: 0.25
 
+    // Named factors replacing magic numbers (sizes are exempt from hexadecimal rule)
+    readonly property real halfFraction: 0.5
+    readonly property real percentDivisor: 100.0
+    readonly property real statusLineHeightFactor: 1.5
+    readonly property int statusLineCount: 2
+    readonly property real repositoryStatusHeight: elementHeight * statusLineHeightFactor * statusLineCount
+    readonly property int branchSeparatorHeight: 2
+    readonly property real branchListHeightFraction: 0.5
+
     // Durations
     readonly property int componentFadingDuration: 200
     readonly property int toolTipDelay: 1000
@@ -182,6 +191,9 @@ Item {
     readonly property string generalText: qsTr("General")
     readonly property string branchesText: qsTr("Branches")
     readonly property string layoutText: qsTr("Layout")
+    readonly property string classicLayoutText: qsTr("Classic")
+    readonly property string branchesLeftLayoutText: qsTr("BranchesLeft")
+    readonly property string fallbackLayoutText: qsTr("Fallback")
     readonly property string reloadLayoutsMenuText: qsTr("Reload layouts")
     readonly property string switchToText: qsTr("Switch to")
     readonly property string rebaseOnText: qsTr("Rebase on")
@@ -313,9 +325,19 @@ Item {
     readonly property string panelTabIdKey: "tabId"
 
     // Single QML source of the tab vocabulary, mirrors CLayout::knownTabIds()
+    readonly property string filesTabId: "Files"
+    readonly property string branchesTabId: "Branches"
+    readonly property string tagsTabId: "Tags"
+    readonly property string branchLogTabId: "BranchLog"
+    readonly property string graphTabId: "Graph"
+    readonly property string refLogTabId: "RefLog"
+    readonly property string diffTabId: "Diff"
+    readonly property string fileLogTabId: "FileLog"
+    readonly property string blameTabId: "Blame"
+    readonly property string outputTabId: "Output"
     readonly property var knownTabIds: [
-        "Files", "Branches", "Tags", "BranchLog", "Graph", "RefLog",
-        "Diff", "FileLog", "Blame", "Output"
+        filesTabId, branchesTabId, tagsTabId, branchLogTabId, graphTabId, refLogTabId,
+        diffTabId, fileLogTabId, blameTabId, outputTabId
     ]
     readonly property var tabSources: ({
         "Files": "../tabs/FilesTab.qml",

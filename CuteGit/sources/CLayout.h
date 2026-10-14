@@ -1,4 +1,3 @@
-
 #pragma once
 
 // Qt
@@ -13,12 +12,12 @@
 //! Single panel of a layout, placed by relative geometry (percent of content area)
 typedef struct
 {
-    QString     sId;
-    double      fPosX;
-    double      fPosY;
+    QString     sIdentifier;
+    double      fPositionX;
+    double      fPositionY;
     double      fWidth;
     double      fHeight;
-    QStringList lTabIds;
+    QStringList lTabIdentifiers;
 } SLayoutPanel;
 
 //-------------------------------------------------------------------------------------------------
@@ -26,7 +25,7 @@ typedef struct
 //! Single named layout: ordered list of panels
 typedef struct
 {
-    QString              sName;
+    QString               sName;
     QVector<SLayoutPanel> vPanels;
 } SLayoutDefinition;
 
@@ -43,11 +42,45 @@ class CLayout
 public:
 
     //-------------------------------------------------------------------------------------------------
+    // Defines
+    //-------------------------------------------------------------------------------------------------
+
+    static const QString sFileName;
+    static const QString sResourceFileName;
+    static const QString sTagLayout;
+    static const QString sTagPanel;
+    static const QString sTagTab;
+    static const QString sAttributeName;
+    static const QString sAttributeIdentifier;
+    static const QString sAttributePositionX;
+    static const QString sAttributePositionY;
+    static const QString sAttributeWidth;
+    static const QString sAttributeHeight;
+    static const QString sKeyPanelIdentifier;
+    static const QString sKeyPositionX;
+    static const QString sKeyPositionY;
+    static const QString sKeyWidth;
+    static const QString sKeyHeight;
+    static const QString sKeyTabs;
+    static const QString sKeyTabIdentifier;
+
+    //! Minimum and maximum values for panel geometry expressed in percent
+    static const double fMinimumPercent;
+    static const double fMaximumPercent;
+
+    //! Fallback text values used when a geometry attribute is missing
+    static const QString sDefaultPositionText;
+    static const QString sDefaultSizeText;
+
+    //! Error message used when no valid layout is found, %1 is the file name
+    static const QString sInvalidLayoutMessage;
+
+    //-------------------------------------------------------------------------------------------------
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
     //! Loads layouts from JSON file, returns default layouts when loading fails
-    static QVector<SLayoutDefinition> loadLayouts(const QString& sFileName, QString* pErrorString = nullptr);
+    static QVector<SLayoutDefinition> loadLayouts(const QString& sLayoutFileName, QString* pErrorMessage = nullptr);
 
     //! Built-in fallback layouts (first entry reproduces the historical layout)
     static QVector<SLayoutDefinition> defaultLayouts();
@@ -55,32 +88,9 @@ public:
     //! Converts a layout definition to a QML friendly panel list
     //! Variant keys below (sKey*) are the single C++ side of the C++/QML contract,
     //! mirrored in qml/components/Const.qml (panelIdKey, panelPosXKey, ...)
-    static QVariantList toVariantPanels(const SLayoutDefinition& tLayout);
+    static QVariantList toVariantPanels(const SLayoutDefinition& tLayoutDefinition);
 
     //! Returns the known tab identifiers (single C++ source of the tab vocabulary,
     //! mirrored in qml/components/Const.qml as knownTabIds)
-    static QStringList knownTabIds();
-
-    //-------------------------------------------------------------------------------------------------
-    // Defines
-    //-------------------------------------------------------------------------------------------------
-
-    static const char* sFileName;
-    static const char* sResourceFileName;
-    static const char* sTagLayout;
-    static const char* sTagPanel;
-    static const char* sTagTab;
-    static const char* sAttributeName;
-    static const char* sAttributeId;
-    static const char* sAttributePosX;
-    static const char* sAttributePosY;
-    static const char* sAttributeWidth;
-    static const char* sAttributeHeight;
-    static const char* sKeyPanelId;
-    static const char* sKeyPosX;
-    static const char* sKeyPosY;
-    static const char* sKeyWidth;
-    static const char* sKeyHeight;
-    static const char* sKeyTabs;
-    static const char* sKeyTabId;
+    static const QStringList& knownTabIds();
 };

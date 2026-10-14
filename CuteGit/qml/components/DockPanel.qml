@@ -147,7 +147,7 @@ ExtendablePane {
     }
 
     function getSelectedFiles() {
-        var filesTab = findTab("Files")
+        var filesTab = findTab(Const.filesTabId)
         if (filesTab !== null && filesTab !== undefined && "getSelectedFiles" in filesTab)
             return filesTab.getSelectedFiles()
         return []

@@ -40,7 +40,7 @@ BaseTab {
         id: remoteBranchList
         anchors.top: remoteBranchesLabel.bottom
         width: parent.width
-        height: parent.height * 0.5 - remoteBranchesLabel.height
+        height: parent.height * Const.branchListHeightFraction - remoteBranchesLabel.height
         visible: count > 0
 
         model: root.repository ? root.repository.remoteBranchModel : undefined
@@ -50,7 +50,7 @@ BaseTab {
     Rectangle {
         id: separator
         width: parent.width
-        height: 2
+        height: Const.branchSeparatorHeight
         anchors.top: remoteBranchList.bottom
         anchors.topMargin: Const.mainPadding
         color: Material.accent

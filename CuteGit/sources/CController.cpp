@@ -1,4 +1,3 @@
-
 // Qt
 #include <QDebug>
 #include <QApplication>
@@ -55,19 +54,19 @@
 
 //-------------------------------------------------------------------------------------------------
 
-const QString sParamConfiguration = "Configuration";
-const QString sParamOpenRepositories = "OpenRepositories";
-const QString sParamKnownRepositories = "KnownRepositories";
-const QString sParamCurrentRepository = "CurrentRepository";
-const QString sParamRepository = "Repository";
-const QString sParamPath = "Path";
-const QString sParamName = "Name";
-const QString sParamHistory = "History";
-const QString sParamLastBrowsedRepositoryURL = "LastBrowsedRepositoryURL";
-const QString sParamLastBrowsedRepositoryPath = "LastBrowsedRepositoryPath";
-const QString sParamLanguage = "Language";
-const QString sParamTheme = "Theme";
-const QString sParamLayoutIndex = "LayoutIndex";
+const QString sParameterConfiguration = "Configuration";
+const QString sParameterOpenRepositories = "OpenRepositories";
+const QString sParameterKnownRepositories = "KnownRepositories";
+const QString sParameterCurrentRepository = "CurrentRepository";
+const QString sParameterRepository = "Repository";
+const QString sParameterPath = "Path";
+const QString sParameterName = "Name";
+const QString sParameterHistory = "History";
+const QString sParameterLastBrowsedRepositoryURL = "LastBrowsedRepositoryURL";
+const QString sParameterLastBrowsedRepositoryPath = "LastBrowsedRepositoryPath";
+const QString sParameterLanguage = "Language";
+const QString sParameterTheme = "Theme";
+const QString sParameterLayoutIndex = "LayoutIndex";
 const QString sThemeMaterialDark = "MaterialDark";
 const QString sThemeMaterialLight = "MaterialLight";
 
@@ -103,6 +102,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_tSharedTimer(this)
     , m_tPollTimer(this)
     , m_iPollIndex(0)
+    , m_pCloneCommands(nullptr)
     , m_pTranslator(new QTranslator(this))
 {
     QCoreApplication::installTranslator(m_pTranslator);
@@ -154,6 +154,9 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_pKnownRepositoryModel(nullptr)
     , m_pOpenRepositoryModel(nullptr)
     , m_pCurrentRepository(nullptr)
+    , m_pLangModel(nullptr)
+    , m_sLanguage("en")
+    , m_sTheme(sThemeMaterialDark)
     , m_sStubFileName(sStubFileName)
     , m_lLayoutNames()
     , m_iCurrentLayoutIndex(0)
@@ -162,15 +165,21 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_bShowClean(false)
     , m_bShowAdded(true)
     , m_bShowModified(true)
+    , m_bShowRenamed(true)
     , m_bShowDeleted(true)
+    , m_bShowMissing(true)
     , m_bShowUntracked(false)
+    , m_bShowIgnored(false)
     , m_bMasterMode(false)
     , m_tShared(m_sSharedKey, this)
     , m_tSharedTimer(this)
     , m_tPollTimer(this)
     , m_iPollIndex(0)
+    , m_pCloneCommands(nullptr)
     , m_pTranslator(new QTranslator(this))
 {
+    reloadLayouts();
+
     if (m_tShared.attach())
     {
         connect(&m_tSharedTimer, &QTimer::timeout, this, &CController::onSharedTimerTick);
@@ -293,29 +302,31 @@ void CController::setCurrentLayoutIndex(int iValue)
 
 void CController::reloadLayouts()
 {
+    static const QString sLayoutsLoadedMessage = "Layouts loaded from %1";
+
     QStringList lCandidates;
     lCandidates << QString("%1/%2").arg(QCoreApplication::applicationDirPath()).arg(CLayout::sFileName);
     lCandidates << QString(CLayout::sResourceFileName);
 
     QString sError;
     QString sUsedFile;
-    QVector<SLayoutDefinition> vLayouts;
+    QVector<SLayoutDefinition> vLayoutDefinitions;
     for (const QString& sCandidate : lCandidates)
     {
         QString sCandidateError;
         QVector<SLayoutDefinition> vCandidate = CLayout::loadLayouts(sCandidate, &sCandidateError);
         if (sCandidateError.isEmpty())
         {
-            vLayouts = vCandidate;
+            vLayoutDefinitions = vCandidate;
             sUsedFile = sCandidate;
             break;
         }
         sError = sCandidateError;
     }
 
-    if (vLayouts.isEmpty())
-        vLayouts = CLayout::defaultLayouts();
-    m_vLayouts = vLayouts;
+    if (vLayoutDefinitions.isEmpty())
+        vLayoutDefinitions = CLayout::defaultLayouts();
+    m_vLayouts = vLayoutDefinitions;
 
     if (sError.isEmpty() == false)
     {
@@ -324,13 +335,13 @@ void CController::reloadLayouts()
     }
     else if (sUsedFile.isEmpty() == false)
     {
-        setStatusText(QString("Layouts loaded from %1").arg(sUsedFile));
+        setStatusText(sLayoutsLoadedMessage.arg(sUsedFile));
     }
 
-    QStringList lNames;
-    for (const SLayoutDefinition& tLayout : m_vLayouts)
-        lNames << tLayout.sName;
-    setLayoutNames(lNames);
+    QStringList lLayoutNames;
+    for (const SLayoutDefinition& tLayoutDefinition : m_vLayouts)
+        lLayoutNames << tLayoutDefinition.sName;
+    setLayoutNames(lLayoutNames);
 
     int iIndex = clampLayoutIndex(m_iCurrentLayoutIndex, m_vLayouts.count());
     m_iCurrentLayoutIndex = -1;
@@ -515,31 +526,31 @@ QString CController::sequenceFileName()
 
 void CController::saveConfiguration()
 {
-    CXMLNode xConfig(sParamConfiguration);
+    CXMLNode xConfig(sParameterConfiguration);
 
     // Save history items
-    CXMLNode xHistory(sParamHistory);
-    xHistory.attributes()[sParamLastBrowsedRepositoryURL] = m_sLastBrowsedRepositoryURL;
-    xHistory.attributes()[sParamLastBrowsedRepositoryPath] = m_sLastBrowsedRepositoryPath;
+    CXMLNode xHistory(sParameterHistory);
+    xHistory.attributes()[sParameterLastBrowsedRepositoryURL] = m_sLastBrowsedRepositoryURL;
+    xHistory.attributes()[sParameterLastBrowsedRepositoryPath] = m_sLastBrowsedRepositoryPath;
     xConfig << xHistory;
 
     // Save known repository list
-    CXMLNode xKnownRepositories(sParamKnownRepositories);
+    CXMLNode xKnownRepositories(sParameterKnownRepositories);
     QStringList lKnownRepositoryPaths = m_pKnownRepositoryModel->stringList();
     for (QString sPath : lKnownRepositoryPaths)
     {
-        CXMLNode xRepository(sParamRepository);
-        xRepository.attributes()[sParamPath] = sPath;
+        CXMLNode xRepository(sParameterRepository);
+        xRepository.attributes()[sParameterPath] = sPath;
         xKnownRepositories << xRepository;
     }
     xConfig << xKnownRepositories;
 
     // Save open repository list
-    CXMLNode xOpenRepositories(sParamOpenRepositories);
+    CXMLNode xOpenRepositories(sParameterOpenRepositories);
     for (CRepository* pRepository : m_pOpenRepositoryModel->repositories())
     {
-        CXMLNode xOpenRepository(sParamRepository);
-        xOpenRepository.attributes()[sParamPath] = pRepository->repositoryPath();
+        CXMLNode xOpenRepository(sParameterRepository);
+        xOpenRepository.attributes()[sParameterPath] = pRepository->repositoryPath();
         xOpenRepositories << xOpenRepository;
     }
     xConfig << xOpenRepositories;
@@ -547,24 +558,24 @@ void CController::saveConfiguration()
     // Save current repository
     if (m_pCurrentRepository != nullptr)
     {
-        CXMLNode xCurrentRepository(sParamCurrentRepository);
-        xCurrentRepository.attributes()[sParamPath] = m_pCurrentRepository->repositoryPath();
+        CXMLNode xCurrentRepository(sParameterCurrentRepository);
+        xCurrentRepository.attributes()[sParameterPath] = m_pCurrentRepository->repositoryPath();
         xConfig << xCurrentRepository;
     }
 
     // Save language
-    CXMLNode xLanguage(sParamLanguage);
-    xLanguage.attributes()[sParamName] = m_sLanguage;
+    CXMLNode xLanguage(sParameterLanguage);
+    xLanguage.attributes()[sParameterName] = m_sLanguage;
     xConfig << xLanguage;
 
     // Save theme
-    CXMLNode xTheme(sParamTheme);
-    xTheme.attributes()[sParamName] = m_sTheme;
+    CXMLNode xTheme(sParameterTheme);
+    xTheme.attributes()[sParameterName] = m_sTheme;
     xConfig << xTheme;
 
     // Save layout index
-    CXMLNode xLayout(sParamLayoutIndex);
-    xLayout.attributes()[sParamName] = QString::number(m_iCurrentLayoutIndex);
+    CXMLNode xLayout(sParameterLayoutIndex);
+    xLayout.attributes()[sParameterName] = QString::number(m_iCurrentLayoutIndex);
     xConfig << xLayout;
 
     xConfig.saveXMLToFile(configFileName());
@@ -577,48 +588,48 @@ void CController::loadConfiguration()
     CXMLNode xConfig = CXMLNode::load(configFileName());
 
     // Load history items
-    CXMLNode xHistory = xConfig.getNodeByTagName(sParamHistory);
-    m_sLastBrowsedRepositoryURL = xHistory.attributes()[sParamLastBrowsedRepositoryURL];
-    m_sLastBrowsedRepositoryPath = xHistory.attributes()[sParamLastBrowsedRepositoryPath];
+    CXMLNode xHistory = xConfig.getNodeByTagName(sParameterHistory);
+    m_sLastBrowsedRepositoryURL = xHistory.attributes()[sParameterLastBrowsedRepositoryURL];
+    m_sLastBrowsedRepositoryPath = xHistory.attributes()[sParameterLastBrowsedRepositoryPath];
 
     // Load known repository list
-    CXMLNode xKnownRepositories = xConfig.getNodeByTagName(sParamKnownRepositories);
-    CXMLNodeList xKnownRepositoryList = xKnownRepositories.getNodesByTagName(sParamRepository);
+    CXMLNode xKnownRepositories = xConfig.getNodeByTagName(sParameterKnownRepositories);
+    CXMLNodeList xKnownRepositoryList = xKnownRepositories.getNodesByTagName(sParameterRepository);
 
     QStringList lKnownRepositoryPaths;
     for (CXMLNode xRepository : xKnownRepositoryList)
     {
-        lKnownRepositoryPaths << xRepository.attributes()[sParamPath];
+        lKnownRepositoryPaths << xRepository.attributes()[sParameterPath];
     }
     m_pKnownRepositoryModel->setStringList(lKnownRepositoryPaths);
 
     // Load open repositories
-    CXMLNode xOpenRepositories = xConfig.getNodeByTagName(sParamOpenRepositories);
-    CXMLNodeList xOpenRepositoryList = xOpenRepositories.getNodesByTagName(sParamRepository);
+    CXMLNode xOpenRepositories = xConfig.getNodeByTagName(sParameterOpenRepositories);
+    CXMLNodeList xOpenRepositoryList = xOpenRepositories.getNodesByTagName(sParameterRepository);
     for (CXMLNode xOpenRepository : xOpenRepositoryList)
     {
-        QString sPath = xOpenRepository.attributes()[sParamPath];
+        QString sPath = xOpenRepository.attributes()[sParameterPath];
         openRepository(sPath);
     }
 
     // Load current repository
-    CXMLNode xCurrentRepository = xConfig.getNodeByTagName(sParamCurrentRepository);
-    m_sCurrentRepositoryPath = xCurrentRepository.attributes()[sParamPath];
+    CXMLNode xCurrentRepository = xConfig.getNodeByTagName(sParameterCurrentRepository);
+    m_sCurrentRepositoryPath = xCurrentRepository.attributes()[sParameterPath];
 
     // Load language
-    CXMLNode xLanguage = xConfig.getNodeByTagName(sParamLanguage);
-    setLanguage(xLanguage.attributes()[sParamName]);
+    CXMLNode xLanguage = xConfig.getNodeByTagName(sParameterLanguage);
+    setLanguage(xLanguage.attributes()[sParameterName]);
 
     // Load theme
-    CXMLNode xTheme = xConfig.getNodeByTagName(sParamTheme);
-    m_sTheme = xTheme.attributes()[sParamName];
+    CXMLNode xTheme = xConfig.getNodeByTagName(sParameterTheme);
+    m_sTheme = xTheme.attributes()[sParameterName];
     if (m_sTheme != sThemeMaterialDark && m_sTheme != sThemeMaterialLight)
         m_sTheme = sThemeMaterialDark;
 
     // Load layout index
-    CXMLNode xLayout = xConfig.getNodeByTagName(sParamLayoutIndex);
+    CXMLNode xLayout = xConfig.getNodeByTagName(sParameterLayoutIndex);
     bool bLayoutConversionSucceeded = false;
-    int iLayoutIndex = xLayout.attributes()[sParamName].toInt(&bLayoutConversionSucceeded);
+    int iLayoutIndex = xLayout.attributes()[sParameterName].toInt(&bLayoutConversionSucceeded);
     if (bLayoutConversionSucceeded)
         setCurrentLayoutIndex(iLayoutIndex);
 }

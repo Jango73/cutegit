@@ -15,7 +15,7 @@ Pane {
 
     property variant controller: null
     property variant repository: null
-    property string branchName: ""
+    property string menuBranchName: ""
 
     //--------------------------------------------------------------------------------
     // Status
@@ -26,13 +26,13 @@ Pane {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: (Const.elementHeight * 1.5) * 2
+        height: Const.repositoryStatusHeight
 
         Item {
             id: repositoryStatusTop
             objectName: "repositoryStatusTop"
             width: parent.width
-            height: parent.height * 0.5
+            height: parent.height * Const.halfFraction
 
             Rectangle {
                 anchors.fill: parent
@@ -121,10 +121,10 @@ Pane {
 
             DockPanel {
                 objectName: "dockPanel." + index
-                x: root.panelGeometry(modelData, Const.panelPosXKey, 0.0) / 100 * contentArea.width + Const.paneMargins * 0.5
-                y: root.panelGeometry(modelData, Const.panelPosYKey, 0.0) / 100 * contentArea.height + Const.paneMargins * 0.5
-                width: root.panelGeometry(modelData, Const.panelWidthKey, 100.0) / 100 * contentArea.width - Const.paneMargins
-                height: root.panelGeometry(modelData, Const.panelHeightKey, 100.0) / 100 * contentArea.height - Const.paneMargins
+                x: root.panelGeometry(modelData, Const.panelPosXKey, 0.0) / Const.percentDivisor * contentArea.width + Const.paneMargins * Const.halfFraction
+                y: root.panelGeometry(modelData, Const.panelPosYKey, 0.0) / Const.percentDivisor * contentArea.height + Const.paneMargins * Const.halfFraction
+                width: root.panelGeometry(modelData, Const.panelWidthKey, 100.0) / Const.percentDivisor * contentArea.width - Const.paneMargins
+                height: root.panelGeometry(modelData, Const.panelHeightKey, 100.0) / Const.percentDivisor * contentArea.height - Const.paneMargins
 
                 extensionParent: root
                 repository: root.repository
@@ -145,29 +145,29 @@ Pane {
 
         onRequestSwitchToBranch: {
             if (root.repository !== null && root.repository.can(CEnums.SwitchBranch))
-                root.repository.currentBranch = root.branchName
+                root.repository.currentBranch = root.menuBranchName
         }
-        onRequestRebaseOnBranch: root.requestRebaseOnBranch(root.branchName)
-        onRequestMergeBranch: root.requestMergeBranch(root.branchName)
-        onRequestDeleteBranch: root.requestDeleteBranch(root.branchName)
+        onRequestRebaseOnBranch: root.requestRebaseOnBranch(root.menuBranchName)
+        onRequestMergeBranch: root.requestMergeBranch(root.menuBranchName)
+        onRequestDeleteBranch: root.requestDeleteBranch(root.menuBranchName)
     }
 
     Action {
         id: rebaseOnBranchAction
-        property string branchName: ""
-        onTriggered: root.repository.rebaseOnBranch(branchName)
+        property string targetBranchName: ""
+        onTriggered: root.repository.rebaseOnBranch(targetBranchName)
     }
 
     Action {
         id: mergeBranchAction
-        property string branchName: ""
-        onTriggered: root.repository.mergeBranch(branchName)
+        property string targetBranchName: ""
+        onTriggered: root.repository.mergeBranch(targetBranchName)
     }
 
     Action {
         id: deleteBranchAction
-        property string branchName: ""
-        onTriggered: root.repository.deleteBranch(branchName)
+        property string targetBranchName: ""
+        onTriggered: root.repository.deleteBranch(targetBranchName)
     }
 
     //--------------------------------------------------------------------------------
@@ -467,35 +467,35 @@ Pane {
         logMenu.popup()
     }
 
-    function showBranchMenu(name) {
+    function showBranchMenu(branchName) {
         if (root.repository === null)
             return
-        root.branchName = name
-        branchMenu.canRebaseOn = (name !== root.repository.currentBranch)
-        branchMenu.canMerge = (name !== root.repository.currentBranch)
+        root.menuBranchName = branchName
+        branchMenu.canRebaseOn = (branchName !== root.repository.currentBranch)
+        branchMenu.canMerge = (branchName !== root.repository.currentBranch)
         branchMenu.popup()
     }
 
-    function requestRebaseOnBranch(name) {
-        root.confirmBranchAction(Const.rebaseOnBranchText + " " + name,
-                                 Const.rebaseOnBranchMessage.arg(name),
-                                 rebaseOnBranchAction, name)
+    function requestRebaseOnBranch(branchName) {
+        root.confirmBranchAction(Const.rebaseOnBranchText + " " + branchName,
+                                 Const.rebaseOnBranchMessage.arg(branchName),
+                                 rebaseOnBranchAction, branchName)
     }
 
-    function requestMergeBranch(name) {
-        root.confirmBranchAction(Const.mergeBranchText + " " + name,
-                                 Const.mergeBranchMessage.arg(name),
-                                 mergeBranchAction, name)
+    function requestMergeBranch(branchName) {
+        root.confirmBranchAction(Const.mergeBranchText + " " + branchName,
+                                 Const.mergeBranchMessage.arg(branchName),
+                                 mergeBranchAction, branchName)
     }
 
-    function requestDeleteBranch(name) {
-        root.confirmBranchAction(Const.deleteBranchText + " " + name,
+    function requestDeleteBranch(branchName) {
+        root.confirmBranchAction(Const.deleteBranchText + " " + branchName,
                                  Const.deleteBranchMessage,
-                                 deleteBranchAction, name)
+                                 deleteBranchAction, branchName)
     }
 
-    function confirmBranchAction(title, message, action, branchName) {
-        action.branchName = branchName
+    function confirmBranchAction(title, message, action, targetBranchName) {
+        action.targetBranchName = targetBranchName
         confirm.title = title
         confirm.messageText = message
         confirm.actionOnAccept = action
@@ -551,22 +551,22 @@ Pane {
     }
 
     function activateFlatFileView() {
-        root.activateTab("Files")
+        root.activateTab(Const.filesTabId)
     }
 
     function activateBranchLogView() {
-        root.activateTab("BranchLog")
+        root.activateTab(Const.branchLogTabId)
     }
 
     function activateGraphView() {
-        root.activateTab("Graph")
+        root.activateTab(Const.graphTabId)
     }
 
     function activateFileDiffView() {
-        root.activateTab("Diff")
+        root.activateTab(Const.diffTabId)
     }
 
     function activateFileBlameView() {
-        root.activateTab("Blame")
+        root.activateTab(Const.blameTabId)
     }
 }
