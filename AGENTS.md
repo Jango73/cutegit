@@ -80,6 +80,11 @@ The agent always signs its commits: append a last line `Agent: <agent-name>`
 (for example `Agent: opencode/muse-spark`) so authorship stays identifiable
 in the log, whatever the commit prefix above. Never leave a blank line in
 the commit message: lines follow each other directly.
+The commit message states the automated test result: append a line `Tests:`
+followed by the sections run and their outcome (for example `Tests:
+tests.sh --debug diff startup repository green` or `Tests: tests.sh --debug
+repository 1 failure in tst_Repository::stageSingleLine_refreshesBothModels`),
+so the log records what was verified and what was left broken.
 
 ## Common Build Commands
 - Dependencies: `./scripts/linux/deps.sh` (submodules + apt/dnf/pacman packages;
