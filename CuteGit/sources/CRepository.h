@@ -366,6 +366,9 @@ protected:
     //! Requests staged and unstaged diffs for a file
     void requestWorkingTreeDiffs(const QString& sFileFullName);
 
+    //! Returns true when a working tree diff result still belongs to the displayed file
+    bool workingTreeDiffMatchesCurrentFile(CDiffModel* pModel, const QString& sUserData) const;
+
     //! Builds a patch from selected diff rows and applies it on the index
     void applyDiffLines(CDiffModel* pModel, CDiffModelProxy* pProxy, const QVariantList& lProxyRows, bool bStage);
 
@@ -393,7 +396,7 @@ protected slots:
     void onNewOutput(QString sOutput, bool bSeparation);
 
     //! Call when an issued command throws a string
-    void onNewOutputString(CEnums::EProcessCommand eCommand, QString sValue);
+    void onNewOutputString(CEnums::EProcessCommand eCommand, QString sValue, QString sUserData = QString());
 
     //! Call when an issued command throws a key/value
     void onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString sKey, QString sValue);
@@ -411,7 +414,7 @@ protected slots:
     void onNewOutputCLogLineCollection(CEnums::EProcessCommand eCommand, CLogLineCollection lNewLines);
 
     //! Call when an issued command throws a list of CDiffLine objects
-    void onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines);
+    void onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines, QString sUserData = QString());
 
     //! Call when an issued command throws a list of CGraphLine objects
     void onNewOutputCGraphLineCollection(CEnums::EProcessCommand eCommand, CGraphLineCollection lNewLines);

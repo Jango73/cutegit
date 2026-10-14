@@ -515,7 +515,21 @@ void CRepository::saveFileDiffAsPatch(const QString& sFullName)
     if (m_bFileDiffFromCommit)
         CUtils::setTextFileContents(sFile, m_sFileDiffString);
     else
-        CUtils::setTextFileContents(sFile, m_sStagedFileDiffString + m_sUnstagedFileDiffString);
+    {
+        // Fixed staged-then-unstaged order with a guaranteed separator:
+        // arrival order of the two asynchronous diffs must not matter
+        QString sPatch(m_sStagedFileDiffString);
+
+        if (not sPatch.isEmpty() && not m_sUnstagedFileDiffString.isEmpty() && not sPatch.endsWith(NEW_LINE))
+            sPatch += NEW_LINE;
+
+        sPatch += m_sUnstagedFileDiffString;
+
+        if (not sPatch.isEmpty() && not sPatch.endsWith(NEW_LINE))
+            sPatch += NEW_LINE;
+
+        CUtils::setTextFileContents(sFile, sPatch);
+    }
 
     qDebug() << "saveFileDiffAsPatch:" << sFile;
 }
@@ -910,8 +924,33 @@ QString CRepository::relativeFileName(const QString& sFullName)
 */
 void CRepository::requestWorkingTreeDiffs(const QString& sFileFullName)
 {
+    // Drop stale views immediately: results arrive asynchronously and the
+    // slots below ignore outputs tagged for a previously selected file
+    m_pStagedFileDiffModel->setLines(QList<CDiffLine*>());
+    m_pUnstagedFileDiffModel->setLines(QList<CDiffLine*>());
+    setStagedFileDiffString("");
+    setUnstagedFileDiffString("");
+
     m_pCommands->stagedFileDiff(m_sRepositoryPath, sFileFullName);
     m_pCommands->unstagedFileDiff(m_sRepositoryPath, sFileFullName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::workingTreeDiffMatchesCurrentFile
+    Checks that an asynchronous working tree diff result still belongs to the
+    displayed file. Results without a file tag are accepted for compatibility.
+*/
+bool CRepository::workingTreeDiffMatchesCurrentFile(CDiffModel* pModel, const QString& sUserData) const
+{
+    if (pModel == nullptr)
+        return false;
+
+    if (sUserData.isEmpty())
+        return true;
+
+    return sUserData == pModel->fullSourceName();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -958,7 +997,7 @@ void CRepository::applyDiffSourceRows(CDiffModel* pModel, const QSet<int>& sSele
 
     if (sPatch.isEmpty())
     {
-        onNewOutput(QString("No staged change in selection"), false);
+        onNewOutput(bStage ? tr("No staged change in selection") : tr("No unstaged change in selection"), false);
         return;
     }
 
@@ -966,7 +1005,7 @@ void CRepository::applyDiffSourceRows(CDiffModel* pModel, const QSet<int>& sSele
 
     if (not tPatchFile.open())
     {
-        onNewOutput(QString("Unable to create patch file"), false);
+        onNewOutput(tr("Unable to create patch file"), false);
         return;
     }
 
@@ -1060,7 +1099,7 @@ void CRepository::onNewOutput(QString sOutput, bool bSeparation)
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sOutput)
+void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sOutput, QString sUserData)
 {
     switch (eCommand)
     {
@@ -1080,16 +1119,18 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
 
     case CEnums::eUnstagedFileDiff:
     {
-        // Drop late working tree diffs once a commit diff has been requested
-        if (not m_bFileDiffFromCommit)
+        // Drop late working tree diffs once a commit diff has been requested,
+        // and stale diffs tagged for a previously selected file
+        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pUnstagedFileDiffModel, sUserData))
             setUnstagedFileDiffString(sOutput);
         break;
     }
 
     case CEnums::eStagedFileDiff:
     {
-        // Drop late working tree diffs once a commit diff has been requested
-        if (not m_bFileDiffFromCommit)
+        // Drop late working tree diffs once a commit diff has been requested,
+        // and stale diffs tagged for a previously selected file
+        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pStagedFileDiffModel, sUserData))
             setStagedFileDiffString(sOutput);
         break;
     }
@@ -1325,14 +1366,18 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         // silently stops working until the file is selected again
         bool bInventoryOnly = (eCommand == CEnums::eAllFileStatus);
 
-        // Browse every file in lNewFiles and add/update
+        // Browse every file in lNewFiles and add/update. Consumed entries
+        // stay alive until the presence checks below are done: deleting
+        // them here would leave dangling pointers inside lNewFiles.
+        QList<CRepoFile*> lOrphanFiles;
+
         for (CRepoFile* pNewFile : lNewFiles)
         {
             QString sNewKey = pNewFile->fullName();
 
             if (bInventoryOnly && m_lRepoFiles.containsKey(sNewKey))
             {
-                delete pNewFile;
+                lOrphanFiles << pNewFile;
                 continue;
             }
 
@@ -1352,7 +1397,7 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
                 pExistingFile->setStaged(pNewFile->staged());
                 pExistingFile->setChanging(false);
 
-                delete pNewFile;
+                lOrphanFiles << pNewFile;
             }
             else
             {
@@ -1387,6 +1432,10 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
                 }
             }
         }
+
+        // Presence checks are done: consumed entries can now be destroyed
+        // without leaving dangling pointers behind
+        qDeleteAll(lOrphanFiles);
 
         // For every file in current list, check if it still exists
         for (int iExistingFileIndex = 0; iExistingFileIndex < m_lRepoFiles.count(); iExistingFileIndex++)
@@ -1505,15 +1554,16 @@ void CRepository::onNewOutputCLogLineCollection(CEnums::EProcessCommand eCommand
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines)
+void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines, QString sUserData)
 {
     switch (eCommand)
     {
 
     case CEnums::eUnstagedFileDiff:
     {
-        // Drop late working tree diffs once a commit diff has been requested
-        if (not m_bFileDiffFromCommit)
+        // Drop late working tree diffs once a commit diff has been requested,
+        // and stale diffs tagged for a previously selected file
+        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pUnstagedFileDiffModel, sUserData))
             m_pUnstagedFileDiffModel->setLines(lNewLines);
         else
             qDeleteAll(lNewLines);
@@ -1522,8 +1572,9 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
 
     case CEnums::eStagedFileDiff:
     {
-        // Drop late working tree diffs once a commit diff has been requested
-        if (not m_bFileDiffFromCommit)
+        // Drop late working tree diffs once a commit diff has been requested,
+        // and stale diffs tagged for a previously selected file
+        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pStagedFileDiffModel, sUserData))
             m_pStagedFileDiffModel->setLines(lNewLines);
         else
             qDeleteAll(lNewLines);

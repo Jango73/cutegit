@@ -90,6 +90,8 @@ const QString CGitCommands::sCommandUnstagedDiff        = "git diff --no-color -
 const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCachedReverse = "git apply --cached --reverse --unidiff-zero \"%1\"";
+const QString CGitCommands::sCommandApplyPatch         = "git apply --unidiff-zero \"%1\"";
+const QString CGitCommands::sCommandApplyPatchReverse  = "git apply --reverse --unidiff-zero \"%1\"";
 
 const QString CGitCommands::sStatusBranchRegExp         = "";
 const QString CGitCommands::sStatusRegExp               = "([a-zA-Z?!\\s])([a-zA-Z?!\\s])\\s(.*)";
@@ -470,7 +472,7 @@ void CGitCommands::patchApply(const QString& sPath, const QString& sFullName)
 void CGitCommands::unstagedFileDiff(const QString& sPath, const QString& sFullName)
 {
     QString sCommand = QString(sCommandUnstagedDiff).arg(sFullName);
-    exec(new CProcessCommand(CEnums::eUnstagedFileDiff, sPath, sCommand));
+    exec(new CProcessCommand(CEnums::eUnstagedFileDiff, sPath, sCommand, false, QMap<QString, QString>(), sFullName));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -482,7 +484,7 @@ void CGitCommands::unstagedFileDiff(const QString& sPath, const QString& sFullNa
 void CGitCommands::stagedFileDiff(const QString& sPath, const QString& sFullName)
 {
     QString sCommand = QString(sCommandStagedDiff).arg(sFullName);
-    exec(new CProcessCommand(CEnums::eStagedFileDiff, sPath, sCommand));
+    exec(new CProcessCommand(CEnums::eStagedFileDiff, sPath, sCommand, false, QMap<QString, QString>(), sFullName));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -494,9 +496,12 @@ void CGitCommands::stagedFileDiff(const QString& sPath, const QString& sFullName
 */
 QString CGitCommands::applyPatchNow(const QString& sPath, const QString& sPatchFile, bool bCached, bool bReverse)
 {
-    Q_UNUSED(bCached);
+    QString sCommand;
 
-    QString sCommand = QString(bReverse ? sCommandApplyPatchCachedReverse : sCommandApplyPatchCached).arg(sPatchFile);
+    if (bCached)
+        sCommand = QString(bReverse ? sCommandApplyPatchCachedReverse : sCommandApplyPatchCached).arg(sPatchFile);
+    else
+        sCommand = QString(bReverse ? sCommandApplyPatchReverse : sCommandApplyPatch).arg(sPatchFile);
 
     return execNow(sPath, sCommand);
 }
@@ -928,8 +933,9 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
     QStringList lLines = tResult.m_sValue.split(NEW_LINE);
     bool bAtLeastOneLineOK = false;
 
+    const int iInvalidHunkId = -1;
     QString sCurrentFileName;
-    int iHunkId = -1;
+    int iHunkId = iInvalidHunkId;
     int iOldLineNumber = -1;
     int iNewLineNumber = -1;
 
@@ -938,9 +944,9 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
 
     for (QString sLine : lLines)
     {
-        QString sTrimmedLine = sLine.trimmed();
-
-        if (not sTrimmedLine.isEmpty())
+        // Keep context lines holding an empty file line (" "): only the
+        // trailing split artifact (truly empty) is skipped
+        if (not sLine.isEmpty())
         {
             bAtLeastOneLineOK = true;
 
@@ -965,12 +971,13 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
                 }
 
                 sCurrentFileName = sNewText;
-                iHunkId = -1;
 
+                // Keep hunk identifiers unique across files: patch grouping
+                // by hunk alone stays correct on multi-file diffs
                 pDiffLine->setOperation(CEnums::DiffFileName);
                 pDiffLine->setText(sNewText);
                 pDiffLine->setFileName(sCurrentFileName);
-                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setHunkId(iInvalidHunkId);
             }
             else if (sLine.startsWith("@@"))
             {
@@ -1036,8 +1043,8 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
         lReturnValue.clear();
     }
 
-    emit newOutputString(tResult.m_eCommand, tResult.m_sValue);
-    emit newOutputListOfCDiffLine(tResult.m_eCommand, lReturnValue);
+    emit newOutputString(tResult.m_eCommand, tResult.m_sValue, tResult.m_sUserData);
+    emit newOutputListOfCDiffLine(tResult.m_eCommand, lReturnValue, tResult.m_sUserData);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -12,6 +12,22 @@
 //! Hunk header pattern, mirrors CGitCommands::sDiffHunkRegExp
 #define PATCH_HUNK_REGEXP "@@\\s+-([0-9]+)(,([0-9]+))?\\s+\\+([0-9]+)(,([0-9]+))?\\s+@@(.*)"
 
+// Capture positions inside PATCH_HUNK_REGEXP
+static const int iHunkOldStartCapture = 1;
+static const int iHunkNewStartCapture = 4;
+static const int iHunkNewCountWithCommaCapture = 5;
+static const int iHunkNewCountCapture = 6;
+static const int iHunkSectionCapture = 7;
+
+// Hunk starts for a file that appears from nothing or disappears entirely
+static const int iNullHunkStart = 0;
+
+// Line count used when the hunk header omits the ,count part
+static const int iImplicitHunkLineCount = 1;
+
+// Cumulative new-side shift, initially none
+static const int iNoNewSideShift = 0;
+
 //-------------------------------------------------------------------------------------------------
 
 /*!
@@ -93,7 +109,8 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
     QList<CDiffLine*> lLines = pModel->lines();
     QRegularExpression tHunkRegExp(QString(PATCH_HUNK_REGEXP));
 
-    // Group source rows by hunk, keeping model order
+    // Group source rows by hunk, keeping model order. Rows from other files
+    // are skipped so a multi-file model never merges hunks into one patch.
     QMap<int, QList<int>> mHunkRows;
     QMap<int, QString> mHunkHeaders;
 
@@ -105,6 +122,9 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
             continue;
 
         if (pLine->operation() == CEnums::DiffFileName)
+            continue;
+
+        if (not pLine->fileName().isEmpty() && pLine->fileName() != sRelativeName)
             continue;
 
         int iHunkId = pLine->hunkId();
@@ -128,6 +148,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
     bool bAllOldStartZero = true;
     bool bAllNewStartZero = true;
     bool bAtLeastOneHunk = false;
+    int iNewOffset = iNoNewSideShift;
 
     for (int iHunkId : mHunkRows.keys())
     {
@@ -201,28 +222,45 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
         if (not bHunkHasChange)
             continue;
 
-        int iOldStart = 0;
-        int iNewStart = 0;
-        QString sSection;
+        QString sOriginalHeader = mHunkHeaders.value(iHunkId);
+        QRegularExpressionMatch tMatch = tHunkRegExp.match(sOriginalHeader);
 
-        QRegularExpressionMatch tMatch = tHunkRegExp.match(mHunkHeaders.value(iHunkId));
-        if (tMatch.hasMatch())
+        // Unparseable headers are kept verbatim: rebuilding them with 0
+        // starts would wrongly switch patch sides to /dev/null
+        if (not tMatch.hasMatch())
         {
-            iOldStart = tMatch.captured(1).toInt();
-            iNewStart = tMatch.captured(4).toInt();
-            sSection = tMatch.captured(7);
+            bAllOldStartZero = false;
+            bAllNewStartZero = false;
+            lPatchHunks << sOriginalHeader;
+            lPatchHunks << lKeptLines;
+            bAtLeastOneHunk = true;
+            continue;
         }
 
-        if (iOldStart != 0)
+        int iOriginalOldStart = tMatch.captured(iHunkOldStartCapture).toInt();
+        int iOriginalNewStart = tMatch.captured(iHunkNewStartCapture).toInt();
+        int iOriginalNewCount = tMatch.captured(iHunkNewCountWithCommaCapture).isEmpty() ? iImplicitHunkLineCount : tMatch.captured(iHunkNewCountCapture).toInt();
+        QString sSection = tMatch.captured(iHunkSectionCapture);
+
+        if (iOriginalOldStart != iNullHunkStart)
             bAllOldStartZero = false;
-        if (iNewStart != 0)
+        if (iOriginalNewStart != iNullHunkStart)
             bAllNewStartZero = false;
 
-        QString sNewHeader = QString("@@ -%1,%2 +%3,%4 @@%5").arg(iOldStart).arg(iOldCount).arg(iNewStart).arg(iNewCount).arg(sSection);
+        // Dropped added lines and context-kept deletions shift the new side
+        // of every following hunk: adjust with the cumulative difference
+        int iAdjustedNewStart = iOriginalNewStart + iNewOffset;
+
+        if (iOriginalNewStart == iNullHunkStart)
+            iAdjustedNewStart = iNullHunkStart;
+
+        QString sNewHeader = QString("@@ -%1,%2 +%3,%4 @@%5").arg(iOriginalOldStart).arg(iOldCount).arg(iAdjustedNewStart).arg(iNewCount).arg(sSection);
 
         lPatchHunks << sNewHeader;
         lPatchHunks << lKeptLines;
         bAtLeastOneHunk = true;
+
+        iNewOffset += (iNewCount - iOriginalNewCount);
     }
 
     if (not bAtLeastOneHunk)

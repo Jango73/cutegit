@@ -172,7 +172,7 @@ signals:
     void execFinished(const CProcessResult& tResult);
 
     //!
-    void newOutputString(CEnums::EProcessCommand eCommand, QString sValue);
+    void newOutputString(CEnums::EProcessCommand eCommand, QString sValue, QString sUserData = QString());
 
     //!
     void newOutputKeyValue(CEnums::EProcessCommand eCommand, QString sKey, QString sValue);
@@ -190,7 +190,7 @@ signals:
     void newOutputCLogLineCollection(CEnums::EProcessCommand eCommand, CLogLineCollection lNewLines);
 
     //!
-    void newOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines);
+    void newOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines, QString sUserData = QString());
 
     //!
     void newOutputCGraphLineCollection(CEnums::EProcessCommand eCommand, CGraphLineCollection lNewLines);

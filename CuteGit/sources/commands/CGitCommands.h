@@ -322,6 +322,8 @@ protected:
     static const QString sCommandStagedDiff;
     static const QString sCommandApplyPatchCached;
     static const QString sCommandApplyPatchCachedReverse;
+    static const QString sCommandApplyPatch;
+    static const QString sCommandApplyPatchReverse;
 
     // Regular expressions
 
