@@ -87,6 +87,7 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_sPollFingerprint("")
     , m_bNeedsRefresh(false)
     , m_bPollPending(false)
+    , m_bFileDiffFromCommit(false)
 {
     if (eType == CEnums::UnknownRepositoryType)
     {
@@ -586,6 +587,7 @@ void CRepository::createTagOnCommit(const QString& sCommitId, const QString& sTa
 
 void CRepository::commitDiffPrevious(const QString& sCommitId)
 {
+    m_bFileDiffFromCommit = true;
     m_pCommands->commitDiffPrevious(m_sRepositoryPath, sCommitId);
 }
 
@@ -843,11 +845,17 @@ void CRepository::onCurrentFileFullName(QString sFileFullName)
         m_pFileLogModel->clear();
         m_pFileLogModel->invalidate();
 
+        m_pFileDiffModel->setFullSourceName("");
+        m_pFileDiffModel->setRelativeSourceName("");
+        m_pFileDiffModel->setLines(QList<CDiffLine*>());
+        m_bFileDiffFromCommit = false;
+
         return;
     }
 
     m_pFileDiffModel->setFullSourceName(sFileFullName);
     m_pFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
+    m_bFileDiffFromCommit = false;
 
     m_pCommands->unstagedFileDiff(m_sRepositoryPath, sFileFullName);
     m_pCommands->fileLog(m_sRepositoryPath, sFileFullName);
@@ -902,9 +910,18 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     }
 
     case CEnums::eUnstagedFileDiff:
+    {
+        // Drop late working tree diffs once a commit diff has been requested
+        if (not m_bFileDiffFromCommit)
+            setFileDiffString(sOutput);
+        break;
+    }
+
     case CEnums::eTwoCommitDiff:
     {
-        setFileDiffString(sOutput);
+        // Drop late commit diffs once a working tree diff has been requested
+        if (m_bFileDiffFromCommit)
+            setFileDiffString(sOutput);
         break;
     }
 
@@ -1206,9 +1223,35 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         m_pFlatFileModelProxy->filterChanged();
 
         // Check if file log must be reset
-        if (m_lRepoFiles.count() == 0)
+        if (m_bFileDiffFromCommit)
+        {
+            // A requested commit diff is independent of the working tree file
+            // list: leave it untouched so refresh never clears it
+        }
+        else if (m_lRepoFiles.count() == 0)
         {
             onCurrentFileFullName("");
+        }
+        else
+        {
+            // Resynchronize the diff with the file list: after a commit the selected
+            // file turns clean and proxy rows shift without QML currentIndexChanged,
+            // so without this the diff view keeps showing a stale diff
+            QString sCurrentDiffSource = m_pFileDiffModel->fullSourceName();
+
+            if (not sCurrentDiffSource.isEmpty())
+            {
+                CRepoFile* pCurrentFile = fileByFullName(sCurrentDiffSource);
+
+                if (pCurrentFile == nullptr || pCurrentFile->status() == CEnums::eClean)
+                {
+                    onCurrentFileFullName("");
+                }
+                else
+                {
+                    m_pCommands->unstagedFileDiff(m_sRepositoryPath, sCurrentDiffSource);
+                }
+            }
         }
 
         break;
@@ -1263,9 +1306,22 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
     {
 
     case CEnums::eUnstagedFileDiff:
+    {
+        // Drop late working tree diffs once a commit diff has been requested
+        if (not m_bFileDiffFromCommit)
+            m_pFileDiffModel->setLines(lNewLines);
+        else
+            qDeleteAll(lNewLines);
+        break;
+    }
+
     case CEnums::eTwoCommitDiff:
     {
-        m_pFileDiffModel->setLines(lNewLines);
+        // Drop late commit diffs once a working tree diff has been requested
+        if (m_bFileDiffFromCommit)
+            m_pFileDiffModel->setLines(lNewLines);
+        else
+            qDeleteAll(lNewLines);
         break;
     }
 
@@ -1313,6 +1369,7 @@ void CRepository::onDiffCommitIdChanged()
 
     if (not m_sDiffFromCommitId.isEmpty() && not m_sDiffToCommitId.isEmpty())
     {
+        m_bFileDiffFromCommit = true;
         m_pCommands->twoCommitDiff(m_sRepositoryPath, m_sDiffFromCommitId, m_sDiffToCommitId);
 
         setDiffFromCommitId("");

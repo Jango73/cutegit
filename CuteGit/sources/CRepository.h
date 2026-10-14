@@ -307,6 +307,9 @@ protected:
     //! True while a poll fingerprint command is waiting for its result
     bool m_bPollPending;
 
+    //! True when the file diff shows a requested commit diff, false for a working tree diff
+    bool m_bFileDiffFromCommit;
+
     //-------------------------------------------------------------------------------------------------
     // Protected control methods
     //-------------------------------------------------------------------------------------------------
