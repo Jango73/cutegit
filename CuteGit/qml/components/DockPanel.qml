@@ -11,7 +11,8 @@ ExtendablePane {
     property variant flatSelection: null
     property var panelDefinition: null
 
-    property var tabIds: panelDefinition !== null ? panelDefinition.tabs : []
+    property var tabIds: panelDefinition !== null && panelDefinition[Const.panelTabsKey] !== undefined
+                         ? panelDefinition[Const.panelTabsKey] : []
 
     content: [
         TabBar {
@@ -24,7 +25,7 @@ ExtendablePane {
 
                 StandardTabButton {
                     width: implicitWidth
-                    text: root.tabTitle(modelData.tabId)
+                    text: root.tabTitle(modelData[Const.panelTabIdKey])
                 }
             }
         },
@@ -49,7 +50,7 @@ ExtendablePane {
                 model: root.tabIds
 
                 Loader {
-                    source: root.tabSource(modelData.tabId)
+                    source: root.tabSource(modelData[Const.panelTabIdKey])
 
                     onLoaded: {
                         root.setupTabItem(item)
@@ -82,50 +83,16 @@ ExtendablePane {
     }
 
     function tabTitle(tabId) {
-        if (tabId === "Files")
-            return Const.filesText
-        if (tabId === "Branches")
-            return Const.branchesText
-        if (tabId === "Tags")
-            return Const.tagsText
-        if (tabId === "BranchLog")
-            return Const.branchLogText
-        if (tabId === "Graph")
-            return Const.graphText
-        if (tabId === "RefLog")
-            return Const.refLogText
-        if (tabId === "Diff")
-            return Const.diffText
-        if (tabId === "FileLog")
-            return Const.logText
-        if (tabId === "Blame")
-            return Const.blameText
-        if (tabId === "Output")
-            return Const.outputText
+        if (tabId in Const.tabTitles)
+            return Const.tabTitles[tabId]
+        console.warn("DockPanel: unknown tab identifier '" + tabId + "'")
         return tabId
     }
 
     function tabSource(tabId) {
-        if (tabId === "Files")
-            return "../tabs/FilesTab.qml"
-        if (tabId === "Branches")
-            return "../tabs/BranchesTab.qml"
-        if (tabId === "Tags")
-            return "../tabs/TagsTab.qml"
-        if (tabId === "BranchLog")
-            return "../tabs/BranchLogTab.qml"
-        if (tabId === "Graph")
-            return "../tabs/GraphTab.qml"
-        if (tabId === "RefLog")
-            return "../tabs/RefLogTab.qml"
-        if (tabId === "Diff")
-            return "../tabs/DiffTab.qml"
-        if (tabId === "FileLog")
-            return "../tabs/FileLogTab.qml"
-        if (tabId === "Blame")
-            return "../tabs/BlameTab.qml"
-        if (tabId === "Output")
-            return "../tabs/OutputTab.qml"
+        if (tabId in Const.tabSources)
+            return Const.tabSources[tabId]
+        console.warn("DockPanel: no source for unknown tab identifier '" + tabId + "'")
         return ""
     }
 
@@ -148,31 +115,35 @@ ExtendablePane {
         }
     }
 
-    function findTab(tabId) {
+    function tabIndexOf(tabId) {
         for (var index = 0; index < root.tabIds.length; index++) {
-            if (root.tabIds[index].tabId === tabId) {
-                var loader = swipeView.itemAt(index)
-                if (loader !== null)
-                    return loader.item
-                return null
-            }
+            if (root.tabIds[index][Const.panelTabIdKey] === tabId)
+                return index
         }
+        return -1
+    }
+
+    function findTab(tabId) {
+        var index = root.tabIndexOf(tabId)
+        if (index === -1)
+            return null
+        var loader = swipeView.itemAt(index)
+        if (loader !== null)
+            return loader.item
         return null
     }
 
     function activateTab(tabId) {
-        for (var index = 0; index < root.tabIds.length; index++) {
-            if (root.tabIds[index].tabId === tabId) {
-                tabBar.currentIndex = index
-                var loader = swipeView.itemAt(index)
-                if (loader !== null && loader.item !== null && loader.item !== undefined) {
-                    if ("focusTab" in loader.item)
-                        loader.item.focusTab()
-                }
-                return true
-            }
+        var index = root.tabIndexOf(tabId)
+        if (index === -1)
+            return false
+        tabBar.currentIndex = index
+        var loader = swipeView.itemAt(index)
+        if (loader !== null && loader.item !== null && loader.item !== undefined) {
+            if ("focusTab" in loader.item)
+                loader.item.focusTab()
         }
-        return false
+        return true
     }
 
     function getSelectedFiles() {

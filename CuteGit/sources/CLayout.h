@@ -10,15 +10,6 @@
 
 //-------------------------------------------------------------------------------------------------
 
-//! Single tab reference inside a panel (vocabulary: Files, Branches, Tags, BranchLog, Graph,
-//! RefLog, Diff, FileLog, Blame, Output)
-typedef struct
-{
-    QString sId;
-} SLayoutTab;
-
-//-------------------------------------------------------------------------------------------------
-
 //! Single panel of a layout, placed by relative geometry (percent of content area)
 typedef struct
 {
@@ -62,9 +53,12 @@ public:
     static QVector<SLayoutDefinition> defaultLayouts();
 
     //! Converts a layout definition to a QML friendly panel list
+    //! Variant keys below (sKey*) are the single C++ side of the C++/QML contract,
+    //! mirrored in qml/components/Const.qml (panelIdKey, panelPosXKey, ...)
     static QVariantList toVariantPanels(const SLayoutDefinition& tLayout);
 
-    //! Returns the known tab identifiers
+    //! Returns the known tab identifiers (single C++ source of the tab vocabulary,
+    //! mirrored in qml/components/Const.qml as knownTabIds)
     static QStringList knownTabIds();
 
     //-------------------------------------------------------------------------------------------------
@@ -72,6 +66,7 @@ public:
     //-------------------------------------------------------------------------------------------------
 
     static const char* sFileName;
+    static const char* sResourceFileName;
     static const char* sTagLayout;
     static const char* sTagPanel;
     static const char* sTagTab;
@@ -81,4 +76,11 @@ public:
     static const char* sAttributePosY;
     static const char* sAttributeWidth;
     static const char* sAttributeHeight;
+    static const char* sKeyPanelId;
+    static const char* sKeyPosX;
+    static const char* sKeyPosY;
+    static const char* sKeyWidth;
+    static const char* sKeyHeight;
+    static const char* sKeyTabs;
+    static const char* sKeyTabId;
 };

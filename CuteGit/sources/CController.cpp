@@ -254,17 +254,30 @@ void CController::setCurrentRepositoryIndex(int iValue)
 
 //-------------------------------------------------------------------------------------------------
 
+/************************************************************************/
+/*!
+    \fn static int clampLayoutIndex(int iValue, int iCount)
+    Clamps a layout index to the valid range, single place for the clamp logic.
+*/
+static int clampLayoutIndex(int iValue, int iCount)
+{
+    if (iCount <= 0)
+        return 0;
+    if (iValue < 0)
+        return 0;
+    if (iValue >= iCount)
+        return iCount - 1;
+    return iValue;
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CController::setCurrentLayoutIndex(int iValue)
 {
     if (m_vLayouts.isEmpty())
         return;
 
-    int iClampedValue = iValue;
-    if (iClampedValue < 0)
-        iClampedValue = 0;
-    if (iClampedValue >= m_vLayouts.count())
-        iClampedValue = m_vLayouts.count() - 1;
-
+    int iClampedValue = clampLayoutIndex(iValue, m_vLayouts.count());
     bool bIndexChanged = (m_iCurrentLayoutIndex != iClampedValue);
 
     if (bIndexChanged || m_lCurrentLayoutPanels.isEmpty())
@@ -280,19 +293,46 @@ void CController::setCurrentLayoutIndex(int iValue)
 
 void CController::reloadLayouts()
 {
-    QString sFileName = QString("%1/%2").arg(QCoreApplication::applicationDirPath()).arg(CLayout::sFileName);
+    QStringList lCandidates;
+    lCandidates << QString("%1/%2").arg(QCoreApplication::applicationDirPath()).arg(CLayout::sFileName);
+    lCandidates << QString(CLayout::sResourceFileName);
+
     QString sError;
-    m_vLayouts = CLayout::loadLayouts(sFileName, &sError);
+    QString sUsedFile;
+    QVector<SLayoutDefinition> vLayouts;
+    for (const QString& sCandidate : lCandidates)
+    {
+        QString sCandidateError;
+        QVector<SLayoutDefinition> vCandidate = CLayout::loadLayouts(sCandidate, &sCandidateError);
+        if (sCandidateError.isEmpty())
+        {
+            vLayouts = vCandidate;
+            sUsedFile = sCandidate;
+            break;
+        }
+        sError = sCandidateError;
+    }
+
+    if (vLayouts.isEmpty())
+        vLayouts = CLayout::defaultLayouts();
+    m_vLayouts = vLayouts;
 
     if (sError.isEmpty() == false)
+    {
         qWarning() << sError;
+        setStatusText(sError);
+    }
+    else if (sUsedFile.isEmpty() == false)
+    {
+        setStatusText(QString("Layouts loaded from %1").arg(sUsedFile));
+    }
 
     QStringList lNames;
     for (const SLayoutDefinition& tLayout : m_vLayouts)
         lNames << tLayout.sName;
     setLayoutNames(lNames);
 
-    int iIndex = m_iCurrentLayoutIndex;
+    int iIndex = clampLayoutIndex(m_iCurrentLayoutIndex, m_vLayouts.count());
     m_iCurrentLayoutIndex = -1;
     setCurrentLayoutIndex(iIndex);
 }

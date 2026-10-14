@@ -112,8 +112,7 @@ unix {
 
     DEPLOY_NAMES = \
         deploy/linux/qt.conf \
-        deploy/linux/CuteGit.sh \
-        deploy/layouts.json
+        deploy/linux/CuteGit.sh
 
     EXEC_NAMES = \
         CuteGit.sh
@@ -143,8 +142,7 @@ unix {
         plugins/platforms/qwindows.dll
 
     DEPLOY_NAMES = \
-        deploy/linux/qt.conf \
-        deploy/layouts.json
+        deploy/linux/qt.conf
 
     EXEC_NAMES =
 }

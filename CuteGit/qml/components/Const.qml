@@ -182,6 +182,7 @@ Item {
     readonly property string generalText: qsTr("General")
     readonly property string branchesText: qsTr("Branches")
     readonly property string layoutText: qsTr("Layout")
+    readonly property string reloadLayoutsMenuText: qsTr("Reload layouts")
     readonly property string switchToText: qsTr("Switch to")
     readonly property string rebaseOnText: qsTr("Rebase on")
     readonly property string amendingText: qsTr("Amending. The changes will be appended to the last commit...")
@@ -301,6 +302,45 @@ Item {
 
     readonly property string logLabelFrom: "[=>] "
     readonly property string logLabelTo: "[<=] "
+
+    // Descriptive layout contract, mirrors CLayout::sKey* in sources/CLayout.h
+    readonly property string panelIdKey: "panelId"
+    readonly property string panelPosXKey: "posX"
+    readonly property string panelPosYKey: "posY"
+    readonly property string panelWidthKey: "width"
+    readonly property string panelHeightKey: "height"
+    readonly property string panelTabsKey: "tabs"
+    readonly property string panelTabIdKey: "tabId"
+
+    // Single QML source of the tab vocabulary, mirrors CLayout::knownTabIds()
+    readonly property var knownTabIds: [
+        "Files", "Branches", "Tags", "BranchLog", "Graph", "RefLog",
+        "Diff", "FileLog", "Blame", "Output"
+    ]
+    readonly property var tabSources: ({
+        "Files": "../tabs/FilesTab.qml",
+        "Branches": "../tabs/BranchesTab.qml",
+        "Tags": "../tabs/TagsTab.qml",
+        "BranchLog": "../tabs/BranchLogTab.qml",
+        "Graph": "../tabs/GraphTab.qml",
+        "RefLog": "../tabs/RefLogTab.qml",
+        "Diff": "../tabs/DiffTab.qml",
+        "FileLog": "../tabs/FileLogTab.qml",
+        "Blame": "../tabs/BlameTab.qml",
+        "Output": "../tabs/OutputTab.qml"
+    })
+    readonly property var tabTitles: ({
+        "Files": filesText,
+        "Branches": branchesText,
+        "Tags": tagsText,
+        "BranchLog": branchLogText,
+        "Graph": graphText,
+        "RefLog": refLogText,
+        "Diff": diffText,
+        "FileLog": logText,
+        "Blame": blameText,
+        "Output": outputText
+    })
 
     //
     readonly property string staged: "X"

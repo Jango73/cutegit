@@ -121,10 +121,10 @@ Pane {
 
             DockPanel {
                 objectName: "dockPanel." + index
-                x: modelData.posX / 100 * contentArea.width + Const.paneMargins * 0.5
-                y: modelData.posY / 100 * contentArea.height + Const.paneMargins * 0.5
-                width: modelData.width / 100 * contentArea.width - Const.paneMargins
-                height: modelData.height / 100 * contentArea.height - Const.paneMargins
+                x: root.panelGeometry(modelData, Const.panelPosXKey, 0.0) / 100 * contentArea.width + Const.paneMargins * 0.5
+                y: root.panelGeometry(modelData, Const.panelPosYKey, 0.0) / 100 * contentArea.height + Const.paneMargins * 0.5
+                width: root.panelGeometry(modelData, Const.panelWidthKey, 100.0) / 100 * contentArea.width - Const.paneMargins
+                height: root.panelGeometry(modelData, Const.panelHeightKey, 100.0) / 100 * contentArea.height - Const.paneMargins
 
                 extensionParent: root
                 repository: root.repository
@@ -477,44 +477,58 @@ Pane {
     }
 
     function requestRebaseOnBranch(name) {
-        rebaseOnBranchAction.branchName = name
-        confirm.title = Const.rebaseOnBranchText + " " + name
-        confirm.messageText = Const.rebaseOnBranchMessage.arg(name)
-        confirm.actionOnAccept = rebaseOnBranchAction
-        confirm.actionOnReject = null
-        confirm.open()
+        root.confirmBranchAction(Const.rebaseOnBranchText + " " + name,
+                                 Const.rebaseOnBranchMessage.arg(name),
+                                 rebaseOnBranchAction, name)
     }
 
     function requestMergeBranch(name) {
-        mergeBranchAction.branchName = name
-        confirm.title = Const.mergeBranchText + " " + name
-        confirm.messageText = Const.mergeBranchMessage.arg(name)
-        confirm.actionOnAccept = mergeBranchAction
+        root.confirmBranchAction(Const.mergeBranchText + " " + name,
+                                 Const.mergeBranchMessage.arg(name),
+                                 mergeBranchAction, name)
+    }
+
+    function requestDeleteBranch(name) {
+        root.confirmBranchAction(Const.deleteBranchText + " " + name,
+                                 Const.deleteBranchMessage,
+                                 deleteBranchAction, name)
+    }
+
+    function confirmBranchAction(title, message, action, branchName) {
+        action.branchName = branchName
+        confirm.title = title
+        confirm.messageText = message
+        confirm.actionOnAccept = action
         confirm.actionOnReject = null
         confirm.open()
     }
 
-    function requestDeleteBranch(name) {
-        deleteBranchAction.branchName = name
-        confirm.title = Const.deleteBranchText + " " + name
-        confirm.messageText = Const.deleteBranchMessage
-        confirm.actionOnAccept = deleteBranchAction
-        confirm.actionOnReject = null
-        confirm.open()
+    function panelGeometry(panelData, key, fallback) {
+        if (panelData === null || panelData === undefined)
+            return fallback
+        var value = panelData[key]
+        if (value === undefined || value === null || isNaN(Number(value)))
+            return fallback
+        return Number(value)
+    }
+
+    function forEachPanel(callback) {
+        for (var index = 0; index < panelRepeater.count; index++) {
+            var panel = panelRepeater.itemAt(index)
+            if (panel !== null)
+                callback(panel)
+        }
     }
 
     function getSelectedFiles() {
         var aggregatedFiles = []
-        for (var index = 0; index < panelRepeater.count; index++) {
-            var panel = panelRepeater.itemAt(index)
-            if (panel !== null) {
-                var selectedFiles = panel.getSelectedFiles()
-                for (var fileIndex = 0; fileIndex < selectedFiles.length; fileIndex++) {
-                    if (aggregatedFiles.indexOf(selectedFiles[fileIndex]) === -1)
-                        aggregatedFiles.push(selectedFiles[fileIndex])
-                }
+        root.forEachPanel(function(panel) {
+            var selectedFiles = panel.getSelectedFiles()
+            for (var fileIndex = 0; fileIndex < selectedFiles.length; fileIndex++) {
+                if (aggregatedFiles.indexOf(selectedFiles[fileIndex]) === -1)
+                    aggregatedFiles.push(selectedFiles[fileIndex])
             }
-        }
+        })
         return aggregatedFiles
     }
 
@@ -526,13 +540,14 @@ Pane {
     }
 
     function activateTab(tabId) {
-        for (var index = 0; index < panelRepeater.count; index++) {
-            var panel = panelRepeater.itemAt(index)
-            if (panel !== null && panel.activateTab(tabId))
-                return true
-        }
-        root.reportMissingTab(tabId)
-        return false
+        var activated = false
+        root.forEachPanel(function(panel) {
+            if (activated === false && panel.activateTab(tabId))
+                activated = true
+        })
+        if (activated === false)
+            root.reportMissingTab(tabId)
+        return activated
     }
 
     function activateFlatFileView() {

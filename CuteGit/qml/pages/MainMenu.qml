@@ -466,6 +466,13 @@ MenuBar {
                 onObjectAdded: function(index, object) { layout.insertItem(index, object) }
                 onObjectRemoved: layout.removeItem(object)
             }
+
+            MenuSeparator { }
+
+            MenuItem {
+                text: Const.reloadLayoutsMenuText
+                onClicked: root.controller.reloadLayouts()
+            }
         }
     }
 }

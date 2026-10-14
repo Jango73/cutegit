@@ -54,6 +54,7 @@
         <file>qml/pages/RepoPane.qml</file>
         <file>qml/pages/ToolPane.qml</file>
 
+        <file>qml/tabs/BaseTab.qml</file>
         <file>qml/tabs/BlameTab.qml</file>
         <file>qml/tabs/BranchesTab.qml</file>
         <file>qml/tabs/BranchLogTab.qml</file>
@@ -79,6 +80,8 @@
         <file>qml/popups/ConfirmPopup.qml</file>
         <file>qml/popups/HelpPopup.qml</file>
         <file>qml/popups/TagOnPopup.qml</file>
+
+        <file>deploy/layouts.json</file>
 
         <file>qml/images/blank.svg</file>
         <file>qml/images/check.svg</file>

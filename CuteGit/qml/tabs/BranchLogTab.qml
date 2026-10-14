@@ -2,12 +2,8 @@ import QtQuick 2.12
 import "../components"
 import "../views"
 
-Item {
+BaseTab {
     id: root
-
-    property variant repository: null
-    property variant viewRoot: null
-    property variant flatSelection: null
 
     StandardTextFilter {
         id: filter

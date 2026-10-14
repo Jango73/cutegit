@@ -17,6 +17,7 @@
 */
 
 const char* CLayout::sFileName = "layouts.json";
+const char* CLayout::sResourceFileName = ":/deploy/layouts.json";
 const char* CLayout::sTagLayout = "Layout";
 const char* CLayout::sTagPanel = "Panel";
 const char* CLayout::sTagTab = "Tab";
@@ -26,6 +27,13 @@ const char* CLayout::sAttributePosX = "X";
 const char* CLayout::sAttributePosY = "Y";
 const char* CLayout::sAttributeWidth = "Width";
 const char* CLayout::sAttributeHeight = "Height";
+const char* CLayout::sKeyPanelId = "panelId";
+const char* CLayout::sKeyPosX = "posX";
+const char* CLayout::sKeyPosY = "posY";
+const char* CLayout::sKeyWidth = "width";
+const char* CLayout::sKeyHeight = "height";
+const char* CLayout::sKeyTabs = "tabs";
+const char* CLayout::sKeyTabId = "tabId";
 
 //-------------------------------------------------------------------------------------------------
 
@@ -52,14 +60,82 @@ static SLayoutPanel toPanel(const CXMLNode& xPanelNode)
     tPanel.fPosY = toPercent(xPanelNode.attributes().value(CLayout::sAttributePosY, "0"), 0.0);
     tPanel.fWidth = toPercent(xPanelNode.attributes().value(CLayout::sAttributeWidth, "100"), 100.0);
     tPanel.fHeight = toPercent(xPanelNode.attributes().value(CLayout::sAttributeHeight, "100"), 100.0);
+    const QStringList lKnownTabIds = CLayout::knownTabIds();
     CXMLNodeList lTabNodes = xPanelNode.getNodesByTagName(CLayout::sTagTab);
     for (const CXMLNode& xTabNode : lTabNodes)
     {
         QString sTabId = xTabNode.attributes().value(CLayout::sAttributeId, "");
-        if (sTabId.isEmpty() == false && CLayout::knownTabIds().contains(sTabId))
-            tPanel.lTabIds << sTabId;
+        if (sTabId.isEmpty())
+            continue;
+        if (lKnownTabIds.contains(sTabId) == false)
+        {
+            qWarning() << QString("CLayout: unknown tab identifier [%1] ignored").arg(sTabId);
+            continue;
+        }
+        tPanel.lTabIds << sTabId;
     }
     return tPanel;
+}
+
+/************************************************************************/
+/*!
+    \fn static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRoot)
+    Parses layout definitions from an already loaded JSON root node.
+*/
+static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRoot)
+{
+    QVector<SLayoutDefinition> vLayouts;
+    CXMLNodeList lLayoutNodes = xRoot.getNodesByTagName(CLayout::sTagLayout);
+    for (const CXMLNode& xLayoutNode : lLayoutNodes)
+    {
+        SLayoutDefinition tLayout;
+        tLayout.sName = xLayoutNode.attributes().value(CLayout::sAttributeName, "");
+        if (tLayout.sName.isEmpty())
+            continue;
+        CXMLNodeList lPanelNodes = xLayoutNode.getNodesByTagName(CLayout::sTagPanel);
+        for (const CXMLNode& xPanelNode : lPanelNodes)
+        {
+            SLayoutPanel tPanel = toPanel(xPanelNode);
+            if (tPanel.lTabIds.isEmpty())
+                continue;
+            tLayout.vPanels << tPanel;
+        }
+        if (tLayout.vPanels.isEmpty() == false)
+            vLayouts << tLayout;
+    }
+    return vLayouts;
+}
+
+/************************************************************************/
+/*!
+    \fn static SLayoutPanel createPanel(const QString& sId, double fPosX, double fPosY, double fWidth, double fHeight, const QStringList& lTabIds)
+    Builds a single panel without repeating member assignments at every call site.
+*/
+static SLayoutPanel createPanel(const QString& sId, double fPosX, double fPosY, double fWidth, double fHeight, const QStringList& lTabIds)
+{
+    SLayoutPanel tPanel;
+    tPanel.sId = sId;
+    tPanel.fPosX = fPosX;
+    tPanel.fPosY = fPosY;
+    tPanel.fWidth = fWidth;
+    tPanel.fHeight = fHeight;
+    tPanel.lTabIds = lTabIds;
+    return tPanel;
+}
+
+/************************************************************************/
+/*!
+    \fn static QVector<SLayoutDefinition> minimalFallbackLayouts()
+    Last resort layouts when neither the file next to the binary nor the embedded
+    resource can be loaded. A single panel holding every known tab, so no tab
+    vocabulary is duplicated here.
+*/
+static QVector<SLayoutDefinition> minimalFallbackLayouts()
+{
+    SLayoutDefinition tFallback;
+    tFallback.sName = "Fallback";
+    tFallback.vPanels << createPanel("Fallback", 0.0, 0.0, 100.0, 100.0, CLayout::knownTabIds());
+    return QVector<SLayoutDefinition>() << tFallback;
 }
 
 /************************************************************************/
@@ -75,26 +151,7 @@ QVector<SLayoutDefinition> CLayout::loadLayouts(const QString& sFileName, QStrin
         return defaultLayouts();
     }
 
-    CXMLNodeList lLayoutNodes = xRoot.getNodesByTagName(sTagLayout);
-    QVector<SLayoutDefinition> vLayouts;
-
-    for (const CXMLNode& xLayoutNode : lLayoutNodes)
-    {
-        SLayoutDefinition tLayout;
-        tLayout.sName = xLayoutNode.attributes().value(sAttributeName, "");
-        if (tLayout.sName.isEmpty())
-            continue;
-        CXMLNodeList lPanelNodes = xLayoutNode.getNodesByTagName(sTagPanel);
-        for (const CXMLNode& xPanelNode : lPanelNodes)
-        {
-            SLayoutPanel tPanel = toPanel(xPanelNode);
-            if (tPanel.lTabIds.isEmpty())
-                continue;
-            tLayout.vPanels << tPanel;
-        }
-        if (tLayout.vPanels.isEmpty() == false)
-            vLayouts << tLayout;
-    }
+    QVector<SLayoutDefinition> vLayouts = parseLayoutNodes(xRoot);
 
     if (vLayouts.isEmpty())
     {
@@ -109,81 +166,21 @@ QVector<SLayoutDefinition> CLayout::loadLayouts(const QString& sFileName, QStrin
 /************************************************************************/
 QVector<SLayoutDefinition> CLayout::defaultLayouts()
 {
-    QVector<SLayoutDefinition> vLayouts;
+    QString sError;
+    CXMLNode xRoot = CXMLNode::loadJSONFromFile(sResourceFileName, &sError);
+    if (xRoot.isEmpty() == false)
+    {
+        QVector<SLayoutDefinition> vLayouts = parseLayoutNodes(xRoot);
+        if (vLayouts.isEmpty() == false)
+            return vLayouts;
+        qWarning() << QString("CLayout: embedded layouts invalid, using minimal fallback (%1)").arg(sError);
+    }
+    else
+    {
+        qWarning() << QString("CLayout: embedded layouts not found, using minimal fallback (%1)").arg(sError);
+    }
 
-    SLayoutDefinition tClassic;
-    tClassic.sName = "Classic";
-    SLayoutPanel tFiles;
-    tFiles.sId = "Files";
-    tFiles.fPosX = 0.0;
-    tFiles.fPosY = 0.0;
-    tFiles.fWidth = 40.0;
-    tFiles.fHeight = 60.0;
-    tFiles.lTabIds << "Files";
-    tClassic.vPanels << tFiles;
-    SLayoutPanel tTools;
-    tTools.sId = "Tools";
-    tTools.fPosX = 40.0;
-    tTools.fPosY = 0.0;
-    tTools.fWidth = 40.0;
-    tTools.fHeight = 60.0;
-    tTools.lTabIds << "Diff" << "FileLog" << "Blame";
-    tClassic.vPanels << tTools;
-    SLayoutPanel tBranches;
-    tBranches.sId = "Branches";
-    tBranches.fPosX = 80.0;
-    tBranches.fPosY = 0.0;
-    tBranches.fWidth = 20.0;
-    tBranches.fHeight = 60.0;
-    tBranches.lTabIds << "Branches" << "Tags";
-    tClassic.vPanels << tBranches;
-    SLayoutPanel tLogs;
-    tLogs.sId = "Logs";
-    tLogs.fPosX = 0.0;
-    tLogs.fPosY = 60.0;
-    tLogs.fWidth = 60.0;
-    tLogs.fHeight = 40.0;
-    tLogs.lTabIds << "BranchLog" << "Graph" << "RefLog";
-    tClassic.vPanels << tLogs;
-    SLayoutPanel tOutput;
-    tOutput.sId = "Output";
-    tOutput.fPosX = 60.0;
-    tOutput.fPosY = 60.0;
-    tOutput.fWidth = 40.0;
-    tOutput.fHeight = 40.0;
-    tOutput.lTabIds << "Output";
-    tClassic.vPanels << tOutput;
-    vLayouts << tClassic;
-
-    SLayoutDefinition tSide;
-    tSide.sName = "BranchesLeft";
-    SLayoutPanel tSideBranches;
-    tSideBranches.sId = "Branches";
-    tSideBranches.fPosX = 0.0;
-    tSideBranches.fPosY = 0.0;
-    tSideBranches.fWidth = 20.0;
-    tSideBranches.fHeight = 100.0;
-    tSideBranches.lTabIds << "Branches" << "Tags";
-    tSide.vPanels << tSideBranches;
-    SLayoutPanel tSideCenter;
-    tSideCenter.sId = "Center";
-    tSideCenter.fPosX = 20.0;
-    tSideCenter.fPosY = 0.0;
-    tSideCenter.fWidth = 40.0;
-    tSideCenter.fHeight = 100.0;
-    tSideCenter.lTabIds << "Files" << "BranchLog" << "Graph" << "RefLog";
-    tSide.vPanels << tSideCenter;
-    SLayoutPanel tSideRight;
-    tSideRight.sId = "Right";
-    tSideRight.fPosX = 60.0;
-    tSideRight.fPosY = 0.0;
-    tSideRight.fWidth = 40.0;
-    tSideRight.fHeight = 100.0;
-    tSideRight.lTabIds << "Diff" << "FileLog" << "Blame" << "Output";
-    tSide.vPanels << tSideRight;
-    vLayouts << tSide;
-
-    return vLayouts;
+    return minimalFallbackLayouts();
 }
 
 /************************************************************************/
@@ -193,19 +190,19 @@ QVariantList CLayout::toVariantPanels(const SLayoutDefinition& tLayout)
     for (const SLayoutPanel& tPanel : tLayout.vPanels)
     {
         QVariantMap mPanel;
-        mPanel["panelId"] = tPanel.sId;
-        mPanel["posX"] = tPanel.fPosX;
-        mPanel["posY"] = tPanel.fPosY;
-        mPanel["width"] = tPanel.fWidth;
-        mPanel["height"] = tPanel.fHeight;
+        mPanel[sKeyPanelId] = tPanel.sId;
+        mPanel[sKeyPosX] = tPanel.fPosX;
+        mPanel[sKeyPosY] = tPanel.fPosY;
+        mPanel[sKeyWidth] = tPanel.fWidth;
+        mPanel[sKeyHeight] = tPanel.fHeight;
         QVariantList lTabs;
         for (const QString& sTabId : tPanel.lTabIds)
         {
             QVariantMap mTab;
-            mTab["tabId"] = sTabId;
+            mTab[sKeyTabId] = sTabId;
             lTabs << mTab;
         }
-        mPanel["tabs"] = lTabs;
+        mPanel[sKeyTabs] = lTabs;
         lPanels << mPanel;
     }
     return lPanels;
@@ -214,8 +211,8 @@ QVariantList CLayout::toVariantPanels(const SLayoutDefinition& tLayout)
 /************************************************************************/
 QStringList CLayout::knownTabIds()
 {
-    QStringList lTabIds;
-    lTabIds << "Files" << "Branches" << "Tags" << "BranchLog" << "Graph" << "RefLog";
-    lTabIds << "Diff" << "FileLog" << "Blame" << "Output";
+    static const QStringList lTabIds = QStringList()
+        << "Files" << "Branches" << "Tags" << "BranchLog" << "Graph" << "RefLog"
+        << "Diff" << "FileLog" << "Blame" << "Output";
     return lTabIds;
 }

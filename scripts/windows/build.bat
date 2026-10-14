@@ -118,6 +118,13 @@ if %VERBOSE_BUILD%==%VERBOSE_ENABLED% (
   make
 )
 
+rem Descriptive UI layouts live next to the binary
+if exist "%ROOT_FOLDER%CuteGit\deploy\layouts.json" (
+  if not exist "%BUILD_FOLDER%\CuteGit\bin" mkdir "%BUILD_FOLDER%\CuteGit\bin"
+  copy /y "%ROOT_FOLDER%CuteGit\deploy\layouts.json" "%BUILD_FOLDER%\CuteGit\bin\layouts.json" >nul
+  echo Copied layouts.json next to the binary.
+)
+
 echo.
 echo Built target in %BUILD_FOLDER%
 exit /b %EXIT_SUCCESS%

@@ -4,12 +4,29 @@ import QtQuick.Controls.Material 2.12
 import CuteGit 1.0
 import "../components"
 
-Item {
+BaseTab {
     id: root
 
-    property variant repository: null
-    property variant viewRoot: null
-    property variant flatSelection: null
+    Component {
+        id: branchDelegate
+
+        StandardListViewItem {
+            width: ListView.view.width
+            listView: ListView.view
+            selectionShown: root.repository !== null && model.name === root.repository.currentBranch
+            primaryText: model.name
+
+            onClicked: function(mouse) {
+                if (mouse.button === Qt.RightButton) {
+                    root.showBranchMenuFor(model.name)
+                }
+            }
+
+            onDoubleClicked: {
+                root.switchToBranch(model.name)
+            }
+        }
+    }
 
     StandardLabel {
         id: remoteBranchesLabel
@@ -27,25 +44,7 @@ Item {
         visible: count > 0
 
         model: root.repository ? root.repository.remoteBranchModel : undefined
-
-        delegate: StandardListViewItem {
-            width: ListView.view.width
-            listView: remoteBranchList
-            selectionShown: root.repository !== null && model.name === root.repository.currentBranch
-            primaryText: model.name
-
-            onClicked: function(mouse) {
-                if (mouse.button === Qt.RightButton) {
-                    root.viewRoot.showBranchMenu(model.name)
-                }
-            }
-
-            onDoubleClicked: {
-                if (root.repository.can(CEnums.SwitchBranch)) {
-                    root.repository.currentBranch = model.name
-                }
-            }
-        }
+        delegate: branchDelegate
     }
 
     Rectangle {
@@ -73,25 +72,17 @@ Item {
         visible: count > 0
 
         model: root.repository ? root.repository.localBranchModel : undefined
+        delegate: branchDelegate
+    }
 
-        delegate: StandardListViewItem {
-            width: ListView.view.width
-            listView: localBranchList
-            selectionShown: root.repository !== null && model.name === root.repository.currentBranch
-            primaryText: model.name
+    function showBranchMenuFor(branchName) {
+        if (root.viewRoot !== null)
+            root.viewRoot.showBranchMenu(branchName)
+    }
 
-            onClicked: function(mouse) {
-                if (mouse.button === Qt.RightButton) {
-                    root.viewRoot.showBranchMenu(model.name)
-                }
-            }
-
-            onDoubleClicked: {
-                if (root.repository.can(CEnums.SwitchBranch)) {
-                    root.repository.currentBranch = model.name
-                }
-            }
-        }
+    function switchToBranch(branchName) {
+        if (root.repository !== null && root.repository.can(CEnums.SwitchBranch))
+            root.repository.currentBranch = branchName
     }
 
     function focusTab() {
