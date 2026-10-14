@@ -25,6 +25,9 @@ ListView {
     /*! The size of the scroll bar */
     property int scrollBarWidth: Const.mainPadding * 2
 
+    /*! Rows moved by PageUp and PageDown */
+    property int pageStep: 5
+
     /*! If true, list is empty */
     readonly property bool empty: count === 0
 
@@ -86,11 +89,11 @@ ListView {
             event.accepted = true
         }
         else if (event.key === Qt.Key_PageUp) {
-            handleKeyboardMovement(event, currentIndex - 5)
+            handleKeyboardMovement(event, currentIndex - pageStep)
             event.accepted = true
         }
         else if (event.key === Qt.Key_PageDown) {
-            handleKeyboardMovement(event, currentIndex + 5)
+            handleKeyboardMovement(event, currentIndex + pageStep)
             event.accepted = true
         }
         else if (event.key === Qt.Key_Home) {
@@ -119,6 +122,9 @@ ListView {
             if (event.modifiers & Qt.ControlModifier) {
                 if (selection)
                     selectAll()
+                // Consumed here: without this the event reaches other
+                // views, while a focused text field keeps its own handling
+                event.accepted = true
             }
         }
     }
@@ -142,7 +148,7 @@ ListView {
 
     /*! Sets a model index for the specified integer index */
     function updateModelIndex(index) {
-        modelIndices[index] = model.index(index, 0)
+        modelIndices[index] = model.index(index, Const.firstColumn)
     }
 
     /*! Selects items based on keyboard movements */

@@ -88,6 +88,10 @@ const QString CGitCommands::sCommandTagCommit           = "git rev-list -n 1 --a
 const QString CGitCommands::sCommandTwoCommitDiff       = "git diff --no-color --ignore-all-space \"%1\" \"%2\"";
 const QString CGitCommands::sCommandUnstage             = "git reset HEAD \"%1\"";
 const QString CGitCommands::sCommandUnstageAll          = "git reset .";
+// File diffs carry 3 context lines (-U3) so hunks stay applicable after
+// partial staging drops unselected lines. Patch application tolerates
+// zero-context hunks (--unidiff-zero) for the same reason: kept hunks
+// hold only selected changes plus kept context.
 const QString CGitCommands::sCommandUnstagedDiff        = "git diff --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";

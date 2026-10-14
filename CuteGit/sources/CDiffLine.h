@@ -11,6 +11,7 @@
 
 // Application
 #include "CEnums.h"
+#include "CDiffConstants.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -38,5 +39,5 @@ public:
     // Constructor & destructor
     //-------------------------------------------------------------------------------------------------
 
-    CDiffLine() : m_eOperation(CEnums::None), m_iHunkId(-1), m_iOldLineNumber(-1), m_iNewLineNumber(-1) {}
+    CDiffLine() : m_eOperation(CEnums::None), m_iHunkId(CDiffConstants::iInvalidHunkId), m_iOldLineNumber(CDiffConstants::iNoLineNumber), m_iNewLineNumber(CDiffConstants::iNoLineNumber) {}
 };

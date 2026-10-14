@@ -70,7 +70,7 @@ StandardListView {
     }
 
     Connections {
-        target: root.model
+        target: root.model ? root.model : null
         function onModelReset() {
             if (root.selection)
                 root.selection.clear()

@@ -2,7 +2,6 @@
 // Qt
 #include <QDir>
 #include <QTemporaryFile>
-#include <QUrl>
 
 // Application
 #include "CRepository.h"
@@ -14,10 +13,7 @@
 
 void CRepository::saveFileDiffAsPatch(const QString& sFullName)
 {
-    QString sFile = sFullName;
-
-    if (sFile.startsWith("file:"))
-        sFile = QUrl(sFile).toLocalFile();
+    QString sFile = CUtils::localFilePath(sFullName);
 
     if (fileDiffFromCommit())
         CUtils::setTextFileContents(sFile, m_sFileDiffString);
@@ -45,10 +41,7 @@ void CRepository::saveFileDiffAsPatch(const QString& sFullName)
 
 void CRepository::patchApply(const QString& sFullName)
 {
-    QString sFile = sFullName;
-
-    if (sFile.startsWith("file:"))
-        sFile = QUrl(sFile).toLocalFile();
+    QString sFile = CUtils::localFilePath(sFullName);
 
     m_pCommands->patchApply(m_sRepositoryPath, sFile);
 }
@@ -182,7 +175,7 @@ void CRepository::applyDiffSourceRows(CDiffModel* pModel, const QSet<int>& sSele
         return;
     }
 
-    QTemporaryFile tPatchFile(QString("%1/CuteGitStageXXXXXX.patch").arg(QDir::tempPath()));
+    QTemporaryFile tPatchFile(CDiffConstants::sStagePatchFileTemplate.arg(QDir::tempPath()));
 
     if (not tPatchFile.open())
     {
@@ -226,7 +219,7 @@ void CRepository::applyDiffHunk(CDiffModel* pModel, CDiffModelProxy* pProxy, int
 
     for (int iSourceRow : CPatchBuilder::selectableSourceRowsForHunk(pModel, iHunkId))
     {
-        QModelIndex tSourceIndex = pModel->index(iSourceRow, 0);
+        QModelIndex tSourceIndex = pModel->index(iSourceRow, CDiffConstants::iFirstColumn);
 
         if (not pProxy->mapFromSource(tSourceIndex).isValid())
             continue;

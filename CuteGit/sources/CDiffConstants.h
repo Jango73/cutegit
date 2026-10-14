@@ -36,6 +36,20 @@ public:
     static const QString sDiffDeletedHeaderPrefix;
     static const QString sDiffIndexPrefix;
     static const QString sDiffNoNewlinePrefix;
+    static const QString sDiffContextPrefix;
+
+    //-------------------------------------------------------------------------------------------------
+    // Patch blocks shared by patch generation
+    //-------------------------------------------------------------------------------------------------
+
+    static const QString sNullFileName;
+    static const QString sPatchOldSideFormat;
+    static const QString sPatchNewSideFormat;
+    static const QString sPatchDiffHeaderFormat;
+    static const QString sPatchOldHeaderFormat;
+    static const QString sPatchNewHeaderFormat;
+    static const QString sPatchHunkHeaderFormat;
+    static const QString sStagePatchFileTemplate;
 
     //-------------------------------------------------------------------------------------------------
     // Diff file name pattern capture
@@ -49,4 +63,6 @@ public:
 
     static const int iInvalidHunkId;
     static const int iNoLineNumber;
+    static const int iDiffPrefixLength;
+    static const int iFirstColumn;
 };

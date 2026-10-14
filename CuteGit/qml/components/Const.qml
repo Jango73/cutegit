@@ -168,10 +168,12 @@ Item {
     // Diff selection sentinels, header prefixes and pane weights (no magic literals in views)
     readonly property int invalidHunkId: -1
     readonly property int invalidRow: -1
+    readonly property int firstColumn: 0
     readonly property string collapsedHeaderPrefix: "▶ "
     readonly property string expandedHeaderPrefix: "▼ "
     readonly property int unstagedDiffStretch: 2
     readonly property int stagedDiffStretch: 1
+    readonly property string diffSectionCountText: qsTr("%1 (%2)")
 
     /*! True when a repository holds a staging index (Git family types are passed by callers) */
     function supportsStaging(repository, gitType, gerritType) {

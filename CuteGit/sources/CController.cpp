@@ -10,6 +10,7 @@
 // Application
 #include "CController.h"
 #include "CLayout.h"
+#include "CUtils.h"
 #include "Strings.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -657,8 +658,7 @@ void CController::quit()
 
 void CController::cloneRepository(QString sRepositoryURL, QString sRepositoryPath)
 {
-    if (sRepositoryPath.startsWith("file:"))
-        sRepositoryPath = QUrl(sRepositoryPath).toLocalFile();
+    sRepositoryPath = CUtils::localFilePath(sRepositoryPath);
 
     CEnums::ERepositoryType eType = CRepository::getRepositoryTypeFromURL(sRepositoryURL);
 
@@ -683,8 +683,7 @@ void CController::cloneRepository(QString sRepositoryURL, QString sRepositoryPat
 
 void CController::openRepository(QString sRepositoryPath)
 {
-    if (sRepositoryPath.startsWith("file:"))
-        sRepositoryPath = QUrl(sRepositoryPath).toLocalFile();
+    sRepositoryPath = CUtils::localFilePath(sRepositoryPath);
 
     if (m_pOpenRepositoryModel->hasRepository(sRepositoryPath))
         return;

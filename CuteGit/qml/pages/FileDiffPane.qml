@@ -121,7 +121,7 @@ Item {
         StandardLabel {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignLeft
-            text: Const.unstagedDiffText + " (" + unstagedDiffView.count + ")"
+            text: Const.diffSectionCountText.arg(Const.unstagedDiffText).arg(unstagedDiffView.count)
         }
 
         WorkingTreeDiffView {
@@ -150,7 +150,7 @@ Item {
         StandardLabel {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignLeft
-            text: Const.stagedDiffText + " (" + stagedDiffView.count + ")"
+            text: Const.diffSectionCountText.arg(Const.stagedDiffText).arg(stagedDiffView.count)
             visible: root.stagingSupported
         }
 

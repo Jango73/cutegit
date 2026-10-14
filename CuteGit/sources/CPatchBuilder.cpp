@@ -47,7 +47,7 @@ QSet<int> CPatchBuilder::sourceRowsFromProxyRows(CDiffModelProxy* pProxy, CDiffM
         if (not bConverted)
             continue;
 
-        QModelIndex tProxyIndex = pProxy->index(iProxyRow, 0);
+        QModelIndex tProxyIndex = pProxy->index(iProxyRow, CDiffConstants::iFirstColumn);
         if (not tProxyIndex.isValid())
             continue;
 
@@ -206,7 +206,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
                 }
                 else
                 {
-                    lKeptLines << (QString(" ") + sText.mid(1));
+                    lKeptLines << (CDiffConstants::sDiffContextPrefix + sText.mid(CDiffConstants::iDiffPrefixLength));
                     iOldCount++;
                     iNewCount++;
                 }
@@ -214,7 +214,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
 
             default:
                 lKeptLines << sText;
-                if (sText.startsWith("\\"))
+                if (sText.startsWith(CDiffConstants::sDiffNoNewlinePrefix))
                     break;
                 iOldCount++;
                 iNewCount++;
@@ -229,7 +229,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
         QRegularExpressionMatch tMatch = tHunkRegExp.match(sOriginalHeader);
 
         // Unparseable headers are kept verbatim: rebuilding them with 0
-        // starts would wrongly switch patch sides to /dev/null
+        // starts would wrongly switch patch sides to the null file
         if (not tMatch.hasMatch())
         {
             bAllOldStartZero = false;
@@ -257,7 +257,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
         if (iOriginalNewStart == iNullHunkStart)
             iAdjustedNewStart = iNullHunkStart;
 
-        QString sNewHeader = QString("@@ -%1,%2 +%3,%4 @@%5").arg(iOriginalOldStart).arg(iOldCount).arg(iAdjustedNewStart).arg(iNewCount).arg(sSection);
+        QString sNewHeader = CDiffConstants::sPatchHunkHeaderFormat.arg(iOriginalOldStart).arg(iOldCount).arg(iAdjustedNewStart).arg(iNewCount).arg(sSection);
 
         lPatchHunks << sNewHeader;
         lPatchHunks << lKeptLines;
@@ -269,13 +269,13 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
     if (not bAtLeastOneHunk)
         return QString();
 
-    QString sOldSide = bAllOldStartZero ? QString("/dev/null") : QString("a/%1").arg(sRelativeName);
-    QString sNewSide = bAllNewStartZero ? QString("/dev/null") : QString("b/%1").arg(sRelativeName);
+    QString sOldSide = bAllOldStartZero ? CDiffConstants::sNullFileName : CDiffConstants::sPatchOldSideFormat.arg(sRelativeName);
+    QString sNewSide = bAllNewStartZero ? CDiffConstants::sNullFileName : CDiffConstants::sPatchNewSideFormat.arg(sRelativeName);
 
     QStringList lPatch;
-    lPatch << QString("diff --git a/%1 b/%1").arg(sRelativeName);
-    lPatch << QString("--- %1").arg(sOldSide);
-    lPatch << QString("+++ %1").arg(sNewSide);
+    lPatch << CDiffConstants::sPatchDiffHeaderFormat.arg(sRelativeName);
+    lPatch << CDiffConstants::sPatchOldHeaderFormat.arg(sOldSide);
+    lPatch << CDiffConstants::sPatchNewHeaderFormat.arg(sNewSide);
     lPatch << lPatchHunks;
 
     return lPatch.join(NEW_LINE) + NEW_LINE;
