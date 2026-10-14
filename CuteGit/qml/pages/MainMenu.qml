@@ -448,5 +448,24 @@ MenuBar {
                 onObjectRemoved: language.removeItem(object)
             }
         }
+
+        Menu {
+            id: layout
+            title: Const.layoutText
+
+            Instantiator {
+                model: root.controller.layoutNames
+
+                MenuItem {
+                    text: modelData
+                    checkable: true
+                    checked: root.controller.currentLayoutIndex === index
+                    onClicked: root.controller.currentLayoutIndex = index
+                }
+
+                onObjectAdded: function(index, object) { layout.insertItem(index, object) }
+                onObjectRemoved: layout.removeItem(object)
+            }
+        }
     }
 }

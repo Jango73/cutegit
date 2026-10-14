@@ -121,4 +121,10 @@ else
   make -j"$(nproc)"
 fi
 
+# Descriptive UI layouts live next to the binary
+if [ -f "${ROOT_DIR}/CuteGit/deploy/layouts.json" ]; then
+  cp "${ROOT_DIR}/CuteGit/deploy/layouts.json" "${BUILD_DIR}/CuteGit/bin/layouts.json"
+  echo "Copied layouts.json next to the binary."
+fi
+
 printf '\nBuilt target in %s\n' "${BUILD_DIR}"

@@ -181,6 +181,7 @@ Item {
     readonly property string loadingText: qsTr("Loading...")
     readonly property string generalText: qsTr("General")
     readonly property string branchesText: qsTr("Branches")
+    readonly property string layoutText: qsTr("Layout")
     readonly property string switchToText: qsTr("Switch to")
     readonly property string rebaseOnText: qsTr("Rebase on")
     readonly property string amendingText: qsTr("Amending. The changes will be appended to the last commit...")

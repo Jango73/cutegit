@@ -1,0 +1,106 @@
+{
+    "Layout": [
+        {
+            "Name": "Classic",
+            "Panel": [
+                {
+                    "Id": "Files",
+                    "X": "0",
+                    "Y": "0",
+                    "Width": "40",
+                    "Height": "60",
+                    "Tab": [
+                        { "Id": "Files" }
+                    ]
+                },
+                {
+                    "Id": "Tools",
+                    "X": "40",
+                    "Y": "0",
+                    "Width": "40",
+                    "Height": "60",
+                    "Tab": [
+                        { "Id": "Diff" },
+                        { "Id": "FileLog" },
+                        { "Id": "Blame" }
+                    ]
+                },
+                {
+                    "Id": "Branches",
+                    "X": "80",
+                    "Y": "0",
+                    "Width": "20",
+                    "Height": "60",
+                    "Tab": [
+                        { "Id": "Branches" },
+                        { "Id": "Tags" }
+                    ]
+                },
+                {
+                    "Id": "Logs",
+                    "X": "0",
+                    "Y": "60",
+                    "Width": "60",
+                    "Height": "40",
+                    "Tab": [
+                        { "Id": "BranchLog" },
+                        { "Id": "Graph" },
+                        { "Id": "RefLog" }
+                    ]
+                },
+                {
+                    "Id": "Output",
+                    "X": "60",
+                    "Y": "60",
+                    "Width": "40",
+                    "Height": "40",
+                    "Tab": [
+                        { "Id": "Output" }
+                    ]
+                }
+            ]
+        },
+        {
+            "Name": "BranchesLeft",
+            "Panel": [
+                {
+                    "Id": "Branches",
+                    "X": "0",
+                    "Y": "0",
+                    "Width": "20",
+                    "Height": "100",
+                    "Tab": [
+                        { "Id": "Branches" },
+                        { "Id": "Tags" }
+                    ]
+                },
+                {
+                    "Id": "Center",
+                    "X": "20",
+                    "Y": "0",
+                    "Width": "40",
+                    "Height": "100",
+                    "Tab": [
+                        { "Id": "Files" },
+                        { "Id": "BranchLog" },
+                        { "Id": "Graph" },
+                        { "Id": "RefLog" }
+                    ]
+                },
+                {
+                    "Id": "Right",
+                    "X": "60",
+                    "Y": "0",
+                    "Width": "40",
+                    "Height": "100",
+                    "Tab": [
+                        { "Id": "Diff" },
+                        { "Id": "FileLog" },
+                        { "Id": "Blame" },
+                        { "Id": "Output" }
+                    ]
+                }
+            ]
+        }
+    ]
+}

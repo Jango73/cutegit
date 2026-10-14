@@ -14,6 +14,7 @@
 #include "CXMLNode.h"
 
 // Application
+#include "CLayout.h"
 #include "CRepositoryModel.h"
 #include "CRepository.h"
 
@@ -54,6 +55,11 @@ class CController : public QObject
     Q_FAST_PROPERTY(QString, s, statusText, StatusText)
     Q_FAST_PROPERTY(QString, s, theme, Theme)
     Q_FAST_PROPERTY(QString, s, stubFileName, StubFileName)
+
+    // Descriptive UI layouts loaded from layouts.json next to the binary
+    Q_FAST_PROPERTY(QStringList, l, layoutNames, LayoutNames)
+    Q_FAST_PROPERTY_NO_SET_IMPL(int, i, currentLayoutIndex, CurrentLayoutIndex)
+    Q_FAST_PROPERTY(QVariantList, l, currentLayoutPanels, CurrentLayoutPanels)
 
     Q_FAST_PROPERTY_NO_SET_IMPL(int, i, currentRepositoryIndex, CurrentRepositoryIndex)
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showClean, ShowClean)
@@ -152,6 +158,9 @@ public:
     //! Opens a native folder selection dialog and returns the selected path
     Q_INVOKABLE QString browseForExistingFolder(QString sTitle);
 
+    //! Reloads descriptive layouts from layouts.json next to the binary
+    Q_INVOKABLE void reloadLayouts();
+
     //!
     Q_INVOKABLE void removeRepository(int iRepositoryIndex);
 
@@ -192,6 +201,8 @@ protected:
     QTranslator*            m_pTranslator;
 
     QString                 m_sCurrentRepositoryPath;       // This is temporary, used for tab index
+
+    QVector<SLayoutDefinition> m_vLayouts;
 
     static const QString    m_sSharedKey;
 };

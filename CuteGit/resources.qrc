@@ -10,6 +10,7 @@
         <file>qml/components/ClosableTabButton.qml</file>
         <file>qml/components/Const.qml</file>
         <file>qml/components/DatePicker.qml</file>
+        <file>qml/components/DockPanel.qml</file>
         <file>qml/components/ElideText.qml</file>
         <file>qml/components/ExtendablePane.qml</file>
         <file>qml/components/FocusIndicator.qml</file>
@@ -52,6 +53,17 @@
         <file>qml/pages/OutputPane.qml</file>
         <file>qml/pages/RepoPane.qml</file>
         <file>qml/pages/ToolPane.qml</file>
+
+        <file>qml/tabs/BlameTab.qml</file>
+        <file>qml/tabs/BranchesTab.qml</file>
+        <file>qml/tabs/BranchLogTab.qml</file>
+        <file>qml/tabs/DiffTab.qml</file>
+        <file>qml/tabs/FileLogTab.qml</file>
+        <file>qml/tabs/FilesTab.qml</file>
+        <file>qml/tabs/GraphTab.qml</file>
+        <file>qml/tabs/OutputTab.qml</file>
+        <file>qml/tabs/RefLogTab.qml</file>
+        <file>qml/tabs/TagsTab.qml</file>
 
         <file>qml/views/DiffView.qml</file>
         <file>qml/views/BlameView.qml</file>

@@ -2,6 +2,7 @@
 // Qt
 #include <QDebug>
 #include <QApplication>
+#include <QCoreApplication>
 #include <QDir>
 #include <QUrl>
 #include <QFileDialog>
@@ -9,6 +10,7 @@
 
 // Application
 #include "CController.h"
+#include "CLayout.h"
 #include "Strings.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -65,6 +67,7 @@ const QString sParamLastBrowsedRepositoryURL = "LastBrowsedRepositoryURL";
 const QString sParamLastBrowsedRepositoryPath = "LastBrowsedRepositoryPath";
 const QString sParamLanguage = "Language";
 const QString sParamTheme = "Theme";
+const QString sParamLayoutIndex = "LayoutIndex";
 const QString sThemeMaterialDark = "MaterialDark";
 const QString sThemeMaterialLight = "MaterialLight";
 
@@ -83,6 +86,9 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_sLanguage("en")
     , m_sTheme(sThemeMaterialDark)
     , m_sStubFileName(sStubFileName)
+    , m_lLayoutNames()
+    , m_iCurrentLayoutIndex(0)
+    , m_lCurrentLayoutPanels()
     , m_iCurrentRepositoryIndex(-1)
     , m_bShowClean(false)
     , m_bShowAdded(true)
@@ -111,6 +117,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     lLang << "zh (中文)";
     m_pLangModel->setStringList(lLang);
 
+    reloadLayouts();
     loadConfiguration();
 
     if (m_tShared.create(SHARED_MEMORY_MAX))
@@ -148,6 +155,9 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_pOpenRepositoryModel(nullptr)
     , m_pCurrentRepository(nullptr)
     , m_sStubFileName(sStubFileName)
+    , m_lLayoutNames()
+    , m_iCurrentLayoutIndex(0)
+    , m_lCurrentLayoutPanels()
     , m_iCurrentRepositoryIndex(-1)
     , m_bShowClean(false)
     , m_bShowAdded(true)
@@ -240,6 +250,49 @@ void CController::setCurrentRepositoryIndex(int iValue)
             setCurrentRepository(nullptr);
         }
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CController::setCurrentLayoutIndex(int iValue)
+{
+    if (m_vLayouts.isEmpty())
+        return;
+
+    int iClampedValue = iValue;
+    if (iClampedValue < 0)
+        iClampedValue = 0;
+    if (iClampedValue >= m_vLayouts.count())
+        iClampedValue = m_vLayouts.count() - 1;
+
+    if (m_iCurrentLayoutIndex != iClampedValue)
+    {
+        m_iCurrentLayoutIndex = iClampedValue;
+        emit currentLayoutIndexChanged();
+    }
+
+    setCurrentLayoutPanels(CLayout::toVariantPanels(m_vLayouts[m_iCurrentLayoutIndex]));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CController::reloadLayouts()
+{
+    QString sFileName = QString("%1/%2").arg(QCoreApplication::applicationDirPath()).arg(CLayout::sFileName);
+    QString sError;
+    m_vLayouts = CLayout::loadLayouts(sFileName, &sError);
+
+    if (sError.isEmpty() == false)
+        qWarning() << sError;
+
+    QStringList lNames;
+    for (const SLayoutDefinition& tLayout : m_vLayouts)
+        lNames << tLayout.sName;
+    setLayoutNames(lNames);
+
+    int iIndex = m_iCurrentLayoutIndex;
+    m_iCurrentLayoutIndex = -1;
+    setCurrentLayoutIndex(iIndex);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -467,6 +520,11 @@ void CController::saveConfiguration()
     xTheme.attributes()[sParamName] = m_sTheme;
     xConfig << xTheme;
 
+    // Save layout index
+    CXMLNode xLayout(sParamLayoutIndex);
+    xLayout.attributes()[sParamName] = QString::number(m_iCurrentLayoutIndex);
+    xConfig << xLayout;
+
     xConfig.saveXMLToFile(configFileName());
 }
 
@@ -514,6 +572,13 @@ void CController::loadConfiguration()
     m_sTheme = xTheme.attributes()[sParamName];
     if (m_sTheme != sThemeMaterialDark && m_sTheme != sThemeMaterialLight)
         m_sTheme = sThemeMaterialDark;
+
+    // Load layout index
+    CXMLNode xLayout = xConfig.getNodeByTagName(sParamLayoutIndex);
+    bool bLayoutConversionSucceeded = false;
+    int iLayoutIndex = xLayout.attributes()[sParamName].toInt(&bLayoutConversionSucceeded);
+    if (bLayoutConversionSucceeded)
+        setCurrentLayoutIndex(iLayoutIndex);
 }
 
 //-------------------------------------------------------------------------------------------------

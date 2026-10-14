@@ -37,6 +37,11 @@ mkdir -p "${PKG_DIR}"
 # Copy executable
 cp "${EXECUTABLE_PATH}" "${PKG_DIR}/"
 
+# Copy descriptive UI layouts next to the binary
+if [[ -f "${ROOT_DIR}/CuteGit/deploy/layouts.json" ]]; then
+    cp "${ROOT_DIR}/CuteGit/deploy/layouts.json" "${PKG_DIR}/"
+fi
+
 # Copy deploy files if they exist
 if [[ -d "${ROOT_DIR}/CuteGit/deploy/linux" ]]; then
     cp -r "${ROOT_DIR}/CuteGit/deploy/linux/"* "${PKG_DIR}/" 2>/dev/null || true

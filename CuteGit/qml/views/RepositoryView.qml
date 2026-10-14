@@ -13,7 +13,9 @@ Pane {
     id: root
     padding: Const.panePadding
 
+    property variant controller: null
     property variant repository: null
+    property string branchName: ""
 
     //--------------------------------------------------------------------------------
     // Status
@@ -22,7 +24,7 @@ Pane {
         id: repositoryStatus
         objectName: "repositoryStatus"
         anchors.left: parent.left
-        anchors.right: rightPart.left
+        anchors.right: parent.right
         anchors.top: parent.top
         height: (Const.elementHeight * 1.5) * 2
 
@@ -88,195 +90,80 @@ Pane {
     }
 
     //--------------------------------------------------------------------------------
-    // File view and tools
+    // File selection shared by every Files tab of every panel
+
+    ItemSelectionModel {
+        id: flatFileSelection
+        objectName: "flatFileSelection"
+        model: root.repository ? root.repository.flatFileModelProxy : null
+
+        onCurrentIndexChanged: {
+            root.repository.flatFileModelProxy.handleCurrentIndex(currentIndex)
+        }
+    }
+
+    //--------------------------------------------------------------------------------
+    // Dynamic panels driven by the descriptive layout
 
     Item {
-        id: centralPart
-        objectName: "centralPart"
+        id: contentArea
+        objectName: "contentArea"
         anchors.top: repositoryStatus.bottom
-        anchors.bottom: bottomPart.top
-        anchors.left: parent.left
-        anchors.right: rightPart.left
-
-        ItemSelectionModel {
-            id: flatFileSelection
-            objectName: "flatFileSelection"
-            model: root.repository ? root.repository.flatFileModelProxy : null
-
-            onCurrentIndexChanged: {
-                root.repository.flatFileModelProxy.handleCurrentIndex(currentIndex)
-            }
-        }
-    }
-
-    FilePane {
-        id: filePane
-        objectName: "filePane"
-        anchors.top: centralPart.top
-        anchors.bottom: centralPart.bottom
-        anchors.left: centralPart.left
-        width: centralPart.width * 0.5
-        anchors.margins: Const.paneMargins
-
-        extensionParent: root
-        repository: root.repository
-        flatSelection: flatFileSelection
-
-        onRequestMenu: {
-            fileMenu.fileNames = fileNames
-            fileMenu.popup()
-        }
-
-        onRequestDeleteFiles: root.requestDeleteFiles(fileNames)
-        onRequestFileFilter: function(text) { root.repository.setFileFilter(text) }
-        onRequestFileSortField: function(field) { root.repository.setFileSortField(field) }
-        onRequestFileSortDirection: function(direction) { root.repository.setFileSortDirection(direction) }
-    }
-
-    ToolPane {
-        id: toolPane
-        objectName: "toolPane"
-        anchors.top: centralPart.top
-        anchors.bottom: centralPart.bottom
-        anchors.left: filePane.right
-        anchors.right: centralPart.right
-        anchors.margins: Const.paneMargins
-
-        extensionParent: root
-        repository: root.repository
-
-        onRequestDiffMenu: {
-            diffMenu.operation = operation
-            diffMenu.text = text
-            diffMenu.popup()
-        }
-
-        onRequestSaveFileDiffAsPatch: {
-            root.requestPatchSave()
-        }
-
-        onRequestLogMenu: {
-            logMenu.commitId = commitId
-            logMenu.commitMessage = message
-            logMenu.popup()
-        }
-
-        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
-    }
-
-    Item {
-        id: rightPart
-        objectName: "rightPart"
-        anchors.top: parent.top
-        anchors.bottom: bottomPart.top
-        anchors.right: parent.right
-        width: parent.width * 0.2
-
-        BranchPane {
-            id: branchPane
-            objectName: "branchPane"
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-
-            repository: root.repository
-
-            onRequestRebaseOnBranch: {
-                rebaseOnBranchAction.branchName = name
-                confirm.title = Const.rebaseOnBranchText + " " + name
-                confirm.messageText = Const.rebaseOnBranchMessage.arg(name)
-                confirm.actionOnAccept = rebaseOnBranchAction
-                confirm.actionOnReject = null
-                confirm.open()
-            }
-
-            onRequestMergeBranch: {
-                mergeBranchAction.branchName = name
-                confirm.title = Const.mergeBranchText + " " + name
-                confirm.messageText = Const.mergeBranchMessage.arg(name)
-                confirm.actionOnAccept = mergeBranchAction
-                confirm.actionOnReject = null
-                confirm.open()
-            }
-
-            onRequestDeleteBranch: {
-                deleteBranchAction.branchName = name
-                confirm.title = Const.deleteBranchText + " " + name
-                confirm.messageText = Const.deleteBranchMessage
-                confirm.actionOnAccept = deleteBranchAction
-                confirm.actionOnReject = null
-                confirm.open()
-            }
-
-            Action {
-                id: rebaseOnBranchAction
-                property string branchName: ""
-                onTriggered: root.repository.rebaseOnBranch(branchName)
-            }
-
-            Action {
-                id: mergeBranchAction
-                property string branchName: ""
-                onTriggered: root.repository.mergeBranch(branchName)
-            }
-
-            Action {
-                id: deleteBranchAction
-                property string branchName: ""
-                onTriggered: root.repository.deleteBranch(branchName)
-            }
-        }
-    }
-
-    Item {
-        id: bottomPart
-        objectName: "bottomPart"
-        anchors.left: parent.left
-        anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: parent.height * 0.4
-    }
+        anchors.left: parent.left
+        anchors.right: parent.right
 
-    BranchLogPane {
-        id: branchLogPane
-        objectName: "branchLogPane"
-        anchors.top: bottomPart.top
-        anchors.bottom: bottomPart.bottom
-        anchors.left: bottomPart.left
-        width: bottomPart.width * 0.6
+        Repeater {
+            id: panelRepeater
+            objectName: "panelRepeater"
+            model: root.controller ? root.controller.currentLayoutPanels : []
 
-        extensionParent: root
-        repository: root.repository
+            DockPanel {
+                objectName: "dockPanel." + index
+                x: modelData.posX / 100 * contentArea.width + Const.paneMargins * 0.5
+                y: modelData.posY / 100 * contentArea.height + Const.paneMargins * 0.5
+                width: modelData.width / 100 * contentArea.width - Const.paneMargins
+                height: modelData.height / 100 * contentArea.height - Const.paneMargins
 
-        onRequestMenu: {
-            logMenu.commitId = commitId
-            logMenu.commitMessage = message
-            logMenu.popup()
-        }
-
-        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
-
-        onRequestTextFilter: {
-            root.repository.setBranchLogFilter(text)
+                extensionParent: root
+                repository: root.repository
+                flatSelection: flatFileSelection
+                viewRoot: root
+                panelDefinition: modelData
+            }
         }
     }
 
-    OutputPane {
-        id: outputPane
-        objectName: "outputPane"
-        anchors.top: bottomPart.top
-        anchors.bottom: bottomPart.bottom
-        anchors.left: branchLogPane.right
-        anchors.right: bottomPart.right
-        anchors.margins: Const.paneMargins
+    //--------------------------------------------------------------------------------
+    // Menus
 
-        extensionParent: root
+    BranchMenu {
+        id: branchMenu
+        objectName: "branchMenu"
         repository: root.repository
+
+        onRequestSwitchToBranch: root.repository.currentBranch = root.branchName
+        onRequestRebaseOnBranch: root.requestRebaseOnBranch(root.branchName)
+        onRequestMergeBranch: root.requestMergeBranch(root.branchName)
+        onRequestDeleteBranch: root.requestDeleteBranch(root.branchName)
+    }
+
+    Action {
+        id: rebaseOnBranchAction
+        property string branchName: ""
+        onTriggered: root.repository.rebaseOnBranch(branchName)
+    }
+
+    Action {
+        id: mergeBranchAction
+        property string branchName: ""
+        onTriggered: root.repository.mergeBranch(branchName)
+    }
+
+    Action {
+        id: deleteBranchAction
+        property string branchName: ""
+        onTriggered: root.repository.deleteBranch(branchName)
     }
 
     //--------------------------------------------------------------------------------
@@ -486,15 +373,15 @@ Pane {
     }
 
     function requestStageSelection() {
-        root.repository.stageSelection(filePane.getSelectedFiles())
+        root.repository.stageSelection(root.getSelectedFiles())
     }
 
     function requestUnstageSelection() {
-        root.repository.unstageSelection(filePane.getSelectedFiles())
+        root.repository.unstageSelection(root.getSelectedFiles())
     }
 
     function requestRevertSelection() {
-        root.repository.revertSelection(filePane.getSelectedFiles())
+        root.repository.revertSelection(root.getSelectedFiles())
     }
 
     function requestStashSave() {
@@ -559,23 +446,94 @@ Pane {
         fileDialog.open()
     }
 
+    function showFileMenu(fileNames) {
+        fileMenu.fileNames = fileNames
+        fileMenu.popup()
+    }
+
+    function showDiffMenu(operation, text) {
+        diffMenu.operation = operation
+        diffMenu.text = text
+        diffMenu.popup()
+    }
+
+    function showLogMenu(commitId, message) {
+        logMenu.commitId = commitId
+        logMenu.commitMessage = message
+        logMenu.popup()
+    }
+
+    function showBranchMenu(name) {
+        root.branchName = name
+        branchMenu.canRebaseOn = (name !== root.repository.currentBranch)
+        branchMenu.canMerge = (name !== root.repository.currentBranch)
+        branchMenu.popup()
+    }
+
+    function requestRebaseOnBranch(name) {
+        rebaseOnBranchAction.branchName = name
+        confirm.title = Const.rebaseOnBranchText + " " + name
+        confirm.messageText = Const.rebaseOnBranchMessage.arg(name)
+        confirm.actionOnAccept = rebaseOnBranchAction
+        confirm.actionOnReject = null
+        confirm.open()
+    }
+
+    function requestMergeBranch(name) {
+        mergeBranchAction.branchName = name
+        confirm.title = Const.mergeBranchText + " " + name
+        confirm.messageText = Const.mergeBranchMessage.arg(name)
+        confirm.actionOnAccept = mergeBranchAction
+        confirm.actionOnReject = null
+        confirm.open()
+    }
+
+    function requestDeleteBranch(name) {
+        deleteBranchAction.branchName = name
+        confirm.title = Const.deleteBranchText + " " + name
+        confirm.messageText = Const.deleteBranchMessage
+        confirm.actionOnAccept = deleteBranchAction
+        confirm.actionOnReject = null
+        confirm.open()
+    }
+
+    function getSelectedFiles() {
+        for (var index = 0; index < panelRepeater.count; index++) {
+            var panel = panelRepeater.itemAt(index)
+            if (panel !== null) {
+                var selectedFiles = panel.getSelectedFiles()
+                if (selectedFiles.length > 0)
+                    return selectedFiles
+            }
+        }
+        return []
+    }
+
+    function activateTab(tabId) {
+        for (var index = 0; index < panelRepeater.count; index++) {
+            var panel = panelRepeater.itemAt(index)
+            if (panel !== null && panel.activateTab(tabId))
+                return
+        }
+    }
+
     function activateFlatFileView() {
-        filePane.activateFlatFileView()
+        root.activateTab("Files")
     }
 
     function activateBranchLogView() {
-        branchLogPane.activateBranchLogView()
+        root.activateTab("BranchLog")
     }
 
     function activateGraphView() {
-        branchLogPane.activateGraphView()
+        root.activateTab("Graph")
     }
 
     function activateFileDiffView() {
-        toolPane.activateFileDiffView()
+        root.activateTab("Diff")
     }
 
     function activateFileBlameView() {
-        toolPane.activateFileBlameView()
+        root.activateTab("Blame")
     }
 }

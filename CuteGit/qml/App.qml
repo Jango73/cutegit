@@ -209,6 +209,7 @@ ApplicationWindow {
 
                 RepositoryView {
                     objectName: "repositoryView." + index
+                    controller: root.ctrl
                     repository: model.repository
                 }
             }

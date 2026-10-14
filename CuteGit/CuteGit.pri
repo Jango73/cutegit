@@ -16,6 +16,7 @@ HEADERS += \
     sources/CGraphLayout.h \
     sources/CLabel.h \
     sources/CLabelModel.h \
+    sources/CLayout.h \
     sources/CLogLine.h \
     sources/CLogLineCollection.h \
     sources/CLogModel.h \
@@ -49,6 +50,7 @@ SOURCES += \
     sources/CGraphLineCollection.cpp \
     sources/CGraphLayout.cpp \
     sources/CLabelModel.cpp \
+    sources/CLayout.cpp \
     sources/CLogLineCollection.cpp \
     sources/CLogModel.cpp \
     sources/CLogModelProxy.cpp \
@@ -110,7 +112,8 @@ unix {
 
     DEPLOY_NAMES = \
         deploy/linux/qt.conf \
-        deploy/linux/CuteGit.sh
+        deploy/linux/CuteGit.sh \
+        deploy/layouts.json
 
     EXEC_NAMES = \
         CuteGit.sh
@@ -140,7 +143,8 @@ unix {
         plugins/platforms/qwindows.dll
 
     DEPLOY_NAMES = \
-        deploy/linux/qt.conf
+        deploy/linux/qt.conf \
+        deploy/layouts.json
 
     EXEC_NAMES =
 }
