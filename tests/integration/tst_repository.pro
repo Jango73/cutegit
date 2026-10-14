@@ -24,6 +24,8 @@ DEPENDPATH += $$CUTEGIT_SOURCES
 SOURCES += \
     tst_repository.cpp \
     $$CUTEGIT_SOURCES/CRepository.cpp \
+    $$CUTEGIT_SOURCES/CRepositoryDiff.cpp \
+    $$CUTEGIT_SOURCES/CRepositoryOutput.cpp \
     $$CUTEGIT_SOURCES/CPatchBuilder.cpp \
     $$CUTEGIT_SOURCES/CDiffConstants.cpp \
     $$CUTEGIT_SOURCES/CDiffModel.cpp \

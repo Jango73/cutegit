@@ -2,9 +2,9 @@
 #pragma once
 
 // Qt
-#include <QStringListModel>
 #include <QHash>
 #include <QSet>
+#include <QStringListModel>
 #include <QVariant>
 
 // qt-plus

@@ -291,6 +291,10 @@ void CCommands::unstagedFileDiff(const QString& sPath, const QString& sFullName)
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    \fn CCommands::stagedFileDiff
+    Shows staged changes (index versus HEAD) for a single file.
+*/
 void CCommands::stagedFileDiff(const QString& sPath, const QString& sFullName)
 {
     Q_UNUSED(sPath);
@@ -299,6 +303,11 @@ void CCommands::stagedFileDiff(const QString& sPath, const QString& sFullName)
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    \fn CCommands::applyPatchNow
+    Applies a patch file synchronously, optionally on the index only, optionally reversed.
+    Returns the process output, empty on success.
+*/
 QString CCommands::applyPatchNow(const QString& sPath, const QString& sPatchFile, bool bCached, bool bReverse)
 {
     Q_UNUSED(sPath);

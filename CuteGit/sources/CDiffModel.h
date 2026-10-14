@@ -56,7 +56,7 @@ public:
     CDiffLine* lineAt(int iRow) const;
 
     //! Returns all lines (borrowed pointers, owned by the model)
-    QList<CDiffLine*> lines() const;
+    const QList<CDiffLine*>& lines() const;
 
     //! Returns role names
     virtual QHash<int, QByteArray> roleNames() const;

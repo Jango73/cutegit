@@ -60,6 +60,8 @@ SOURCES += \
     sources/CPatchBuilder.cpp \
     sources/CRepoFile.cpp \
     sources/CRepository.cpp \
+    sources/CRepositoryDiff.cpp \
+    sources/CRepositoryOutput.cpp \
     sources/CRepositoryModel.cpp \
     sources/CStagedFileModelProxy.cpp \
     sources/CTreeFileModel.cpp \

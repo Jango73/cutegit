@@ -106,7 +106,7 @@ CDiffLine* CDiffModel::lineAt(int iRow) const
 
 //-------------------------------------------------------------------------------------------------
 
-QList<CDiffLine*> CDiffModel::lines() const
+const QList<CDiffLine*>& CDiffModel::lines() const
 {
     return m_lLines;
 }

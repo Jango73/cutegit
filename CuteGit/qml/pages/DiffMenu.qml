@@ -25,17 +25,17 @@ Menu {
     /*! Selected proxy rows at menu time */
     property var selectedRows: []
 
-    /*! True for Git-like repositories holding an index */
-    property bool isStagable: repository !== null
-        && (repository.repositoryType === CEnums.Git || repository.repositoryType === CEnums.Gerrit)
-        && repository.fileDiffFromCommit === false
+    /*! True when line or hunk staging actions apply to the attached repository */
+    property bool isStageable: root.repository !== null
+        && Const.supportsStaging(root.repository, CEnums.Git, CEnums.Gerrit)
+        && root.repository.fileDiffFromCommit === false
 
     /*! Requests a copy action */
     signal requestCopyText(var text)
 
     /*! Shared enabled rule for line and hunk staging actions */
     function isActionEnabled(forStaged, forHunk) {
-        if (!root.isStagable || root.staged !== forStaged)
+        if (!root.isStageable || root.staged !== forStaged)
             return false
 
         if (forHunk)

@@ -29,15 +29,15 @@ Issues sorted by decreasing severity.
 
 ## Conventions (AGENTS.md)
 
-- [ ] 16. `CCommands.cpp:294-310`: `stagedFileDiff` and `applyPatchNow` lack a doxygen (`\fn`) header while the rule requires a header plus a 75-character separator per function (the neighbouring `CGitCommands` methods comply).
-- [ ] 17. `CRepository.cpp:9`: the added `#include <QRegularExpression>` is unused in that file.
-- [ ] 18. `CRepository.cpp` totals 1630 lines (limit: 1000) and this commit adds about 150 lines instead of splitting by responsibility.
-- [ ] 19. `#define PATCH_HUNK_REGEXP "..."` (`CPatchBuilder.cpp:13`): a C macro for a string while the rule mandates Qt types; a `static const QString` also removes `QString(PATCH_HUNK_REGEXP)` at `:94`.
-- [ ] 20. Prefixes: local `mHunkRows`/`mHunkHeaders` use `m_` (reserved for members, `CPatchBuilder.cpp:97-98`); `sSelectedSourceRows` is a `QSet` with the `s_` prefix of `QString` (`:88`).
-- [ ] 21. Vocabulary / naming: `RegExp` abbreviation violates the full-words rule (pre-existing, this commit adds one more occurrence instead of correcting it); `isStagable` (`DiffMenu.qml:33`) misspells `isStageable`; `isGit` is true for Git or Gerrit (`FileDiffPane.qml:15-17`), a misleading name whose logic is duplicated between `FileDiffPane` and `DiffMenu.isStagable`.
-- [ ] 22. `CRepository.cpp:515,1084,1092,1430,1516...`: direct reads of `m_bFileDiffFromCommit` in six places while it became a `Q_PROPERTY` with a setter used elsewhere; mixing `m_` access and accessor bypasses notification.
-- [ ] 23. `CDiffModel.h/.cpp`: `lines()` returns the `QList` by value (O(n) copy on each `patchFromSelection` call) and exposes mutable model-owned pointers; return a constant reference.
-- [ ] 24. `CRepository.h:5-8`: include order not alphabetical (`QStringListModel, QHash, QSet, QVariant`); `CGitCommands.h`: misaligned `sCommandApplyPatchCached   =` (`:91-92`).
+- [x] 16. `CCommands.cpp:294-310`: `stagedFileDiff` and `applyPatchNow` lack a doxygen (`\fn`) header while the rule requires a header plus a 75-character separator per function (the neighbouring `CGitCommands` methods comply).
+- [x] 17. `CRepository.cpp:9`: the added `#include <QRegularExpression>` is unused in that file.
+- [x] 18. `CRepository.cpp` totals 1630 lines (limit: 1000) and this commit adds about 150 lines instead of splitting by responsibility.
+- [x] 19. `#define PATCH_HUNK_REGEXP "..."` (`CPatchBuilder.cpp:13`): a C macro for a string while the rule mandates Qt types; a `static const QString` also removes `QString(PATCH_HUNK_REGEXP)` at `:94`.
+- [x] 20. Prefixes: local `mHunkRows`/`mHunkHeaders` use `m_` (reserved for members, `CPatchBuilder.cpp:97-98`); `sSelectedSourceRows` is a `QSet` with the `s_` prefix of `QString` (`:88`).
+- [x] 21. Vocabulary / naming: `RegExp` abbreviation violates the full-words rule (pre-existing, this commit adds one more occurrence instead of correcting it); `isStagable` (`DiffMenu.qml:33`) misspells `isStageable`; `isGit` is true for Git or Gerrit (`FileDiffPane.qml:15-17`), a misleading name whose logic is duplicated between `FileDiffPane` and `DiffMenu.isStagable`.
+- [x] 22. `CRepository.cpp:515,1084,1092,1430,1516...`: direct reads of `m_bFileDiffFromCommit` in six places while it became a `Q_PROPERTY` with a setter used elsewhere; mixing `m_` access and accessor bypasses notification.
+- [x] 23. `CDiffModel.h/.cpp`: `lines()` returns the `QList` by value (O(n) copy on each `patchFromSelection` call) and exposes mutable model-owned pointers; return a constant reference.
+- [x] 24. `CRepository.h:5-8`: include order not alphabetical (`QStringListModel, QHash, QSet, QVariant`); `CGitCommands.h`: misaligned `sCommandApplyPatchCached   =` (`:91-92`).
 
 ## Magic numbers and strings
 

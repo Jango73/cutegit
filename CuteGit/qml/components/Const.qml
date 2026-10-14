@@ -173,6 +173,12 @@ Item {
     readonly property int unstagedDiffStretch: 2
     readonly property int stagedDiffStretch: 1
 
+    /*! True when a repository holds a staging index (Git family types are passed by callers) */
+    function supportsStaging(repository, gitType, gerritType) {
+        return repository !== null
+            && (repository.repositoryType === gitType || repository.repositoryType === gerritType)
+    }
+
     readonly property string okText: qsTr("OK")
     readonly property string logText: qsTr("Log")
     readonly property string tagText: qsTr("Tag")

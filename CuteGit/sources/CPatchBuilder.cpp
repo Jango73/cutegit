@@ -79,7 +79,7 @@ QList<int> CPatchBuilder::selectableSourceRowsForHunk(CDiffModel* pModel, int iH
     if (pModel == nullptr || iHunkId == CDiffConstants::iInvalidHunkId)
         return lReturnValue;
 
-    QList<CDiffLine*> lLines = pModel->lines();
+    const QList<CDiffLine*>& lLines = pModel->lines();
 
     for (int iRow = 0; iRow < lLines.count(); iRow++)
     {
@@ -109,7 +109,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
     if (pModel == nullptr || sRelativeName.isEmpty() || sSelectedSourceRows.isEmpty())
         return QString();
 
-    QList<CDiffLine*> lLines = pModel->lines();
+    const QList<CDiffLine*>& lLines = pModel->lines();
     QRegularExpression tHunkRegExp(CDiffConstants::sHunkHeaderPattern);
 
     // Group source rows by hunk, keeping model order. Rows from other files

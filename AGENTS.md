@@ -65,7 +65,7 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 - **Functions**: Add a doxygen header to functions and separate all functions with a 75 character line such as : /************************************************************************/
 - **File size**: Keep source files under 1000 lines; split by responsibility before crossing this limit.
 - **Vocabulary**:
-  - NEVER use abbreviations; ALWAYS use full words (acronyms are OK).
+  - NEVER use abbreviations; ALWAYS use full words (acronyms are OK, `RegExp` is allowed as the standard short form of `RegularExpression`).
   - No figurative language: respect the repository vocabulary, use every word
     in its primary (literal) sense. Name things for what they are, not for
     what they resemble.

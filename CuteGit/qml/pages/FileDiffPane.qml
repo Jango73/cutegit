@@ -12,9 +12,8 @@ Item {
 
     property variant repository: null
 
-    /*! True for Git-like repositories holding an index */
-    property bool isGit: repository !== null
-        && (repository.repositoryType === CEnums.Git || repository.repositoryType === CEnums.Gerrit)
+    /*! True when the attached repository holds a staging index */
+    property bool stagingSupported: Const.supportsStaging(root.repository, CEnums.Git, CEnums.Gerrit)
 
     /*! True when a commit diff is shown instead of the working tree */
     property bool fromCommit: repository !== null && repository.fileDiffFromCommit === true
@@ -40,7 +39,7 @@ Item {
         text: Const.listEmptyText
         visible: root.repository === null || (
             root.fromCommit ? commitDiffView.count === 0
-            : (root.isGit ? (stagedDiffView.count === 0 && unstagedDiffView.count === 0)
+            : (root.stagingSupported ? (stagedDiffView.count === 0 && unstagedDiffView.count === 0)
                           : unstagedDiffView.count === 0)
         )
     }
@@ -131,7 +130,7 @@ Item {
             stretchWeight: Const.unstagedDiffStretch
             repository: root.repository
             staged: false
-            stagingEnabled: root.isGit
+            stagingEnabled: root.stagingSupported
 
             model: root.repository !== null ? root.repository.unstagedFileDiffModelProxy : null
 
@@ -152,17 +151,17 @@ Item {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignLeft
             text: Const.stagedDiffText + " (" + stagedDiffView.count + ")"
-            visible: root.isGit
+            visible: root.stagingSupported
         }
 
         WorkingTreeDiffView {
             id: stagedDiffView
             objectName: "stagedDiffView"
             stretchWeight: Const.stagedDiffStretch
-            visible: root.isGit
+            visible: root.stagingSupported
             repository: root.repository
             staged: true
-            stagingEnabled: root.isGit
+            stagingEnabled: root.stagingSupported
 
             model: root.repository !== null ? root.repository.stagedFileDiffModelProxy : null
 
@@ -176,7 +175,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
             text: Const.noStagedChangesText
-            visible: root.isGit && stagedDiffView.count === 0
+            visible: root.stagingSupported && stagedDiffView.count === 0
         }
     }
 }
