@@ -84,16 +84,17 @@ if /I "%BUILD_TYPE%"=="Debug" (
 
 rem Build qt-plus if it exists
 set "QT_PLUS_DIR=%ROOT_FOLDER%qt-plus"
-if exist "%QT_PLUS_DIR%" if exist "%QT_PLUS_DIR%\build.bat" (
+set "QT_PLUS_BUILD=%QT_PLUS_DIR%\scripts\windows\build.bat"
+if exist "%QT_PLUS_DIR%" if exist "%QT_PLUS_BUILD%" (
   echo Building qt-plus library...
   if %VERBOSE_BUILD%==%VERBOSE_ENABLED% (
-    call "%QT_PLUS_DIR%\build.bat" -c "%BUILD_TYPE%" -v
+    call "%QT_PLUS_BUILD%" -c "%BUILD_TYPE%" -v
   ) else (
-    call "%QT_PLUS_DIR%\build.bat" -c "%BUILD_TYPE%"
+    call "%QT_PLUS_BUILD%" -c "%BUILD_TYPE%"
   )
   echo qt-plus built successfully.
 ) else (
-  echo Warning: qt-plus not found or missing build.bat 1>&2
+  echo Warning: qt-plus not found or missing scripts\windows\build.bat 1>&2
 )
 
 if not exist "%BUILD_FOLDER%" mkdir "%BUILD_FOLDER%"

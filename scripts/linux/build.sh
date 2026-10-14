@@ -81,16 +81,17 @@ BUILD_DIR="${ROOT_DIR}/build-${BUILD_TYPE,,}"
 
 # Build qt-plus if it exists
 QT_PLUS_DIR="${ROOT_DIR}/qt-plus"
-if [[ -d "${QT_PLUS_DIR}" && -f "${QT_PLUS_DIR}/build.sh" ]]; then
+QT_PLUS_BUILD="${QT_PLUS_DIR}/scripts/linux/build.sh"
+if [[ -d "${QT_PLUS_DIR}" && -f "${QT_PLUS_BUILD}" ]]; then
   echo "Building qt-plus library..."
   if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
-    "${QT_PLUS_DIR}/build.sh" -c "${BUILD_TYPE}" -v
+    "${QT_PLUS_BUILD}" -c "${BUILD_TYPE}" -v
   else
-    "${QT_PLUS_DIR}/build.sh" -c "${BUILD_TYPE}"
+    "${QT_PLUS_BUILD}" -c "${BUILD_TYPE}"
   fi
   echo "qt-plus built successfully."
 else
-  echo "Warning: qt-plus not found or missing build.sh" >&2
+  echo "Warning: qt-plus not found or missing scripts/linux/build.sh" >&2
 fi
 
 # Build CuteGit

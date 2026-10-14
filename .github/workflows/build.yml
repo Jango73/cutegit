@@ -1,0 +1,67 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            git \
+            qt6-base-dev \
+            qt6-base-dev-tools \
+            qt6-declarative-dev \
+            qt6-declarative-dev-tools \
+            qt6-qmltooling-plugins \
+            qt6-tools-dev \
+            qt6-tools-dev-tools \
+            linguist-qt6 \
+            libqt6shadertools6-dev \
+            qt6-shader-baker \
+            qt6-wayland \
+            libqt6svg6-dev \
+            qml6-module-qtquick \
+            qml6-module-qtquick-controls \
+            qml6-module-qtquick-dialogs \
+            qml6-module-qtquick-layouts \
+            qml6-module-qtqml-models \
+            qml6-module-qtqml-workerscript \
+            qml6-module-qtquick-templates \
+            qml6-module-qtquick-window \
+            libqt6serialport6-dev
+
+      - name: Build release
+        run: ./scripts/linux/build.sh --release
+
+      - name: Run tests
+        run: ./scripts/linux/tests.sh --release
+
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v6
+        with:
+          name: cutegit-linux-release
+          path: |
+            build-release/CuteGit/bin/CuteGitApp
+            build-release/CuteGit/bin/layouts.json
+            qt-plus/bin/libqt-plus.so*
+          if-no-files-found: error
