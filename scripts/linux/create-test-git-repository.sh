@@ -8,7 +8,7 @@ ROOT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
 
-TARGET_FOLDER="./test"
+TARGET_FOLDER="./test-git"
 BRANCH_COUNT=4
 MERGED_COUNT=2
 BASE_COMMIT_COUNT=5
@@ -37,7 +37,7 @@ BASE_DATE="2024-01-01 12:00:00 UTC"
 # */
 usage() {
     cat <<'USAGE'
-Usage: ./create-test-repository.sh [TARGET_FOLDER] [options]
+Usage: ./create-test-git-repository.sh [TARGET_FOLDER] [options]
     Create a fictive git repository with branches, merges and tags.
 
 Arguments:
