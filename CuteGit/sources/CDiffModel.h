@@ -19,7 +19,11 @@ public:
     {
         eOperationRole = Qt::UserRole + 1,
         eTextRole,
-        eCommitIdRole
+        eCommitIdRole,
+        eFileNameRole,
+        eHunkIdRole,
+        eOldLineNumberRole,
+        eNewLineNumberRole
     };
 
     //-------------------------------------------------------------------------------------------------
@@ -47,6 +51,12 @@ public:
 
     //! Sets all lines
     void setLines(QList<CDiffLine*> lNewLines);
+
+    //! Returns the line at row, nullptr when out of range
+    CDiffLine* lineAt(int iRow) const;
+
+    //! Returns all lines (borrowed pointers, owned by the model)
+    QList<CDiffLine*> lines() const;
 
     //! Returns role names
     virtual QHash<int, QByteArray> roleNames() const;

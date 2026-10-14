@@ -102,6 +102,7 @@ public:
     {
         None,
         DiffFileName,
+        DiffHunk,
         DiffAdd,
         DiffDelete
     };
@@ -162,6 +163,8 @@ public:
         eStashSave,
         eStashPop,
         eUnstagedFileDiff,
+        eStagedFileDiff,
+        eApplyPatch,
         eTwoCommitDiff,
         eSetCurrentBranch,
         eResetToCommit,

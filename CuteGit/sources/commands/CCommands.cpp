@@ -291,6 +291,26 @@ void CCommands::unstagedFileDiff(const QString& sPath, const QString& sFullName)
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::stagedFileDiff(const QString& sPath, const QString& sFullName)
+{
+    Q_UNUSED(sPath);
+    Q_UNUSED(sFullName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+QString CCommands::applyPatchNow(const QString& sPath, const QString& sPatchFile, bool bCached, bool bReverse)
+{
+    Q_UNUSED(sPath);
+    Q_UNUSED(sPatchFile);
+    Q_UNUSED(bCached);
+    Q_UNUSED(bReverse);
+
+    return QString();
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::blame(const QString& sPath, const QString& sFullName)
 {
     Q_UNUSED(sPath);

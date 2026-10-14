@@ -25,6 +25,7 @@ Item {
     readonly property color fileRenamedColor: "#80804000"
     readonly property color fileAddedColor: "#80000080"
     readonly property color fileDeletedColor: "#80804000"
+    readonly property color hunkHeaderColor: "#80404040"
 
     readonly property color labelLocalColor: "aquamarine"
     readonly property color labelRemoteColor: "lightsalmon"
@@ -154,6 +155,15 @@ Item {
     readonly property string logMarkDiffTo: qsTr("Mark as diff to")
 
     readonly property string diffCopyLineText: qsTr("&Copy line")
+    readonly property string stagedDiffText: qsTr("Staged")
+    readonly property string unstagedDiffText: qsTr("Unstaged")
+    readonly property string commitDiffText: qsTr("Commit diff")
+    readonly property string noStagedChangesText: qsTr("No staged changes")
+    readonly property string noUnstagedChangesText: qsTr("No unstaged changes")
+    readonly property string stageSelectedLinesText: qsTr("Stage selected &lines")
+    readonly property string unstageSelectedLinesText: qsTr("Unstage selected &lines")
+    readonly property string stageHunkText: qsTr("Stage &hunk")
+    readonly property string unstageHunkText: qsTr("Unstage &hunk")
 
     readonly property string okText: qsTr("OK")
     readonly property string logText: qsTr("Log")

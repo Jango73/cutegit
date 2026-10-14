@@ -39,6 +39,10 @@ QHash<int, QByteArray> CDiffModel::roleNames() const
     hRoleNames[eOperationRole] = "operation";
     hRoleNames[eTextRole] = "text";
     hRoleNames[eCommitIdRole] = "commitId";
+    hRoleNames[eFileNameRole] = "fileName";
+    hRoleNames[eHunkIdRole] = "hunkId";
+    hRoleNames[eOldLineNumberRole] = "oldLineNumber";
+    hRoleNames[eNewLineNumberRole] = "newLineNumber";
     return hRoleNames;
 }
 
@@ -73,7 +77,36 @@ QVariant CDiffModel::data(const QModelIndex& index, int role) const
 
     case eCommitIdRole:
         return m_lLines[row]->commitId();
+
+    case eFileNameRole:
+        return m_lLines[row]->fileName();
+
+    case eHunkIdRole:
+        return m_lLines[row]->hunkId();
+
+    case eOldLineNumberRole:
+        return m_lLines[row]->oldLineNumber();
+
+    case eNewLineNumberRole:
+        return m_lLines[row]->newLineNumber();
     }
 
     return QVariant();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+CDiffLine* CDiffModel::lineAt(int iRow) const
+{
+    if ((iRow < 0) || (iRow >= m_lLines.count()))
+        return nullptr;
+
+    return m_lLines[iRow];
+}
+
+//-------------------------------------------------------------------------------------------------
+
+QList<CDiffLine*> CDiffModel::lines() const
+{
+    return m_lLines;
 }

@@ -9,7 +9,9 @@ BaseTab {
         anchors.fill: parent
         repository: root.repository
 
-        onRequestMenu: root.viewRoot.showDiffMenu(operation, text)
+        onRequestMenu: function(staged, proxyRow, operation, text, hunkId, selectedRows) {
+            root.viewRoot.showDiffMenu(staged, proxyRow, operation, text, hunkId, selectedRows)
+        }
         onRequestTextFilter: if (root.repository !== null) root.repository.setFileDiffFilter(text)
         onRequestSaveAsPatch: root.viewRoot.requestPatchSave()
     }

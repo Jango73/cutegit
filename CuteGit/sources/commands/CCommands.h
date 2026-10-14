@@ -136,6 +136,13 @@ public:
     //!
     virtual void unstagedFileDiff(const QString& sPath, const QString& sFullName);
 
+    //! Shows staged changes of sFullName in the repo at sPath (index versus HEAD)
+    virtual void stagedFileDiff(const QString& sPath, const QString& sFullName);
+
+    //! Applies sPatchFile in the repo at sPath, optionally on the index only, optionally reversed
+    //! Runs synchronously and returns the process output, empty on success
+    virtual QString applyPatchNow(const QString& sPath, const QString& sPatchFile, bool bCached, bool bReverse);
+
     //!
     virtual void blame(const QString& sPath, const QString& sFullName);
 

@@ -86,12 +86,16 @@ const QString CGitCommands::sCommandTagCommit           = "git rev-list -n 1 --a
 const QString CGitCommands::sCommandTwoCommitDiff       = "git diff --no-color --ignore-all-space \"%1\" \"%2\"";
 const QString CGitCommands::sCommandUnstage             = "git reset HEAD \"%1\"";
 const QString CGitCommands::sCommandUnstageAll          = "git reset .";
-const QString CGitCommands::sCommandUnstagedDiff        = "git diff --no-color --ignore-all-space HEAD \"%1\"";
+const QString CGitCommands::sCommandUnstagedDiff        = "git diff --no-color -U3 -- \"%1\"";
+const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
+const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
+const QString CGitCommands::sCommandApplyPatchCachedReverse = "git apply --cached --reverse --unidiff-zero \"%1\"";
 
 const QString CGitCommands::sStatusBranchRegExp         = "";
 const QString CGitCommands::sStatusRegExp               = "([a-zA-Z?!\\s])([a-zA-Z?!\\s])\\s(.*)";
 const QString CGitCommands::sPickCommitRegExp           = "(pick)\\s+([a-zA-Z0-9]+)\\s+(.*)";
 const QString CGitCommands::sDiffLineRegExp             = "diff\\s+(.*)\\s+a/(.*)\\s+b/(.*)";
+const QString CGitCommands::sDiffHunkRegExp             = "@@\\s+-([0-9]+)(,([0-9]+))?\\s+\\+([0-9]+)(,([0-9]+))?\\s+@@(.*)";
 const QString CGitCommands::sBlameLineRegExp            = "([0-9a-fA-F]+)\\s+\\(\\s+([a-zA-Z0-9_-]+)\\s+([0-9:+-]+\\s+[0-9:+-]+\\s+[0-9:+-]+)\\s+([0-9]+)\\)(.*)";
 
 const QString CGitCommands::sComment                    = "#";
@@ -467,6 +471,34 @@ void CGitCommands::unstagedFileDiff(const QString& sPath, const QString& sFullNa
 {
     QString sCommand = QString(sCommandUnstagedDiff).arg(sFullName);
     exec(new CProcessCommand(CEnums::eUnstagedFileDiff, sPath, sCommand));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CGitCommands::stagedFileDiff
+    Shows staged changes (index versus HEAD) for a single file.
+*/
+void CGitCommands::stagedFileDiff(const QString& sPath, const QString& sFullName)
+{
+    QString sCommand = QString(sCommandStagedDiff).arg(sFullName);
+    exec(new CProcessCommand(CEnums::eStagedFileDiff, sPath, sCommand));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CGitCommands::applyPatchNow
+    Applies a patch file synchronously, optionally on the index only, optionally reversed.
+    Returns the process output, empty on success.
+*/
+QString CGitCommands::applyPatchNow(const QString& sPath, const QString& sPatchFile, bool bCached, bool bReverse)
+{
+    Q_UNUSED(bCached);
+
+    QString sCommand = QString(bReverse ? sCommandApplyPatchCachedReverse : sCommandApplyPatchCached).arg(sPatchFile);
+
+    return execNow(sPath, sCommand);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -889,10 +921,20 @@ void CGitCommands::handleCommitCountOutput(const CProcessResult& tResult)
 void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
 {
     // Create CDiffLine objects with the returned string of the process
+    // Hunk headers are kept with operation DiffHunk so callers can rebuild
+    // applicable patches for partial staging
 
     QList<CDiffLine*> lReturnValue;
     QStringList lLines = tResult.m_sValue.split(NEW_LINE);
     bool bAtLeastOneLineOK = false;
+
+    QString sCurrentFileName;
+    int iHunkId = -1;
+    int iOldLineNumber = -1;
+    int iNewLineNumber = -1;
+
+    QRegularExpression tFileRegExp(sDiffLineRegExp);
+    QRegularExpression tHunkRegExp(sDiffHunkRegExp);
 
     for (QString sLine : lLines)
     {
@@ -902,44 +944,89 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
         {
             bAtLeastOneLineOK = true;
 
-            CDiffLine* pDiffLine = new CDiffLine();
-            pDiffLine->setText(sLine);
-
             if (sLine.startsWith("index") || sLine.startsWith("+++") || sLine.startsWith("---"))
             {
-                delete pDiffLine;
+                continue;
+            }
+
+            CDiffLine* pDiffLine = new CDiffLine();
+            pDiffLine->setText(sLine);
+            pDiffLine->setFileName(sCurrentFileName);
+            pDiffLine->setHunkId(iHunkId);
+
+            if (sLine.startsWith("diff"))
+            {
+                QString sNewText = sLine;
+
+                QRegularExpressionMatch match = tFileRegExp.match(sLine);
+                if (match.hasMatch())
+                {
+                    sNewText = match.captured(3).trimmed();
+                }
+
+                sCurrentFileName = sNewText;
+                iHunkId = -1;
+
+                pDiffLine->setOperation(CEnums::DiffFileName);
+                pDiffLine->setText(sNewText);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+            }
+            else if (sLine.startsWith("@@"))
+            {
+                QRegularExpressionMatch match = tHunkRegExp.match(sLine);
+                if (match.hasMatch())
+                {
+                    iOldLineNumber = match.captured(1).toInt();
+                    iNewLineNumber = match.captured(4).toInt();
+                }
+
+                iHunkId++;
+
+                pDiffLine->setOperation(CEnums::DiffHunk);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(-1);
+                pDiffLine->setNewLineNumber(-1);
+            }
+            else if (sLine.startsWith("+") && not sLine.startsWith("+++"))
+            {
+                pDiffLine->setOperation(CEnums::DiffAdd);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(-1);
+                pDiffLine->setNewLineNumber(iNewLineNumber);
+                iNewLineNumber++;
+            }
+            else if (sLine.startsWith("-") && not sLine.startsWith("---"))
+            {
+                pDiffLine->setOperation(CEnums::DiffDelete);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(iOldLineNumber);
+                pDiffLine->setNewLineNumber(-1);
+                iOldLineNumber++;
+            }
+            else if (sLine.startsWith("\\"))
+            {
+                pDiffLine->setOperation(CEnums::None);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(-1);
+                pDiffLine->setNewLineNumber(-1);
             }
             else
             {
-                if (sLine.startsWith("diff"))
-                {
-                    QString sNewText = pDiffLine->text(); // .split(PATH_SEP).last();
-
-                    QRegularExpression tRegExp(sDiffLineRegExp);
-
-                    QRegularExpressionMatch match = tRegExp.match(sLine);
-                    if (match.hasMatch())
-                    {
-                        QString sFileA = match.captured(2).trimmed();
-                        QString sFileB = match.captured(3).trimmed();
-
-                        sNewText = sFileB;
-                    }
-
-                    pDiffLine->setOperation(CEnums::DiffFileName);
-                    pDiffLine->setText(sNewText);
-                }
-                else if (not (sLine.startsWith("@@")))
-                {
-                    if (sLine.startsWith("+"))
-                        pDiffLine->setOperation(CEnums::DiffAdd);
-
-                    if (sLine.startsWith("-"))
-                        pDiffLine->setOperation(CEnums::DiffDelete);
-                }
-
-                lReturnValue << pDiffLine;
+                pDiffLine->setOperation(CEnums::None);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(iOldLineNumber);
+                pDiffLine->setNewLineNumber(iNewLineNumber);
+                iOldLineNumber++;
+                iNewLineNumber++;
             }
+
+            lReturnValue << pDiffLine;
         }
     }
 
@@ -1284,6 +1371,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eAbortRebase:
     case CEnums::ePatchCreate:
     case CEnums::ePatchApply:
+    case CEnums::eApplyPatch:
     case CEnums::eCleanUp:
     {
         // Throw the returned string of the process
@@ -1326,6 +1414,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     case CEnums::eUnstagedFileDiff:
+    case CEnums::eStagedFileDiff:
     case CEnums::eTwoCommitDiff:
     {
         handleDiffOutput(tResult);

@@ -139,6 +139,10 @@ QModelIndexList CFlatFileModelProxy::indexListToSource(QModelIndexList lIndices)
 
 bool CFlatFileModelProxy::statusShown(const QString& sStatus) const
 {
+    // Without a controller (unit tests) no status can be filtered out
+    if (m_pController == nullptr)
+        return true;
+
     if (m_pController->showClean() && sStatus == CRepoFile::sTokenClean)
         return true;
 

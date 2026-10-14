@@ -27,6 +27,10 @@ public:
     Q_FAST_PROPERTY(CEnums::EDiffOperation, e, operation, Operation)
     Q_FAST_PROPERTY(QString, s, text, Text)
     Q_FAST_PROPERTY(QString, s, commitId, CommitId)
+    Q_FAST_PROPERTY(QString, s, fileName, FileName)
+    Q_FAST_PROPERTY(int, i, hunkId, HunkId)
+    Q_FAST_PROPERTY(int, i, oldLineNumber, OldLineNumber)
+    Q_FAST_PROPERTY(int, i, newLineNumber, NewLineNumber)
 
 public:
 
@@ -34,5 +38,5 @@ public:
     // Constructor & destructor
     //-------------------------------------------------------------------------------------------------
 
-    CDiffLine() : m_eOperation(CEnums::None) {}
+    CDiffLine() : m_eOperation(CEnums::None), m_iHunkId(-1), m_iOldLineNumber(-1), m_iNewLineNumber(-1) {}
 };

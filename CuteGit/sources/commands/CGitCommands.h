@@ -145,6 +145,12 @@ public:
     virtual void unstagedFileDiff(const QString& sPath, const QString& sFullName) override;
 
     //!
+    virtual void stagedFileDiff(const QString& sPath, const QString& sFullName) override;
+
+    //!
+    virtual QString applyPatchNow(const QString& sPath, const QString& sPatchFile, bool bCached, bool bReverse) override;
+
+    //!
     virtual void blame(const QString& sPath, const QString& sFullName) override;
 
     //!
@@ -313,6 +319,9 @@ protected:
     static const QString sCommandUnstage;
     static const QString sCommandUnstageAll;
     static const QString sCommandUnstagedDiff;
+    static const QString sCommandStagedDiff;
+    static const QString sCommandApplyPatchCached;
+    static const QString sCommandApplyPatchCachedReverse;
 
     // Regular expressions
 
@@ -320,6 +329,7 @@ protected:
     static const QString sStatusRegExp;
     static const QString sPickCommitRegExp;
     static const QString sDiffLineRegExp;
+    static const QString sDiffHunkRegExp;
     static const QString sBlameLineRegExp;
 
     // Other strings

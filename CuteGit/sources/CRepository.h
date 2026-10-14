@@ -4,6 +4,8 @@
 // Qt
 #include <QStringListModel>
 #include <QHash>
+#include <QSet>
+#include <QVariant>
 
 // qt-plus
 #include "Macros.h"
@@ -83,6 +85,14 @@ public:
     Q_FAST_PROPERTY(CDiffModel*, p, fileDiffModel, FileDiffModel)
     Q_FAST_PROPERTY(CDiffModelProxy*, p, fileDiffModelProxy, FileDiffModelProxy)
     Q_FAST_PROPERTY(QString, s, fileDiffString, FileDiffString)
+
+    // Models for staged versus unstaged working tree diffs
+    Q_FAST_PROPERTY(CDiffModel*, p, stagedFileDiffModel, StagedFileDiffModel)
+    Q_FAST_PROPERTY(CDiffModelProxy*, p, stagedFileDiffModelProxy, StagedFileDiffModelProxy)
+    Q_FAST_PROPERTY(QString, s, stagedFileDiffString, StagedFileDiffString)
+    Q_FAST_PROPERTY(CDiffModel*, p, unstagedFileDiffModel, UnstagedFileDiffModel)
+    Q_FAST_PROPERTY(CDiffModelProxy*, p, unstagedFileDiffModelProxy, UnstagedFileDiffModelProxy)
+    Q_FAST_PROPERTY(QString, s, unstagedFileDiffString, UnstagedFileDiffString)
 
     // Model for the blame view
     Q_FAST_PROPERTY(CDiffModel*, p, fileBlameModel, FileBlameModel)
@@ -276,6 +286,18 @@ public:
     //! Sets the diff filter
     Q_INVOKABLE void setFileDiffFilter(const QString& sText);
 
+    //! Stages selected unstaged diff lines, given as unstaged proxy rows
+    Q_INVOKABLE void stageDiffLines(QVariantList lProxyRows);
+
+    //! Unstages selected staged diff lines, given as staged proxy rows
+    Q_INVOKABLE void unstageDiffLines(QVariantList lProxyRows);
+
+    //! Stages every line of a hunk in the unstaged diff
+    Q_INVOKABLE void stageDiffHunk(int iHunkId);
+
+    //! Unstages every line of a hunk in the staged diff
+    Q_INVOKABLE void unstageDiffHunk(int iHunkId);
+
     //! Sets the blame filter
     Q_INVOKABLE void setFileBlameFilter(const QString& sText);
 
@@ -308,7 +330,7 @@ protected:
     bool m_bPollPending;
 
     //! True when the file diff shows a requested commit diff, false for a working tree diff
-    bool m_bFileDiffFromCommit;
+    Q_FAST_PROPERTY(bool, b, fileDiffFromCommit, FileDiffFromCommit)
 
     //-------------------------------------------------------------------------------------------------
     // Protected control methods
@@ -340,6 +362,15 @@ protected:
 
     //!
     QString relativeFileName(const QString& sFullName);
+
+    //! Requests staged and unstaged diffs for a file
+    void requestWorkingTreeDiffs(const QString& sFileFullName);
+
+    //! Builds a patch from selected diff rows and applies it on the index
+    void applyDiffLines(CDiffModel* pModel, CDiffModelProxy* pProxy, const QVariantList& lProxyRows, bool bStage);
+
+    //! Builds a patch from selected source rows and applies it on the index
+    void applyDiffSourceRows(CDiffModel* pModel, const QSet<int>& sSelectedSourceRows, bool bStage);
 
     //-------------------------------------------------------------------------------------------------
     // Signals

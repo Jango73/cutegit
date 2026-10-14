@@ -6,6 +6,8 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QUrl>
+#include <QRegularExpression>
+#include <QTemporaryFile>
 
 // Application
 #include "CUtils.h"
@@ -19,6 +21,7 @@
 #include "CLogModelProxy.h"
 #include "CDiffModel.h"
 #include "CDiffModelProxy.h"
+#include "CPatchBuilder.h"
 #include "CGraphModel.h"
 #include "CBranch.h"
 #include "CLogLineCollection.h"
@@ -73,6 +76,10 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_pRefLogModel(new CLogModel(this, this))
     , m_pFileDiffModel(new CDiffModel(this))
     , m_pFileDiffModelProxy(new CDiffModelProxy(this, this))
+    , m_pStagedFileDiffModel(new CDiffModel(this))
+    , m_pStagedFileDiffModelProxy(new CDiffModelProxy(this, this))
+    , m_pUnstagedFileDiffModel(new CDiffModel(this))
+    , m_pUnstagedFileDiffModelProxy(new CDiffModelProxy(this, this))
     , m_pFileBlameModel(new CDiffModel(this))
     , m_pFileBlameModelProxy(new CDiffModelProxy(this, this))
     , m_pCommandOutputModel(new QStringListModel(this))
@@ -119,6 +126,8 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     m_pStagedFileModelProxy->setSourceModel(m_pFlatFileModel);
     m_pBranchLogModelProxy->setSourceModel(m_pBranchLogModel);
     m_pFileDiffModelProxy->setSourceModel(m_pFileDiffModel);
+    m_pStagedFileDiffModelProxy->setSourceModel(m_pStagedFileDiffModel);
+    m_pUnstagedFileDiffModelProxy->setSourceModel(m_pUnstagedFileDiffModel);
     m_pFileBlameModelProxy->setSourceModel(m_pFileBlameModel);
 
     // Connect signals
@@ -503,7 +512,10 @@ void CRepository::saveFileDiffAsPatch(const QString& sFullName)
     if (sFile.startsWith("file:"))
         sFile = QUrl(sFile).toLocalFile();
 
-    CUtils::setTextFileContents(sFile, m_sFileDiffString);
+    if (m_bFileDiffFromCommit)
+        CUtils::setTextFileContents(sFile, m_sFileDiffString);
+    else
+        CUtils::setTextFileContents(sFile, m_sStagedFileDiffString + m_sUnstagedFileDiffString);
 
     qDebug() << "saveFileDiffAsPatch:" << sFile;
 }
@@ -587,7 +599,7 @@ void CRepository::createTagOnCommit(const QString& sCommitId, const QString& sTa
 
 void CRepository::commitDiffPrevious(const QString& sCommitId)
 {
-    m_bFileDiffFromCommit = true;
+    setFileDiffFromCommit(true);
     m_pCommands->commitDiffPrevious(m_sRepositoryPath, sCommitId);
 }
 
@@ -635,6 +647,10 @@ void CRepository::setFileDiffFilter(const QString& sText)
 {
     m_pFileDiffModelProxy->setTextFilter(sText);
     m_pFileDiffModelProxy->filterChanged();
+    m_pStagedFileDiffModelProxy->setTextFilter(sText);
+    m_pStagedFileDiffModelProxy->filterChanged();
+    m_pUnstagedFileDiffModelProxy->setTextFilter(sText);
+    m_pUnstagedFileDiffModelProxy->filterChanged();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -651,6 +667,64 @@ void CRepository::setBranchLogFilter(const QString& sText)
 {
     m_pBranchLogModelProxy->setTextFilter(sText);
     m_pBranchLogModelProxy->filterChanged();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::stageDiffLines
+    Stages selected unstaged lines by applying a filtered patch on the index.
+*/
+void CRepository::stageDiffLines(QVariantList lProxyRows)
+{
+    applyDiffLines(m_pUnstagedFileDiffModel, m_pUnstagedFileDiffModelProxy, lProxyRows, true);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::unstageDiffLines
+    Unstages selected staged lines by reverse-applying a filtered patch on the index.
+*/
+void CRepository::unstageDiffLines(QVariantList lProxyRows)
+{
+    applyDiffLines(m_pStagedFileDiffModel, m_pStagedFileDiffModelProxy, lProxyRows, false);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::stageDiffHunk
+    Stages every change of a hunk in the unstaged diff.
+*/
+void CRepository::stageDiffHunk(int iHunkId)
+{
+    QList<int> lSourceRows = CPatchBuilder::selectableSourceRowsForHunk(m_pUnstagedFileDiffModel, iHunkId);
+
+    if (lSourceRows.isEmpty())
+        return;
+
+    QSet<int> sSelectedSourceRows(lSourceRows.begin(), lSourceRows.end());
+
+    applyDiffSourceRows(m_pUnstagedFileDiffModel, sSelectedSourceRows, true);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::unstageDiffHunk
+    Unstages every change of a hunk in the staged diff.
+*/
+void CRepository::unstageDiffHunk(int iHunkId)
+{
+    QList<int> lSourceRows = CPatchBuilder::selectableSourceRowsForHunk(m_pStagedFileDiffModel, iHunkId);
+
+    if (lSourceRows.isEmpty())
+        return;
+
+    QSet<int> sSelectedSourceRows(lSourceRows.begin(), lSourceRows.end());
+
+    applyDiffSourceRows(m_pStagedFileDiffModel, sSelectedSourceRows, false);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -830,6 +904,89 @@ QString CRepository::relativeFileName(const QString& sFullName)
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    \fn CRepository::requestWorkingTreeDiffs
+    Requests staged and unstaged diffs for a file.
+*/
+void CRepository::requestWorkingTreeDiffs(const QString& sFileFullName)
+{
+    m_pCommands->stagedFileDiff(m_sRepositoryPath, sFileFullName);
+    m_pCommands->unstagedFileDiff(m_sRepositoryPath, sFileFullName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::applyDiffLines
+    Builds a patch from selected rows and applies it on the index.
+    When bStage is true the patch comes from the unstaged model and is
+    applied forward, otherwise it comes from the staged model and is
+    applied in reverse.
+*/
+void CRepository::applyDiffLines(CDiffModel* pModel, CDiffModelProxy* pProxy, const QVariantList& lProxyRows, bool bStage)
+{
+    if (pModel == nullptr || pProxy == nullptr || m_pCommands == nullptr)
+        return;
+
+    if (lProxyRows.isEmpty())
+        return;
+
+    applyDiffSourceRows(pModel, CPatchBuilder::sourceRowsFromProxyRows(pProxy, pModel, lProxyRows), bStage);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::applyDiffSourceRows
+    Builds a patch from selected source rows and applies it on the index.
+    When bStage is true the patch is applied forward, otherwise in reverse.
+*/
+void CRepository::applyDiffSourceRows(CDiffModel* pModel, const QSet<int>& sSelectedSourceRows, bool bStage)
+{
+    if (pModel == nullptr || m_pCommands == nullptr)
+        return;
+
+    if (sSelectedSourceRows.isEmpty())
+        return;
+
+    QString sFullName = pModel->fullSourceName();
+
+    if (sFullName.isEmpty())
+        return;
+
+    QString sPatch = CPatchBuilder::patchFromSelection(pModel, sSelectedSourceRows, relativeFileName(sFullName));
+
+    if (sPatch.isEmpty())
+    {
+        onNewOutput(QString("No staged change in selection"), false);
+        return;
+    }
+
+    QTemporaryFile tPatchFile(QString("%1/CuteGitStageXXXXXX.patch").arg(QDir::tempPath()));
+
+    if (not tPatchFile.open())
+    {
+        onNewOutput(QString("Unable to create patch file"), false);
+        return;
+    }
+
+    tPatchFile.write(sPatch.toUtf8());
+    tPatchFile.flush();
+
+    QString sOutput = m_pCommands->applyPatchNow(m_sRepositoryPath, tPatchFile.fileName(), true, not bStage);
+
+    if (sOutput.isEmpty())
+    {
+        checkChangedFileStatus();
+    }
+    else
+    {
+        onNewOutput(sOutput, false);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::onCurrentFileFullName(QString sFileFullName)
 {
     if (sFileFullName == m_pFileLogModel->fullSourceName())
@@ -848,16 +1005,28 @@ void CRepository::onCurrentFileFullName(QString sFileFullName)
         m_pFileDiffModel->setFullSourceName("");
         m_pFileDiffModel->setRelativeSourceName("");
         m_pFileDiffModel->setLines(QList<CDiffLine*>());
-        m_bFileDiffFromCommit = false;
+        m_pStagedFileDiffModel->setFullSourceName("");
+        m_pStagedFileDiffModel->setRelativeSourceName("");
+        m_pStagedFileDiffModel->setLines(QList<CDiffLine*>());
+        m_pUnstagedFileDiffModel->setFullSourceName("");
+        m_pUnstagedFileDiffModel->setRelativeSourceName("");
+        m_pUnstagedFileDiffModel->setLines(QList<CDiffLine*>());
+        setStagedFileDiffString("");
+        setUnstagedFileDiffString("");
+        setFileDiffFromCommit(false);
 
         return;
     }
 
     m_pFileDiffModel->setFullSourceName(sFileFullName);
     m_pFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
-    m_bFileDiffFromCommit = false;
+    m_pStagedFileDiffModel->setFullSourceName(sFileFullName);
+    m_pStagedFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
+    m_pUnstagedFileDiffModel->setFullSourceName(sFileFullName);
+    m_pUnstagedFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
+    setFileDiffFromCommit(false);
 
-    m_pCommands->unstagedFileDiff(m_sRepositoryPath, sFileFullName);
+    requestWorkingTreeDiffs(sFileFullName);
     m_pCommands->fileLog(m_sRepositoryPath, sFileFullName);
 }
 
@@ -913,7 +1082,15 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     {
         // Drop late working tree diffs once a commit diff has been requested
         if (not m_bFileDiffFromCommit)
-            setFileDiffString(sOutput);
+            setUnstagedFileDiffString(sOutput);
+        break;
+    }
+
+    case CEnums::eStagedFileDiff:
+    {
+        // Drop late working tree diffs once a commit diff has been requested
+        if (not m_bFileDiffFromCommit)
+            setStagedFileDiffString(sOutput);
         break;
     }
 
@@ -929,6 +1106,7 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     case CEnums::eIssuedCommand:
     case CEnums::eCloneRepository:
     case CEnums::eNotification:
+    case CEnums::eApplyPatch:
     case CEnums::eDeleteFile:
     case CEnums::eUndeleteFile:
     case CEnums::eStageFile:
@@ -1141,10 +1319,22 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         bool bHasModifiedFiles = false;
         bool bHasCommitableFiles = false;
 
+        // The clean inventory only discovers files: it carries no status
+        // information and must never downgrade a known file, otherwise the
+        // resync below wipes the displayed diff source and line staging
+        // silently stops working until the file is selected again
+        bool bInventoryOnly = (eCommand == CEnums::eAllFileStatus);
+
         // Browse every file in lNewFiles and add/update
         for (CRepoFile* pNewFile : lNewFiles)
         {
             QString sNewKey = pNewFile->fullName();
+
+            if (bInventoryOnly && m_lRepoFiles.containsKey(sNewKey))
+            {
+                delete pNewFile;
+                continue;
+            }
 
             if (pNewFile->status() != CEnums::eIgnored && pNewFile->status() != CEnums::eClean)
             {
@@ -1171,23 +1361,29 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
             }
         }
 
-        // For every file not existing in lNewFiles, mark 'not staged' and 'clean' if required
-        for (CRepoFile* pExistingFile : m_lRepoFiles)
+        // Absence from a real status batch means clean; absence from the
+        // clean inventory means nothing, the existence check below handles
+        // deleted files
+        if (not bInventoryOnly)
         {
-            QString sExistingKey = pExistingFile->fullName();
-
-            if (not lNewFiles.containsKey(sExistingKey))
+            // For every file not existing in lNewFiles, mark 'not staged' and 'clean' if required
+            for (CRepoFile* pExistingFile : m_lRepoFiles)
             {
-                pExistingFile->setStaged(false);
+                QString sExistingKey = pExistingFile->fullName();
 
-                if (
-                        pExistingFile->status() == CEnums::eAdded ||
-                        pExistingFile->status() == CEnums::eModified ||
-                        pExistingFile->status() == CEnums::eRenamed ||
-                        pExistingFile->status() == CEnums::eDeleted
-                        )
+                if (not lNewFiles.containsKey(sExistingKey))
                 {
-                    pExistingFile->setStatus(CEnums::eClean);
+                    pExistingFile->setStaged(false);
+
+                    if (
+                            pExistingFile->status() == CEnums::eAdded ||
+                            pExistingFile->status() == CEnums::eModified ||
+                            pExistingFile->status() == CEnums::eRenamed ||
+                            pExistingFile->status() == CEnums::eDeleted
+                            )
+                    {
+                        pExistingFile->setStatus(CEnums::eClean);
+                    }
                 }
             }
         }
@@ -1209,9 +1405,13 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
             }
         }
 
-        // Update some flags
-        setHasModifiedFiles(bHasModifiedFiles);
-        setHasCommitableFiles(bHasCommitableFiles);
+        // Update some flags: only real status batches own them, the clean
+        // inventory would clear them on every pass
+        if (not bInventoryOnly)
+        {
+            setHasModifiedFiles(bHasModifiedFiles);
+            setHasCommitableFiles(bHasCommitableFiles);
+        }
 
         // Sort the files
         std::sort(m_lRepoFiles.begin(), m_lRepoFiles.end(), [] (CRepoFile* left, CRepoFile* right) {
@@ -1222,34 +1422,39 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         m_pFlatFileModel->handleRepoFilesChanged();
         m_pFlatFileModelProxy->filterChanged();
 
-        // Check if file log must be reset
-        if (m_bFileDiffFromCommit)
+        // Check if file log must be reset: only real status batches carry
+        // dirtiness information, the clean inventory must never wipe the
+        // displayed diff source
+        if (not bInventoryOnly)
         {
-            // A requested commit diff is independent of the working tree file
-            // list: leave it untouched so refresh never clears it
-        }
-        else if (m_lRepoFiles.count() == 0)
-        {
-            onCurrentFileFullName("");
-        }
-        else
-        {
-            // Resynchronize the diff with the file list: after a commit the selected
-            // file turns clean and proxy rows shift without QML currentIndexChanged,
-            // so without this the diff view keeps showing a stale diff
-            QString sCurrentDiffSource = m_pFileDiffModel->fullSourceName();
-
-            if (not sCurrentDiffSource.isEmpty())
+            if (m_bFileDiffFromCommit)
             {
-                CRepoFile* pCurrentFile = fileByFullName(sCurrentDiffSource);
+                // A requested commit diff is independent of the working tree file
+                // list: leave it untouched so refresh never clears it
+            }
+            else if (m_lRepoFiles.count() == 0)
+            {
+                onCurrentFileFullName("");
+            }
+            else
+            {
+                // Resynchronize the diff with the file list: after a commit the selected
+                // file turns clean and proxy rows shift without QML currentIndexChanged,
+                // so without this the diff view keeps showing a stale diff
+                QString sCurrentDiffSource = m_pUnstagedFileDiffModel->fullSourceName();
 
-                if (pCurrentFile == nullptr || pCurrentFile->status() == CEnums::eClean)
+                if (not sCurrentDiffSource.isEmpty())
                 {
-                    onCurrentFileFullName("");
-                }
-                else
-                {
-                    m_pCommands->unstagedFileDiff(m_sRepositoryPath, sCurrentDiffSource);
+                    CRepoFile* pCurrentFile = fileByFullName(sCurrentDiffSource);
+
+                    if (pCurrentFile == nullptr || pCurrentFile->status() == CEnums::eClean)
+                    {
+                        onCurrentFileFullName("");
+                    }
+                    else
+                    {
+                        requestWorkingTreeDiffs(sCurrentDiffSource);
+                    }
                 }
             }
         }
@@ -1309,7 +1514,17 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
     {
         // Drop late working tree diffs once a commit diff has been requested
         if (not m_bFileDiffFromCommit)
-            m_pFileDiffModel->setLines(lNewLines);
+            m_pUnstagedFileDiffModel->setLines(lNewLines);
+        else
+            qDeleteAll(lNewLines);
+        break;
+    }
+
+    case CEnums::eStagedFileDiff:
+    {
+        // Drop late working tree diffs once a commit diff has been requested
+        if (not m_bFileDiffFromCommit)
+            m_pStagedFileDiffModel->setLines(lNewLines);
         else
             qDeleteAll(lNewLines);
         break;
@@ -1369,7 +1584,7 @@ void CRepository::onDiffCommitIdChanged()
 
     if (not m_sDiffFromCommitId.isEmpty() && not m_sDiffToCommitId.isEmpty())
     {
-        m_bFileDiffFromCommit = true;
+        setFileDiffFromCommit(true);
         m_pCommands->twoCommitDiff(m_sRepositoryPath, m_sDiffFromCommitId, m_sDiffToCommitId);
 
         setDiffFromCommitId("");

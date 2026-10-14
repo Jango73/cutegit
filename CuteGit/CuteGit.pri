@@ -21,6 +21,7 @@ HEADERS += \
     sources/CLogLineCollection.h \
     sources/CLogModel.h \
     sources/CLogModelProxy.h \
+    sources/CPatchBuilder.h \
     sources/CRepoFile.h \
     sources/CRepository.h \
     sources/CRepositoryModel.h \
@@ -54,6 +55,7 @@ SOURCES += \
     sources/CLogLineCollection.cpp \
     sources/CLogModel.cpp \
     sources/CLogModelProxy.cpp \
+    sources/CPatchBuilder.cpp \
     sources/CRepoFile.cpp \
     sources/CRepository.cpp \
     sources/CRepositoryModel.cpp \

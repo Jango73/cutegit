@@ -455,9 +455,13 @@ Pane {
         fileMenu.popup()
     }
 
-    function showDiffMenu(operation, text) {
+    function showDiffMenu(staged, proxyRow, operation, text, hunkId, selectedRows) {
+        diffMenu.staged = staged
+        diffMenu.proxyRow = proxyRow
         diffMenu.operation = operation
         diffMenu.text = text
+        diffMenu.hunkId = hunkId
+        diffMenu.selectedRows = selectedRows
         diffMenu.popup()
     }
 
