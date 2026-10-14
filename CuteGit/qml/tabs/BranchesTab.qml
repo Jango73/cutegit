@@ -31,7 +31,7 @@ Item {
         delegate: StandardListViewItem {
             width: ListView.view.width
             listView: remoteBranchList
-            selectionShown: model.name === root.repository.currentBranch
+            selectionShown: root.repository !== null && model.name === root.repository.currentBranch
             primaryText: model.name
 
             onClicked: function(mouse) {
@@ -77,7 +77,7 @@ Item {
         delegate: StandardListViewItem {
             width: ListView.view.width
             listView: localBranchList
-            selectionShown: model.name === root.repository.currentBranch
+            selectionShown: root.repository !== null && model.name === root.repository.currentBranch
             primaryText: model.name
 
             onClicked: function(mouse) {
@@ -95,6 +95,9 @@ Item {
     }
 
     function focusTab() {
-        remoteBranchList.forceActiveFocus()
+        if (remoteBranchList.count > 0)
+            remoteBranchList.forceActiveFocus()
+        else
+            localBranchList.forceActiveFocus()
     }
 }

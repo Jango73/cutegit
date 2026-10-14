@@ -38,6 +38,12 @@ ExtendablePane {
             anchors.topMargin: Const.smallPadding
             currentIndex: tabBar.currentIndex
             clip: true
+            visible: root.tabIds.length > 0
+
+            onCurrentIndexChanged: {
+                if (tabBar.currentIndex !== currentIndex)
+                    tabBar.currentIndex = currentIndex
+            }
 
             Repeater {
                 model: root.tabIds
@@ -50,6 +56,17 @@ ExtendablePane {
                     }
                 }
             }
+        },
+
+        StandardLabel {
+            anchors.top: tabBar.visible ? tabBar.bottom : parent.top
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            text: Const.emptyPanelText
+            visible: root.tabIds.length === 0
         }
     ]
 
@@ -57,7 +74,10 @@ ExtendablePane {
     onViewRootChanged: refreshTabItems()
     onFlatSelectionChanged: refreshTabItems()
     onPanelDefinitionChanged: {
-        tabBar.currentIndex = 0
+        if (root.tabIds.length > 0) {
+            if (tabBar.currentIndex < 0 || tabBar.currentIndex >= root.tabIds.length)
+                tabBar.currentIndex = 0
+        }
         refreshTabItems()
     }
 

@@ -98,7 +98,8 @@ Pane {
         model: root.repository ? root.repository.flatFileModelProxy : null
 
         onCurrentIndexChanged: {
-            root.repository.flatFileModelProxy.handleCurrentIndex(currentIndex)
+            if (root.repository !== null)
+                root.repository.flatFileModelProxy.handleCurrentIndex(currentIndex)
         }
     }
 
@@ -142,7 +143,10 @@ Pane {
         objectName: "branchMenu"
         repository: root.repository
 
-        onRequestSwitchToBranch: root.repository.currentBranch = root.branchName
+        onRequestSwitchToBranch: {
+            if (root.repository !== null && root.repository.can(CEnums.SwitchBranch))
+                root.repository.currentBranch = root.branchName
+        }
         onRequestRebaseOnBranch: root.requestRebaseOnBranch(root.branchName)
         onRequestMergeBranch: root.requestMergeBranch(root.branchName)
         onRequestDeleteBranch: root.requestDeleteBranch(root.branchName)
@@ -464,6 +468,8 @@ Pane {
     }
 
     function showBranchMenu(name) {
+        if (root.repository === null)
+            return
         root.branchName = name
         branchMenu.canRebaseOn = (name !== root.repository.currentBranch)
         branchMenu.canMerge = (name !== root.repository.currentBranch)
@@ -498,23 +504,35 @@ Pane {
     }
 
     function getSelectedFiles() {
+        var aggregatedFiles = []
         for (var index = 0; index < panelRepeater.count; index++) {
             var panel = panelRepeater.itemAt(index)
             if (panel !== null) {
                 var selectedFiles = panel.getSelectedFiles()
-                if (selectedFiles.length > 0)
-                    return selectedFiles
+                for (var fileIndex = 0; fileIndex < selectedFiles.length; fileIndex++) {
+                    if (aggregatedFiles.indexOf(selectedFiles[fileIndex]) === -1)
+                        aggregatedFiles.push(selectedFiles[fileIndex])
+                }
             }
         }
-        return []
+        return aggregatedFiles
+    }
+
+    function reportMissingTab(tabId) {
+        var message = Const.missingTabInLayoutText.arg(tabId)
+        console.warn(message)
+        if (root.controller !== null)
+            root.controller.statusText = message
     }
 
     function activateTab(tabId) {
         for (var index = 0; index < panelRepeater.count; index++) {
             var panel = panelRepeater.itemAt(index)
             if (panel !== null && panel.activateTab(tabId))
-                return
+                return true
         }
+        root.reportMissingTab(tabId)
+        return false
     }
 
     function activateFlatFileView() {

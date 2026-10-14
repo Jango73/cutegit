@@ -28,7 +28,7 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         text: Const.listEmptyText
-        visible: root.repository === null | logView.count === 0
+        visible: root.repository === null || logView.count === 0
     }
 
     LogView {

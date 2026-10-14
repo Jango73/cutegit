@@ -189,6 +189,8 @@ Item {
     readonly property string branchLogText: qsTr("Branch log")
     readonly property string helpTitleText: qsTr("Help")
     readonly property string listEmptyText: qsTr("List empty")
+    readonly property string emptyPanelText: qsTr("Empty panel")
+    readonly property string missingTabInLayoutText: qsTr("Tab '%1' not found in current layout")
     readonly property string expandAllText: qsTr("Expand all")
     readonly property string deleteFileText: qsTr("Delete file")
     readonly property string branchFromText: qsTr("Branch from")

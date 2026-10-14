@@ -265,13 +265,15 @@ void CController::setCurrentLayoutIndex(int iValue)
     if (iClampedValue >= m_vLayouts.count())
         iClampedValue = m_vLayouts.count() - 1;
 
-    if (m_iCurrentLayoutIndex != iClampedValue)
+    bool bIndexChanged = (m_iCurrentLayoutIndex != iClampedValue);
+
+    if (bIndexChanged || m_lCurrentLayoutPanels.isEmpty())
     {
         m_iCurrentLayoutIndex = iClampedValue;
-        emit currentLayoutIndexChanged();
+        if (bIndexChanged)
+            emit currentLayoutIndexChanged();
+        setCurrentLayoutPanels(CLayout::toVariantPanels(m_vLayouts[m_iCurrentLayoutIndex]));
     }
-
-    setCurrentLayoutPanels(CLayout::toVariantPanels(m_vLayouts[m_iCurrentLayoutIndex]));
 }
 
 //-------------------------------------------------------------------------------------------------
