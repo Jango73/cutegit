@@ -117,7 +117,9 @@ private slots:
 
         QTRY_VERIFY_WITH_TIMEOUT(addedContains(pStaged, "line-B1"), s_iAsyncTimeoutMs);
         QTRY_VERIFY_WITH_TIMEOUT(not addedContains(pUnstaged, "line-B1"), s_iAsyncTimeoutMs);
-        QVERIFY(addedContains(pUnstaged, "line-B2"));
+        // Staged and unstaged refreshes are independent asynchronous payloads:
+        // the unstaged pane must be awaited, not assumed already there
+        QTRY_VERIFY_WITH_TIMEOUT(addedContains(pUnstaged, "line-B2"), s_iAsyncTimeoutMs);
     }
 
     // Stages two lines, re-requests diffs, unstages one of them
