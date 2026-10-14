@@ -20,13 +20,18 @@ Item {
     property bool fromCommit: repository !== null && repository.fileDiffFromCommit === true
 
     /*! Requests to show the menu */
-    signal requestMenu(var staged, var proxyRow, var operation, var text, var hunkId, var selectedRows)
+    signal requestMenu(var staged, var operation, var text, var hunkId, var selectedRows)
 
     /*! Requests a filter change */
     signal requestTextFilter(var text)
 
     /*! Requests to save the diff as a patch */
     signal requestSaveAsPatch()
+
+    /*! Forwards a working tree right click with its staged side */
+    function requestWorkingTreeMenu(staged, operation, text, hunkId, selectedRows) {
+        root.requestMenu(staged, operation, text, hunkId, selectedRows)
+    }
 
     StandardLabel {
         anchors.fill: parent
@@ -91,6 +96,7 @@ Item {
 
     DiffView {
         id: commitDiffView
+        objectName: "commitDiffView"
         anchors.top: filterLayout.bottom
         anchors.bottom: parent.bottom
         anchors.left: parent.left
@@ -98,10 +104,10 @@ Item {
         visible: root.fromCommit
         stagingEnabled: false
 
-        model: root.repository !== null ? root.repository.fileDiffModelProxy : undefined
+        model: root.repository !== null ? root.repository.fileDiffModelProxy : null
 
-        onItemRightClicked: function(proxyRow, operation, text, hunkId) {
-            root.requestMenu(false, proxyRow, operation, text, hunkId, commitDiffView.selectedRows)
+        onItemRightClicked: function(operation, text, hunkId) {
+            root.requestMenu(false, operation, text, hunkId, commitDiffView.selectedRows)
         }
     }
 
@@ -119,19 +125,18 @@ Item {
             text: Const.unstagedDiffText + " (" + unstagedDiffView.count + ")"
         }
 
-        DiffView {
+        WorkingTreeDiffView {
             id: unstagedDiffView
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredHeight: root.isGit ? 2 : 1
+            objectName: "unstagedDiffView"
+            stretchWeight: Const.unstagedDiffStretch
             repository: root.repository
             staged: false
             stagingEnabled: root.isGit
 
-            model: root.repository !== null ? root.repository.unstagedFileDiffModelProxy : undefined
+            model: root.repository !== null ? root.repository.unstagedFileDiffModelProxy : null
 
-            onItemRightClicked: function(proxyRow, operation, text, hunkId) {
-                root.requestMenu(false, proxyRow, operation, text, hunkId, unstagedDiffView.selectedRows)
+            onRequestMenu: function(operation, text, hunkId, selectedRows) {
+                root.requestWorkingTreeMenu(false, operation, text, hunkId, selectedRows)
             }
         }
 
@@ -150,20 +155,19 @@ Item {
             visible: root.isGit
         }
 
-        DiffView {
+        WorkingTreeDiffView {
             id: stagedDiffView
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredHeight: 1
+            objectName: "stagedDiffView"
+            stretchWeight: Const.stagedDiffStretch
             visible: root.isGit
             repository: root.repository
             staged: true
             stagingEnabled: root.isGit
 
-            model: root.repository !== null ? root.repository.stagedFileDiffModelProxy : undefined
+            model: root.repository !== null ? root.repository.stagedFileDiffModelProxy : null
 
-            onItemRightClicked: function(proxyRow, operation, text, hunkId) {
-                root.requestMenu(true, proxyRow, operation, text, hunkId, stagedDiffView.selectedRows)
+            onRequestMenu: function(operation, text, hunkId, selectedRows) {
+                root.requestWorkingTreeMenu(true, operation, text, hunkId, selectedRows)
             }
         }
 

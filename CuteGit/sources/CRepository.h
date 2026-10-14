@@ -372,8 +372,20 @@ protected:
     //! Builds a patch from selected diff rows and applies it on the index
     void applyDiffLines(CDiffModel* pModel, CDiffModelProxy* pProxy, const QVariantList& lProxyRows, bool bStage);
 
+    //! Builds a patch from every visible change of a hunk and applies it on the index
+    void applyDiffHunk(CDiffModel* pModel, CDiffModelProxy* pProxy, int iHunkId, bool bStage);
+
     //! Builds a patch from selected source rows and applies it on the index
     void applyDiffSourceRows(CDiffModel* pModel, const QSet<int>& sSelectedSourceRows, bool bStage);
+
+    //! Returns the staged or unstaged diff model for a working tree diff command
+    CDiffModel* workingTreeDiffModel(CEnums::EProcessCommand eCommand) const;
+
+    //! Stores the raw output of a staged or unstaged diff
+    void setWorkingTreeDiffString(CEnums::EProcessCommand eCommand, const QString& sOutput, const QString& sUserData);
+
+    //! Stores parsed lines of a staged or unstaged diff
+    void setWorkingTreeDiffLines(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines, const QString& sUserData);
 
     //-------------------------------------------------------------------------------------------------
     // Signals

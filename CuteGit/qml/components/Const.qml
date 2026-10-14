@@ -165,6 +165,14 @@ Item {
     readonly property string stageHunkText: qsTr("Stage &hunk")
     readonly property string unstageHunkText: qsTr("Unstage &hunk")
 
+    // Diff selection sentinels, header prefixes and pane weights (no magic literals in views)
+    readonly property int invalidHunkId: -1
+    readonly property int invalidRow: -1
+    readonly property string collapsedHeaderPrefix: "▶ "
+    readonly property string expandedHeaderPrefix: "▼ "
+    readonly property int unstagedDiffStretch: 2
+    readonly property int stagedDiffStretch: 1
+
     readonly property string okText: qsTr("OK")
     readonly property string logText: qsTr("Log")
     readonly property string tagText: qsTr("Tag")

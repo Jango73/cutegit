@@ -24,12 +24,14 @@ DEPENDPATH += $$CUTEGIT_SOURCES
 SOURCES += \
     setup.cpp \
     $$CUTEGIT_SOURCES/CPatchBuilder.cpp \
+    $$CUTEGIT_SOURCES/CDiffConstants.cpp \
     $$CUTEGIT_SOURCES/CDiffModel.cpp \
     $$CUTEGIT_SOURCES/CDiffModelProxy.cpp
 
 HEADERS += \
     $$CUTEGIT_SOURCES/CPatchBuilder.h \
     $$CUTEGIT_SOURCES/CDiffLine.h \
+    $$CUTEGIT_SOURCES/CDiffConstants.h \
     $$CUTEGIT_SOURCES/CDiffModel.h \
     $$CUTEGIT_SOURCES/CDiffModelProxy.h \
     $$CUTEGIT_SOURCES/CEnums.h

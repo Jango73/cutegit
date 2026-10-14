@@ -6,18 +6,16 @@
 // Application
 #include "CPatchBuilder.h"
 #include "CDiffLine.h"
+#include "CDiffConstants.h"
 
 //-------------------------------------------------------------------------------------------------
 
-//! Hunk header pattern, mirrors CGitCommands::sDiffHunkRegExp
-#define PATCH_HUNK_REGEXP "@@\\s+-([0-9]+)(,([0-9]+))?\\s+\\+([0-9]+)(,([0-9]+))?\\s+@@(.*)"
-
-// Capture positions inside PATCH_HUNK_REGEXP
-static const int iHunkOldStartCapture = 1;
-static const int iHunkNewStartCapture = 4;
-static const int iHunkNewCountWithCommaCapture = 5;
-static const int iHunkNewCountCapture = 6;
-static const int iHunkSectionCapture = 7;
+// Capture positions inside CDiffConstants::sHunkHeaderPattern
+static const int iHunkOldStartCapture = CDiffConstants::iHunkOldStartCapture;
+static const int iHunkNewStartCapture = CDiffConstants::iHunkNewStartCapture;
+static const int iHunkNewCountWithCommaCapture = CDiffConstants::iHunkNewCountWithCommaCapture;
+static const int iHunkNewCountCapture = CDiffConstants::iHunkNewCountCapture;
+static const int iHunkSectionCapture = CDiffConstants::iHunkSectionCapture;
 
 // Hunk starts for a file that appears from nothing or disappears entirely
 static const int iNullHunkStart = 0;
@@ -57,6 +55,11 @@ QSet<int> CPatchBuilder::sourceRowsFromProxyRows(CDiffModelProxy* pProxy, CDiffM
         if (not tSourceIndex.isValid())
             continue;
 
+        // Validate that the mapped row belongs to the expected model:
+        // the proxy may be rebound while QML still holds stale rows
+        if (tSourceIndex.model() != pModel)
+            continue;
+
         sReturnValue.insert(tSourceIndex.row());
     }
 
@@ -73,7 +76,7 @@ QList<int> CPatchBuilder::selectableSourceRowsForHunk(CDiffModel* pModel, int iH
 {
     QList<int> lReturnValue;
 
-    if (pModel == nullptr || iHunkId < 0)
+    if (pModel == nullptr || iHunkId == CDiffConstants::iInvalidHunkId)
         return lReturnValue;
 
     QList<CDiffLine*> lLines = pModel->lines();
@@ -107,7 +110,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
         return QString();
 
     QList<CDiffLine*> lLines = pModel->lines();
-    QRegularExpression tHunkRegExp(QString(PATCH_HUNK_REGEXP));
+    QRegularExpression tHunkRegExp(CDiffConstants::sHunkHeaderPattern);
 
     // Group source rows by hunk, keeping model order. Rows from other files
     // are skipped so a multi-file model never merges hunks into one patch.
@@ -129,7 +132,7 @@ QString CPatchBuilder::patchFromSelection(CDiffModel* pModel, const QSet<int>& s
 
         int iHunkId = pLine->hunkId();
 
-        if (iHunkId < 0)
+        if (iHunkId == CDiffConstants::iInvalidHunkId)
             continue;
 
         if (pLine->operation() == CEnums::DiffHunk)

@@ -31,6 +31,7 @@ SOURCES += \
     $$CUTEGIT_SOURCES/CRepositoryModel.cpp \
     $$CUTEGIT_SOURCES/CRepository.cpp \
     $$CUTEGIT_SOURCES/CPatchBuilder.cpp \
+    $$CUTEGIT_SOURCES/CDiffConstants.cpp \
     $$CUTEGIT_SOURCES/CDiffModel.cpp \
     $$CUTEGIT_SOURCES/CDiffModelProxy.cpp \
     $$CUTEGIT_SOURCES/CFlatFileModel.cpp \
@@ -64,6 +65,7 @@ HEADERS += \
     $$CUTEGIT_SOURCES/CRepositoryModel.h \
     $$CUTEGIT_SOURCES/CRepository.h \
     $$CUTEGIT_SOURCES/CPatchBuilder.h \
+    $$CUTEGIT_SOURCES/CDiffConstants.h \
     $$CUTEGIT_SOURCES/CDiffLine.h \
     $$CUTEGIT_SOURCES/CDiffModel.h \
     $$CUTEGIT_SOURCES/CDiffModelProxy.h \

@@ -5,6 +5,7 @@ HEADERS += \
     sources/CBranchModel.h \
     sources/CController.h \
     sources/CDiffLine.h \
+    sources/CDiffConstants.h \
     sources/CDiffModel.h \
     sources/CDiffModelProxy.h \
     sources/CEnums.h \
@@ -43,6 +44,7 @@ SOURCES += \
     sources/CBranchModel.cpp \
     sources/CController.cpp \
     sources/CDiffModel.cpp \
+    sources/CDiffConstants.cpp \
     sources/CDiffModelProxy.cpp \
     sources/CFlatFileModel.cpp \
     sources/CFlatFileModelProxy.cpp \

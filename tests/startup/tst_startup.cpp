@@ -104,8 +104,22 @@ private slots:
         QTest::qWait(3500);
 
         QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
-        QVERIFY2(warningsContain(lWarnings, "onModelReset"),
-                 "The diff views inside the repository view were never instantiated");
+
+        // The file diff pane instantiates both working tree diff views directly:
+        // tab panels load lazily, so the repository view alone cannot prove it
+        QQmlComponent tDiffPane(&tEngine, QUrl(QStringLiteral("qrc:/qml/pages/FileDiffPane.qml")));
+        QVERIFY2(tDiffPane.isReady(), "FileDiffPane.qml is not ready");
+
+        QScopedPointer<QObject> pPane(tDiffPane.create());
+        QVERIFY2(not pPane.isNull(), "FileDiffPane.qml produced no object");
+
+        pPane->setProperty("repository", QVariant::fromValue(pModel->repositories().value(0)));
+
+        QTRY_VERIFY_WITH_TIMEOUT(pPane->findChild<QObject*>("unstagedDiffView") != nullptr,
+                                 s_iAsyncTimeoutMs);
+        QVERIFY2(pPane->findChild<QObject*>("stagedDiffView") != nullptr,
+                 "The staged diff view inside the file diff pane was never instantiated");
+        QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
     }
 
     void cleanupTestCase()
@@ -148,17 +162,6 @@ private:
     QString formatWarnings(const QStringList& lWarnings)
     {
         return QString("QML warnings:\n%1").arg(lWarnings.join("\n"));
-    }
-
-    bool warningsContain(const QStringList& lWarnings, const QString& sText)
-    {
-        for (const QString& sWarning : lWarnings)
-        {
-            if (sWarning.contains(sText))
-                return true;
-        }
-
-        return false;
     }
 
     int cloneFixture(const QString& sClonePath)

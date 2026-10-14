@@ -10,6 +10,8 @@
 #include "../CUtils.h"
 #include "../CController.h"
 #include "../Strings.h"
+#include "../CDiffLine.h"
+#include "../CDiffConstants.h"
 
 /*!
     \class CGitCommands
@@ -97,7 +99,7 @@ const QString CGitCommands::sStatusBranchRegExp         = "";
 const QString CGitCommands::sStatusRegExp               = "([a-zA-Z?!\\s])([a-zA-Z?!\\s])\\s(.*)";
 const QString CGitCommands::sPickCommitRegExp           = "(pick)\\s+([a-zA-Z0-9]+)\\s+(.*)";
 const QString CGitCommands::sDiffLineRegExp             = "diff\\s+(.*)\\s+a/(.*)\\s+b/(.*)";
-const QString CGitCommands::sDiffHunkRegExp             = "@@\\s+-([0-9]+)(,([0-9]+))?\\s+\\+([0-9]+)(,([0-9]+))?\\s+@@(.*)";
+const QString CGitCommands::sDiffHunkRegExp             = CDiffConstants::sHunkHeaderPattern;
 const QString CGitCommands::sBlameLineRegExp            = "([0-9a-fA-F]+)\\s+\\(\\s+([a-zA-Z0-9_-]+)\\s+([0-9:+-]+\\s+[0-9:+-]+\\s+[0-9:+-]+)\\s+([0-9]+)\\)(.*)";
 
 const QString CGitCommands::sComment                    = "#";
@@ -923,6 +925,25 @@ void CGitCommands::handleCommitCountOutput(const CProcessResult& tResult)
 
 //-------------------------------------------------------------------------------------------------
 
+/***************************************************************************/
+
+/*! Builds a fully configured diff line, so callers set every field in one call */
+static CDiffLine* makeDiffLine(CEnums::EDiffOperation eOperation, const QString& sText, const QString& sFileName, int iHunkId, int iOldLineNumber, int iNewLineNumber)
+{
+    CDiffLine* pReturnValue = new CDiffLine();
+
+    pReturnValue->setOperation(eOperation);
+    pReturnValue->setText(sText);
+    pReturnValue->setFileName(sFileName);
+    pReturnValue->setHunkId(iHunkId);
+    pReturnValue->setOldLineNumber(iOldLineNumber);
+    pReturnValue->setNewLineNumber(iNewLineNumber);
+
+    return pReturnValue;
+}
+
+/***************************************************************************/
+
 void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
 {
     // Create CDiffLine objects with the returned string of the process
@@ -933,11 +954,12 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
     QStringList lLines = tResult.m_sValue.split(NEW_LINE);
     bool bAtLeastOneLineOK = false;
 
-    const int iInvalidHunkId = -1;
+    const int iInvalidHunkId = CDiffConstants::iInvalidHunkId;
+    const int iNoLineNumber = CDiffConstants::iNoLineNumber;
     QString sCurrentFileName;
     int iHunkId = iInvalidHunkId;
-    int iOldLineNumber = -1;
-    int iNewLineNumber = -1;
+    int iOldLineNumber = iNoLineNumber;
+    int iNewLineNumber = iNoLineNumber;
 
     QRegularExpression tFileRegExp(sDiffLineRegExp);
     QRegularExpression tHunkRegExp(sDiffHunkRegExp);
@@ -950,85 +972,59 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
         {
             bAtLeastOneLineOK = true;
 
-            if (sLine.startsWith("index") || sLine.startsWith("+++") || sLine.startsWith("---"))
+            if (sLine.startsWith(CDiffConstants::sDiffIndexPrefix) || sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix))
             {
                 continue;
             }
 
-            CDiffLine* pDiffLine = new CDiffLine();
-            pDiffLine->setText(sLine);
-            pDiffLine->setFileName(sCurrentFileName);
-            pDiffLine->setHunkId(iHunkId);
+            CDiffLine* pDiffLine = nullptr;
 
-            if (sLine.startsWith("diff"))
+            if (sLine.startsWith(CDiffConstants::sDiffFilePrefix))
             {
                 QString sNewText = sLine;
 
                 QRegularExpressionMatch match = tFileRegExp.match(sLine);
                 if (match.hasMatch())
                 {
-                    sNewText = match.captured(3).trimmed();
+                    sNewText = match.captured(CDiffConstants::iDiffFilePathCapture).trimmed();
                 }
 
                 sCurrentFileName = sNewText;
 
                 // Keep hunk identifiers unique across files: patch grouping
                 // by hunk alone stays correct on multi-file diffs
-                pDiffLine->setOperation(CEnums::DiffFileName);
-                pDiffLine->setText(sNewText);
-                pDiffLine->setFileName(sCurrentFileName);
-                pDiffLine->setHunkId(iInvalidHunkId);
+                pDiffLine = makeDiffLine(CEnums::DiffFileName, sNewText, sCurrentFileName, iInvalidHunkId, iNoLineNumber, iNoLineNumber);
             }
-            else if (sLine.startsWith("@@"))
+            else if (sLine.startsWith(CDiffConstants::sDiffHunkPrefix))
             {
                 QRegularExpressionMatch match = tHunkRegExp.match(sLine);
                 if (match.hasMatch())
                 {
-                    iOldLineNumber = match.captured(1).toInt();
-                    iNewLineNumber = match.captured(4).toInt();
+                    iOldLineNumber = match.captured(CDiffConstants::iHunkOldStartCapture).toInt();
+                    iNewLineNumber = match.captured(CDiffConstants::iHunkNewStartCapture).toInt();
                 }
 
                 iHunkId++;
 
-                pDiffLine->setOperation(CEnums::DiffHunk);
-                pDiffLine->setFileName(sCurrentFileName);
-                pDiffLine->setHunkId(iHunkId);
-                pDiffLine->setOldLineNumber(-1);
-                pDiffLine->setNewLineNumber(-1);
+                pDiffLine = makeDiffLine(CEnums::DiffHunk, sLine, sCurrentFileName, iHunkId, iNoLineNumber, iNoLineNumber);
             }
-            else if (sLine.startsWith("+") && not sLine.startsWith("+++"))
+            else if (sLine.startsWith(CDiffConstants::sDiffAddedPrefix) && not sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix))
             {
-                pDiffLine->setOperation(CEnums::DiffAdd);
-                pDiffLine->setFileName(sCurrentFileName);
-                pDiffLine->setHunkId(iHunkId);
-                pDiffLine->setOldLineNumber(-1);
-                pDiffLine->setNewLineNumber(iNewLineNumber);
+                pDiffLine = makeDiffLine(CEnums::DiffAdd, sLine, sCurrentFileName, iHunkId, iNoLineNumber, iNewLineNumber);
                 iNewLineNumber++;
             }
-            else if (sLine.startsWith("-") && not sLine.startsWith("---"))
+            else if (sLine.startsWith(CDiffConstants::sDiffDeletedPrefix) && not sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix))
             {
-                pDiffLine->setOperation(CEnums::DiffDelete);
-                pDiffLine->setFileName(sCurrentFileName);
-                pDiffLine->setHunkId(iHunkId);
-                pDiffLine->setOldLineNumber(iOldLineNumber);
-                pDiffLine->setNewLineNumber(-1);
+                pDiffLine = makeDiffLine(CEnums::DiffDelete, sLine, sCurrentFileName, iHunkId, iOldLineNumber, iNoLineNumber);
                 iOldLineNumber++;
             }
-            else if (sLine.startsWith("\\"))
+            else if (sLine.startsWith(CDiffConstants::sDiffNoNewlinePrefix))
             {
-                pDiffLine->setOperation(CEnums::None);
-                pDiffLine->setFileName(sCurrentFileName);
-                pDiffLine->setHunkId(iHunkId);
-                pDiffLine->setOldLineNumber(-1);
-                pDiffLine->setNewLineNumber(-1);
+                pDiffLine = makeDiffLine(CEnums::None, sLine, sCurrentFileName, iHunkId, iNoLineNumber, iNoLineNumber);
             }
             else
             {
-                pDiffLine->setOperation(CEnums::None);
-                pDiffLine->setFileName(sCurrentFileName);
-                pDiffLine->setHunkId(iHunkId);
-                pDiffLine->setOldLineNumber(iOldLineNumber);
-                pDiffLine->setNewLineNumber(iNewLineNumber);
+                pDiffLine = makeDiffLine(CEnums::None, sLine, sCurrentFileName, iHunkId, iOldLineNumber, iNewLineNumber);
                 iOldLineNumber++;
                 iNewLineNumber++;
             }

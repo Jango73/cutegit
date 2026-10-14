@@ -27,6 +27,7 @@
 #include "CLogLineCollection.h"
 #include "CDiffLine.h"
 #include "CGraphLine.h"
+#include "CDiffConstants.h"
 #include "commands/CGitCommands.h"
 #include "commands/CGerritCommands.h"
 #include "commands/CSvnCommands.h"
@@ -713,14 +714,7 @@ void CRepository::unstageDiffLines(QVariantList lProxyRows)
 */
 void CRepository::stageDiffHunk(int iHunkId)
 {
-    QList<int> lSourceRows = CPatchBuilder::selectableSourceRowsForHunk(m_pUnstagedFileDiffModel, iHunkId);
-
-    if (lSourceRows.isEmpty())
-        return;
-
-    QSet<int> sSelectedSourceRows(lSourceRows.begin(), lSourceRows.end());
-
-    applyDiffSourceRows(m_pUnstagedFileDiffModel, sSelectedSourceRows, true);
+    applyDiffHunk(m_pUnstagedFileDiffModel, m_pUnstagedFileDiffModelProxy, iHunkId, true);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -731,14 +725,7 @@ void CRepository::stageDiffHunk(int iHunkId)
 */
 void CRepository::unstageDiffHunk(int iHunkId)
 {
-    QList<int> lSourceRows = CPatchBuilder::selectableSourceRowsForHunk(m_pStagedFileDiffModel, iHunkId);
-
-    if (lSourceRows.isEmpty())
-        return;
-
-    QSet<int> sSelectedSourceRows(lSourceRows.begin(), lSourceRows.end());
-
-    applyDiffSourceRows(m_pStagedFileDiffModel, sSelectedSourceRows, false);
+    applyDiffHunk(m_pStagedFileDiffModel, m_pStagedFileDiffModelProxy, iHunkId, false);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1026,6 +1013,110 @@ void CRepository::applyDiffSourceRows(CDiffModel* pModel, const QSet<int>& sSele
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    \fn CRepository::applyDiffHunk
+    Builds a patch from every change of a hunk and applies it on the index.
+    Only rows visible through the proxy are kept, so hunk staging follows
+    the same text filter as line staging. When bStage is true the patch is
+    applied forward, otherwise in reverse.
+*/
+void CRepository::applyDiffHunk(CDiffModel* pModel, CDiffModelProxy* pProxy, int iHunkId, bool bStage)
+{
+    if (pModel == nullptr || pProxy == nullptr)
+        return;
+
+    if (iHunkId == CDiffConstants::iInvalidHunkId)
+        return;
+
+    QSet<int> sSelectedSourceRows;
+
+    for (int iSourceRow : CPatchBuilder::selectableSourceRowsForHunk(pModel, iHunkId))
+    {
+        QModelIndex tSourceIndex = pModel->index(iSourceRow, 0);
+
+        if (not pProxy->mapFromSource(tSourceIndex).isValid())
+            continue;
+
+        sSelectedSourceRows.insert(iSourceRow);
+    }
+
+    if (sSelectedSourceRows.isEmpty())
+        return;
+
+    applyDiffSourceRows(pModel, sSelectedSourceRows, bStage);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::workingTreeDiffModel
+    Returns the staged or unstaged diff model for a working tree diff command.
+    Returns nullptr for any other command.
+*/
+CDiffModel* CRepository::workingTreeDiffModel(CEnums::EProcessCommand eCommand) const
+{
+    switch (eCommand)
+    {
+    case CEnums::eStagedFileDiff:
+        return m_pStagedFileDiffModel;
+
+    case CEnums::eUnstagedFileDiff:
+        return m_pUnstagedFileDiffModel;
+
+    default:
+        return nullptr;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::setWorkingTreeDiffString
+    Stores the raw output of a staged or unstaged diff, dropping late results
+    requested for a commit diff and stale results tagged for another file.
+*/
+void CRepository::setWorkingTreeDiffString(CEnums::EProcessCommand eCommand, const QString& sOutput, const QString& sUserData)
+{
+    CDiffModel* pModel = workingTreeDiffModel(eCommand);
+
+    if (pModel == nullptr)
+        return;
+
+    if (m_bFileDiffFromCommit)
+        return;
+
+    if (not workingTreeDiffMatchesCurrentFile(pModel, sUserData))
+        return;
+
+    if (eCommand == CEnums::eStagedFileDiff)
+        setStagedFileDiffString(sOutput);
+    else
+        setUnstagedFileDiffString(sOutput);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::setWorkingTreeDiffLines
+    Stores parsed lines of a staged or unstaged diff, dropping late results
+    requested for a commit diff and stale results tagged for another file.
+    Takes ownership of lNewLines in all cases.
+*/
+void CRepository::setWorkingTreeDiffLines(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines, const QString& sUserData)
+{
+    CDiffModel* pModel = workingTreeDiffModel(eCommand);
+
+    if (pModel == nullptr || m_bFileDiffFromCommit || not workingTreeDiffMatchesCurrentFile(pModel, sUserData))
+    {
+        qDeleteAll(lNewLines);
+        return;
+    }
+
+    pModel->setLines(lNewLines);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::onCurrentFileFullName(QString sFileFullName)
 {
     if (sFileFullName == m_pFileLogModel->fullSourceName())
@@ -1118,20 +1209,11 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     }
 
     case CEnums::eUnstagedFileDiff:
-    {
-        // Drop late working tree diffs once a commit diff has been requested,
-        // and stale diffs tagged for a previously selected file
-        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pUnstagedFileDiffModel, sUserData))
-            setUnstagedFileDiffString(sOutput);
-        break;
-    }
-
     case CEnums::eStagedFileDiff:
     {
         // Drop late working tree diffs once a commit diff has been requested,
         // and stale diffs tagged for a previously selected file
-        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pStagedFileDiffModel, sUserData))
-            setStagedFileDiffString(sOutput);
+        setWorkingTreeDiffString(eCommand, sOutput, sUserData);
         break;
     }
 
@@ -1560,24 +1642,11 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
     {
 
     case CEnums::eUnstagedFileDiff:
-    {
-        // Drop late working tree diffs once a commit diff has been requested,
-        // and stale diffs tagged for a previously selected file
-        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pUnstagedFileDiffModel, sUserData))
-            m_pUnstagedFileDiffModel->setLines(lNewLines);
-        else
-            qDeleteAll(lNewLines);
-        break;
-    }
-
     case CEnums::eStagedFileDiff:
     {
         // Drop late working tree diffs once a commit diff has been requested,
         // and stale diffs tagged for a previously selected file
-        if (not m_bFileDiffFromCommit && workingTreeDiffMatchesCurrentFile(m_pStagedFileDiffModel, sUserData))
-            m_pStagedFileDiffModel->setLines(lNewLines);
-        else
-            qDeleteAll(lNewLines);
+        setWorkingTreeDiffLines(eCommand, lNewLines, sUserData);
         break;
     }
 

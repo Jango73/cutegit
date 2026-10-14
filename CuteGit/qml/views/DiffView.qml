@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQml 2.12
+import QtQml.Models 2.12
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Material 2.12
 import CuteGit 1.0
@@ -8,7 +9,7 @@ import "../components"
 StandardListView {
     id: root
 
-    signal itemRightClicked(var proxyRow, var operation, var text, var hunkId)
+    signal itemRightClicked(var operation, var text, var hunkId)
 
     /*! Repository used to stage lines with Space, null disables staging */
     property variant repository: null
@@ -19,71 +20,17 @@ StandardListView {
     /*! If false, Space never stages (non-indexed version controls, commit view) */
     property bool stagingEnabled: true
 
-    /*! Selected proxy rows */
-    property var selectedRows: []
-
-    /*! Anchor row for Shift range extension */
-    property int selectionAnchor: -1
-
-    function isSelected(row) {
-        return selectedRows.indexOf(row) !== -1
+    /*! Selection owned by the view, bound to the proxy model */
+    selection: ItemSelectionModel {
+        model: root.model
     }
 
-    function clearSelection() {
-        if (selectedRows.length !== 0)
-            selectedRows = []
-
-        selectionAnchor = -1
-    }
-
-    function selectOnly(row) {
-        selectedRows = [row]
-        selectionAnchor = row
-        currentIndex = row
-    }
-
-    function toggleRow(row) {
-        var rows = selectedRows.slice()
-        var position = rows.indexOf(row)
-
-        if (position === -1)
-            rows.push(row)
-        else
-            rows.splice(position, 1)
-
-        selectedRows = rows
-        selectionAnchor = row
-        currentIndex = row
-    }
-
-    function selectRangeTo(row, fallbackAnchor) {
-        var anchor = selectionAnchor
-
-        if (anchor < 0)
-            anchor = (fallbackAnchor === undefined ? -1 : fallbackAnchor)
-
-        if (anchor < 0)
-            anchor = row
-
-        var from = Math.min(anchor, row)
-        var to = Math.max(anchor, row)
-        var rows = []
-
-        for (var index = from; index <= to; index++)
-            rows.push(index)
-
-        selectedRows = rows
-        currentIndex = row
-    }
-
-    function selectAllRows() {
-        var rows = []
-
-        for (var index = 0; index < count; index++)
-            rows.push(index)
-
-        selectedRows = rows
-    }
+    /*! Selected proxy rows, read by the diff menu and staging helpers */
+    readonly property var selectedRows: root.selection
+        ? root.selection.selectedIndexes
+            .map(function(index) { return index.row })
+            .sort(function(first, second) { return first - second })
+        : []
 
     function stageSelection() {
         if (!stagingEnabled || !root.repository)
@@ -91,7 +38,7 @@ StandardListView {
 
         var rows = selectedRows.length !== 0
             ? selectedRows.slice()
-            : (currentIndex >= 0 ? [currentIndex] : [])
+            : (currentIndex > Const.invalidRow ? [currentIndex] : [])
 
         if (rows.length === 0)
             return
@@ -102,33 +49,35 @@ StandardListView {
             root.repository.stageDiffLines(rows)
     }
 
-    /*! Extends the line selection on Shift, moves it otherwise */
-    function handleKeyboardMovement(event, targetIndex) {
-        var clamped = Math.max(0, Math.min(count - 1, targetIndex))
+    /*! Toggles a single row without clearing the selection (Control+click) */
+    function toggleSelection(row) {
+        if (!selection)
+            return
 
-        if (event.modifiers & Qt.ShiftModifier)
-            selectRangeTo(clamped, currentIndex)
-        else
-            selectOnly(clamped)
+        root.updateModelIndex(row)
+
+        var proxyIndex = modelIndices[row]
+
+        if (proxyIndex === undefined)
+            return
+
+        selection.select(proxyIndex, ItemSelectionModel.Toggle)
+        currentIndex = row
     }
 
     function headerText(isCollapsed, text) {
-        return (isCollapsed ? "▶ " : "▼ ") + text
+        return (isCollapsed ? Const.collapsedHeaderPrefix : Const.expandedHeaderPrefix) + text
     }
 
     Connections {
         target: root.model
-        function onModelReset() { root.clearSelection() }
+        function onModelReset() {
+            if (root.selection)
+                root.selection.clear()
+        }
     }
 
     onSpacePressed: root.stageSelection()
-
-    Keys.onPressed: function(event) {
-        if (event.key === Qt.Key_A && (event.modifiers & Qt.ControlModifier)) {
-            root.selectAllRows()
-            event.accepted = true
-        }
-    }
 
     delegate: StandardListViewItem {
         objectName: "root.delegate." + index
@@ -140,7 +89,12 @@ StandardListView {
         primaryColor: model.operation === CEnums.DiffFileName ? Material.background : Material.foreground
         primaryFont.family: Const.fixedWidthFontFamily
         primaryFont.pixelSize: Const.fixedWidthFontSize
-        selectionShown: root.selectedRows.indexOf(index) !== -1
+        selectionShown: root.indexSelected(index)
+
+        /*! Tracks delegate reuse across rows: index has no notifier of its own */
+        property int rowIndex: index
+        onRowIndexChanged: root.updateModelIndex(rowIndex)
+        Component.onCompleted: root.updateModelIndex(index)
 
         background: Rectangle {
             anchors.fill: parent
@@ -158,18 +112,13 @@ StandardListView {
                 }
 
                 if (mouse.modifiers & Qt.ControlModifier) {
-                    root.toggleRow(index)
-                } else if (mouse.modifiers & Qt.ShiftModifier) {
-                    root.selectRangeTo(index, previousIndex)
+                    ListView.view.toggleSelection(index)
                 } else {
-                    root.selectOnly(index)
+                    ListView.view.itemClicked(mouse, index, previousIndex)
                 }
             } else if (mouse.button === Qt.RightButton) {
-                if (root.selectedRows.indexOf(index) === -1) {
-                    root.selectOnly(index)
-                }
-
-                root.itemRightClicked(index, model.operation, model.text, model.hunkId)
+                ListView.view.itemClicked(mouse, index, previousIndex)
+                ListView.view.itemRightClicked(model.operation, model.text, model.hunkId)
             }
         }
     }

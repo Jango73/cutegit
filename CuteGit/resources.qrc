@@ -44,6 +44,7 @@
         <file>qml/pages/BranchMenu.qml</file>
         <file>qml/pages/BranchPane.qml</file>
         <file>qml/pages/DiffMenu.qml</file>
+        <file>qml/pages/DiffMenuAction.qml</file>
         <file>qml/pages/FileLogPane.qml</file>
         <file>qml/pages/FileDiffPane.qml</file>
         <file>qml/pages/FileMenu.qml</file>
@@ -67,6 +68,7 @@
         <file>qml/tabs/TagsTab.qml</file>
 
         <file>qml/views/DiffView.qml</file>
+        <file>qml/views/WorkingTreeDiffView.qml</file>
         <file>qml/views/BlameView.qml</file>
         <file>qml/views/FlatFileView.qml</file>
         <file>qml/views/GraphView.qml</file>
