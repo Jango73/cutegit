@@ -380,7 +380,7 @@ protected slots:
     void onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines);
 
     //! Call when an issued command throws a list of CGraphLine objects
-    void onNewOutputListOfCGraphLine(CEnums::EProcessCommand eCommand, QList<CGraphLine*> lNewLines);
+    void onNewOutputCGraphLineCollection(CEnums::EProcessCommand eCommand, CGraphLineCollection lNewLines);
 
     //!
     void onDiffCommitIdChanged();
@@ -393,4 +393,7 @@ protected slots:
 
     //! Indirectly called by models when they need more data for file log (lazy loading)
     void onRequestFileLogData(int iStartIndex, int iCount);
+
+    //! Indirectly called by models when they need more data for graph (lazy loading)
+    void onRequestGraphData(int iStartIndex, int iCount);
 };

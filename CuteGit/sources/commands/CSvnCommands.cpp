@@ -39,7 +39,7 @@ const QString CSvnCommands::sCommandDiffFile           = "svn diff \"%1\"";
 const QString CSvnCommands::sCommandDiffRevision       = "svn diff -c %1";
 const QString CSvnCommands::sCommandDiffTwoRevisions   = "svn diff -r %1:%2";
 const QString CSvnCommands::sCommandFileLog            = "svn log --limit %1 --xml \"%2\"";
-const QString CSvnCommands::sCommandGraphLog           = "svn log --limit 50 --xml";
+const QString CSvnCommands::sCommandGraphLog           = "svn log --limit %1 --xml";
 const QString CSvnCommands::sCommandInfo               = "svn info";
 const QString CSvnCommands::sCommandListBranches       = "svn list \"^/branches\"";
 const QString CSvnCommands::sCommandRevert             = "svn revert \"%1\"";
@@ -256,9 +256,12 @@ void CSvnCommands::branches(const QString& sPath)
 
 //-------------------------------------------------------------------------------------------------
 
-void CSvnCommands::graph(const QString& sPath)
+void CSvnCommands::graph(const QString& sPath, int iFrom, int iCount)
 {
-    exec(new CProcessCommand(CEnums::eGraph, sPath, sCommandGraphLog));
+    int iPotentialCount = 0;
+    QString sCommand = QString(sCommandGraphLog).arg(iFrom + iCount);
+    QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
+    exec(new CProcessCommand(CEnums::eGraph, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -640,10 +643,14 @@ void CSvnCommands::handleLogOutput(const CProcessResult& tResult)
 
 void CSvnCommands::handleGraphOutput(const CProcessResult& tResult)
 {
-    QList<CGraphLine*> lReturnValue;
+    CGraphLineCollection lReturnValue;
 
     CXMLNode xLog = CXMLNode::parseXML(tResult.m_sValue);
     CXMLNodeList xEntries = xLog.getNodesByTagName("logentry");
+
+    QStringList lUserValues = tResult.m_sUserData.split(",");
+    int iPotentialCount = (lUserValues.count() > 0) ? lUserValues[0].toInt() : 0;
+    int iStartIndex = (lUserValues.count() > 1) ? lUserValues[1].toInt() : 0;
 
     QStringList lRevisions;
 
@@ -655,7 +662,7 @@ void CSvnCommands::handleGraphOutput(const CProcessResult& tResult)
             lRevisions << sRevision;
     }
 
-    int iIndex = 0;
+    int iEntryIndex = 0;
 
     for (CXMLNode xEntry : xEntries)
     {
@@ -664,24 +671,36 @@ void CSvnCommands::handleGraphOutput(const CProcessResult& tResult)
         if (sRevision.isEmpty())
             continue;
 
+        if (iEntryIndex < iStartIndex)
+        {
+            iEntryIndex++;
+            continue;
+        }
+
         CGraphLine* pLine = new CGraphLine();
 
         pLine->setCommitId(sRevision);
 
         // Subversion history is linear: the parent of a revision is the next older one
-        if (iIndex + 1 < lRevisions.count())
-            pLine->setParents(QStringList() << lRevisions[iIndex + 1]);
+        if (iEntryIndex + 1 < lRevisions.count())
+            pLine->setParents(QStringList() << lRevisions[iEntryIndex + 1]);
 
         pLine->setMessage(xEntry.getNodeByTagName("msg").value().trimmed());
         pLine->setMessageIsComplete(true);
         pLine->setAuthor(xEntry.getNodeByTagName("author").value().trimmed());
         pLine->setDate(parseSvnDate(xEntry.getNodeByTagName("date").value()));
 
-        lReturnValue << pLine;
-        iIndex++;
+        lReturnValue.add(pLine);
+        iEntryIndex++;
     }
 
-    emit newOutputListOfCGraphLine(tResult.m_eCommand, lReturnValue);
+    if (iPotentialCount == 0)
+        iPotentialCount = lReturnValue.lines().count();
+
+    lReturnValue.setPotentialCount(iPotentialCount);
+    lReturnValue.setStartIndex(iStartIndex);
+
+    emit newOutputCGraphLineCollection(tResult.m_eCommand, lReturnValue);
 }
 
 //-------------------------------------------------------------------------------------------------

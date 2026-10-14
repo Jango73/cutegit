@@ -1,5 +1,6 @@
 
 // Qt
+#include <QDebug>
 #include <QSet>
 
 // Application
@@ -11,6 +12,7 @@
 CGraphModel::CGraphModel(CRepository* pRepository, QObject* parent)
     : QAbstractListModel(parent)
     , m_pRepository(pRepository)
+    , m_iPotentialCount(0)
 {
 }
 
@@ -102,60 +104,147 @@ static void pruneOrphanedLabels(QMap<QString, CLabelModel*>& mLabels, const QLis
 
 /***************************************************************************/
 
-void CGraphModel::setLines(QList<CGraphLine*> lNewLines)
+/*! Lays out incoming lines in the context of already loaded lines */
+// Layout is sequential: lanes of loaded rows never change when rows are appended.
+// A refresh lays out its page alone, an append lays out loaded rows plus the tail.
+static void layoutIncomingLines(const QList<CGraphLine*>& lLoadedLines, QList<CGraphLine*>& lIncomingLines, int iStartIndex)
 {
-    CGraphLayout::layoutLines(lNewLines);
-
-    // Reconcile in place so refreshes without changes cause no view update at all
-    int iCommonCount = qMin(m_lLines.count(), lNewLines.count());
-
-    for (int iIndex = 0; iIndex < iCommonCount; iIndex++)
+    if (iStartIndex == 0)
     {
-        if (isSameGraphLine(m_lLines[iIndex], lNewLines[iIndex]))
+        CGraphLayout::layoutLines(lIncomingLines);
+    }
+    else
+    {
+        QList<CGraphLine*> lCombined = lLoadedLines + lIncomingLines;
+        CGraphLayout::layoutLines(lCombined);
+    }
+}
+
+/***************************************************************************/
+
+void CGraphModel::setLines(CGraphLineCollection tCollection)
+{
+    setPotentialCount(tCollection.potentialCount());
+
+    QList<CGraphLine*> lIncomingLines = tCollection.lines();
+    int iStartIndex = tCollection.startIndex();
+    int iIncomingCount = lIncomingLines.count();
+
+    layoutIncomingLines(m_lLines, lIncomingLines, iStartIndex);
+
+    // A refresh loads from row 0 while loaded rows stay visible: reconcile in place
+    // so the view only updates rows that actually changed
+    if (iStartIndex == 0)
+    {
+        if (iIncomingCount == 0)
         {
-            delete lNewLines[iIndex];
+            if (not m_lLines.isEmpty())
+            {
+                beginRemoveRows(QModelIndex(), 0, m_lLines.count() - 1);
+                qDeleteAll(m_lLines);
+                m_lLines.clear();
+                qDeleteAll(m_mLabels);
+                m_mLabels.clear();
+                endRemoveRows();
+            }
+
+            return;
+        }
+
+        if (m_lLines.count() >= iIncomingCount)
+        {
+            bool bIdentical = true;
+
+            for (int iIndex = 0; iIndex < iIncomingCount; iIndex++)
+            {
+                if (not isSameGraphLine(m_lLines[iIndex], lIncomingLines[iIndex]))
+                {
+                    bIdentical = false;
+                    break;
+                }
+            }
+
+            // Overlapping rows are unchanged: keep loaded rows (including any
+            // prefetched tail) untouched so the view shows no flicker
+            if (bIdentical)
+            {
+                if (m_iPotentialCount > iIncomingCount)
+                {
+                    while (m_lLines.count() > m_iPotentialCount)
+                    {
+                        int iLastIndex = m_lLines.count() - 1;
+                        beginRemoveRows(QModelIndex(), iLastIndex, iLastIndex);
+                        CGraphLine* pRemovedLine = m_lLines.takeLast();
+                        endRemoveRows();
+                        QString sRemovedCommitId = pRemovedLine->commitId();
+                        delete pRemovedLine;
+                        removeLabelModelIfOrphaned(m_mLabels, m_lLines, sRemovedCommitId);
+                    }
+                }
+
+                qDeleteAll(lIncomingLines);
+
+                return;
+            }
+        }
+    }
+
+    for (int iIndex = 0; iIndex < iIncomingCount; iIndex++)
+    {
+        int iFinalIndex = iStartIndex + iIndex;
+
+        if (iFinalIndex < m_lLines.count())
+        {
+            if (isSameGraphLine(m_lLines[iFinalIndex], lIncomingLines[iIndex]))
+            {
+                delete lIncomingLines[iIndex];
+                lIncomingLines[iIndex] = nullptr;
+            }
+            else
+            {
+                QString sOldCommitId = m_lLines[iFinalIndex] != nullptr ? m_lLines[iFinalIndex]->commitId() : QString("");
+
+                delete m_lLines[iFinalIndex];
+                m_lLines[iFinalIndex] = lIncomingLines[iIndex];
+                lIncomingLines[iIndex] = nullptr;
+
+                removeLabelModelIfOrphaned(m_mLabels, m_lLines, sOldCommitId);
+                syncLabelModel(m_mLabels, m_lLines[iFinalIndex]->commitId(), m_lLines[iFinalIndex]->createLabels());
+
+                QModelIndex qModelIndex = createIndex(iFinalIndex, 0);
+                emit dataChanged(qModelIndex, qModelIndex);
+            }
+        }
+        else if (iFinalIndex == m_lLines.count())
+        {
+            syncLabelModel(m_mLabels, lIncomingLines[iIndex]->commitId(), lIncomingLines[iIndex]->createLabels());
+            beginInsertRows(QModelIndex(), m_lLines.count(), m_lLines.count());
+            m_lLines << lIncomingLines[iIndex];
+            endInsertRows();
+            lIncomingLines[iIndex] = nullptr;
         }
         else
         {
-            QString sOldCommitId = m_lLines[iIndex]->commitId();
-            CGraphLine* pNewLine = lNewLines[iIndex];
-            QString sNewCommitId = pNewLine->commitId();
-            QList<CLabel*> lNewLabels = pNewLine->createLabels();
-            delete m_lLines[iIndex];
-            m_lLines[iIndex] = pNewLine;
-            removeLabelModelIfOrphaned(m_mLabels, m_lLines, sOldCommitId);
-            syncLabelModel(m_mLabels, sNewCommitId, lNewLabels);
-            emit dataChanged(createIndex(iIndex, 0), createIndex(iIndex, 0));
+            qDebug() << "CGraphModel::setLines() : graph lines must be sequential";
+            delete lIncomingLines[iIndex];
+            lIncomingLines[iIndex] = nullptr;
         }
     }
 
-    if (lNewLines.count() > m_lLines.count())
+    // A divergent refresh makes rows beyond the new coverage stale: drop them so
+    // later paginated loads restart from fresh data
+    if (iStartIndex == 0)
     {
-        int iFirstIndex = m_lLines.count();
-        int iLastIndex = lNewLines.count() - 1;
-
-        for (int iIndex = iFirstIndex; iIndex <= iLastIndex; iIndex++)
-            syncLabelModel(m_mLabels, lNewLines[iIndex]->commitId(), lNewLines[iIndex]->createLabels());
-
-        beginInsertRows(QModelIndex(), iFirstIndex, iLastIndex);
-
-        while (m_lLines.count() < lNewLines.count())
-            m_lLines << lNewLines[m_lLines.count()];
-
-        endInsertRows();
-    }
-    else if (m_lLines.count() > lNewLines.count())
-    {
-        int iFirstIndex = lNewLines.count();
-        int iLastIndex = m_lLines.count() - 1;
-        beginRemoveRows(QModelIndex(), iFirstIndex, iLastIndex);
-
-        while (m_lLines.count() > lNewLines.count())
-            delete m_lLines.takeLast();
-
-        endRemoveRows();
-
-        pruneOrphanedLabels(m_mLabels, m_lLines);
+        while (m_lLines.count() > iStartIndex + iIncomingCount)
+        {
+            int iLastIndex = m_lLines.count() - 1;
+            beginRemoveRows(QModelIndex(), iLastIndex, iLastIndex);
+            CGraphLine* pRemovedLine = m_lLines.takeLast();
+            endRemoveRows();
+            QString sRemovedCommitId = pRemovedLine->commitId();
+            delete pRemovedLine;
+            removeLabelModelIfOrphaned(m_mLabels, m_lLines, sRemovedCommitId);
+        }
     }
 }
 
@@ -243,6 +332,30 @@ QVariant CGraphModel::data(const QModelIndex& index, int role) const
 
 //-------------------------------------------------------------------------------------------------
 
+bool CGraphModel::canFetchMore(const QModelIndex& parent) const
+{
+    Q_UNUSED(parent)
+
+    return m_lLines.count() < m_iPotentialCount;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGraphModel::fetchMore(const QModelIndex& parent)
+{
+    Q_UNUSED(parent)
+
+    int iCurrentCount = m_lLines.count();
+    int iNewCount = GRAPH_COUNT_DEFAULT;
+
+    if (iNewCount > m_iPotentialCount - iCurrentCount)
+        iNewCount = m_iPotentialCount - iCurrentCount;
+
+    emit requestGraphData(iCurrentCount, iNewCount);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CGraphModel::setCommitMessage(const QString& sCommitId, const QString& sMessage)
 {
     for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
@@ -278,6 +391,14 @@ void CGraphModel::commitChanged(const QString& sCommitId)
             break;
         }
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGraphModel::invalidate()
+{
+    beginResetModel();
+    endResetModel();
 }
 
 //-------------------------------------------------------------------------------------------------

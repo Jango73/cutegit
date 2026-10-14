@@ -6,6 +6,7 @@
 
 // Application
 #include "CGraphLine.h"
+#include "CGraphLineCollection.h"
 #include "CLabelModel.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -34,6 +35,12 @@ public:
         eGraphConnectionsRole,
     };
 
+    //-------------------------------------------------------------------------------------------------
+    // QML properties
+    //-------------------------------------------------------------------------------------------------
+
+    Q_FAST_PROPERTY(int, i, potentialCount, PotentialCount)
+
 public:
 
     //-------------------------------------------------------------------------------------------------
@@ -44,7 +51,7 @@ public:
     CGraphModel(CRepository* pRepository, QObject *parent = nullptr);
 
     //! Destructor
-    virtual ~CGraphModel();
+    virtual ~CGraphModel() override;
 
     //-------------------------------------------------------------------------------------------------
     // Control methods
@@ -53,17 +60,23 @@ public:
     //! Clears all data
     void clear();
 
-    //! Sets all lines
-    void setLines(QList<CGraphLine*> lNewLines);
+    //! Sets some lines
+    void setLines(CGraphLineCollection tCollection);
 
     //! Returns role names
-    virtual QHash<int, QByteArray> roleNames() const;
+    virtual QHash<int, QByteArray> roleNames() const override;
 
     //! Returns row count
-    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const;
+    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 
     //! Returns data
-    virtual QVariant data(const QModelIndex& index, int role) const;
+    virtual QVariant data(const QModelIndex& index, int role) const override;
+
+    //!
+    virtual bool canFetchMore(const QModelIndex& parent) const override;
+
+    //!
+    virtual void fetchMore(const QModelIndex& parent) override;
 
     //!
     void setCommitMessage(const QString& sCommitId, const QString& sMessage);
@@ -71,12 +84,19 @@ public:
     //!
     void commitChanged(const QString& sCommitId);
 
+    //!
+    void invalidate();
+
     //! Returns true when both lines show the same commit
     bool isSameGraphLine(const CGraphLine* pExistingLine, const CGraphLine* pIncomingLine) const;
 
     //-------------------------------------------------------------------------------------------------
-    // Properties
+    // Signals
     //-------------------------------------------------------------------------------------------------
+
+signals:
+
+    void requestGraphData(int iStartIndex, int iCount);
 
 private:
 

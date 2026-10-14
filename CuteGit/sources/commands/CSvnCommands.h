@@ -54,7 +54,7 @@ public:
     virtual void branches(const QString& sPath) override;
 
     //!
-    virtual void graph(const QString& sPath) override;
+    virtual void graph(const QString& sPath, int iFrom = 0, int iCount = GRAPH_COUNT_DEFAULT) override;
 
     //!
     virtual void branchLog(const QString& sPath, int iFrom = 0, int iCount = LOG_COUNT_DEFAULT) override;

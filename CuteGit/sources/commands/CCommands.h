@@ -75,8 +75,8 @@ public:
     //! Creates a list of head commits for tags of the repo at sPath
     virtual void tagCommits(const QString& sPath, QStringList lTags);
 
-    //! Creates a list of CGraphLine from the repo at sPath
-    virtual void graph(const QString& sPath);
+    //! Creates a list of CGraphLine from the repo at sPath, paginated like the log
+    virtual void graph(const QString& sPath, int iFrom = 0, int iCount = GRAPH_COUNT_DEFAULT);
 
     //! Creates a list of CLogLine from the repo at sPath, for the current branch
     virtual void branchLog(const QString& sPath, int iFrom = 0, int iCount = LOG_COUNT_DEFAULT);

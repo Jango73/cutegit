@@ -60,7 +60,8 @@ const QString CGitCommands::sCommandFileLogCount        = "git rev-list --count 
 const QString CGitCommands::sCommandFileStatus          = "git status --porcelain --ignored --untracked-files=all \"%1\"";
 const QString CGitCommands::sCommandGetRebaseApplyPath  = "git rev-parse --git-path rebase-apply";
 const QString CGitCommands::sCommandGetRebaseMergePath  = "git rev-parse --git-path rebase-merge";
-const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI\" --max-count=50";
+const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI\" --skip=%1 --max-count=%2";
+const QString CGitCommands::sCommandGraphCount         = "git rev-list --count --all";
 const QString CGitCommands::sCommandHeadCommit          = "git rev-parse --short \"%1\"";
 const QString CGitCommands::sCommandListOtherFiles      = "git ls-files --others";
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
@@ -279,9 +280,12 @@ void CGitCommands::tagCommits(const QString& sPath, QStringList lTags)
 
 //-------------------------------------------------------------------------------------------------
 
-void CGitCommands::graph(const QString& sPath)
+void CGitCommands::graph(const QString& sPath, int iFrom, int iCount)
 {
-    exec(new CProcessCommand(CEnums::eGraph, sPath, sCommandGraph));
+    int iPotentialCount = execNow(sPath, sCommandGraphCount).trimmed().toInt();
+    QString sCommand = QString(sCommandGraph).arg(iFrom).arg(iCount);
+    QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
+    exec(new CProcessCommand(CEnums::eGraph, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1190,9 +1194,9 @@ static QStringList splitDecorations(const QString& sValue)
 
 void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
 {
-    // Create CGraphLines with the returned string of the process
+    // Create a CGraphLineCollection with the returned string of the process
 
-    QList<CGraphLine*> lReturnValue;
+    CGraphLineCollection lReturnValue;
     QStringList lStrings = tResult.m_sValue.split(NEW_LINE);
 
     for (QString sLine : lStrings)
@@ -1220,11 +1224,21 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
 
             getFullCommitMessage(tResult.m_sPath, pLine->commitId());
 
-            lReturnValue << pLine;
+            lReturnValue.add(pLine);
         }
     }
 
-    emit newOutputListOfCGraphLine(tResult.m_eCommand, lReturnValue);
+    QStringList lUserValues = tResult.m_sUserData.split(",");
+    int iPotentialCount = lUserValues.count() > 0 ? lUserValues[0].toInt() : 0;
+    int iStartIndex = lUserValues.count() > 1 ? lUserValues[1].toInt() : 0;
+
+    if (iPotentialCount == 0)
+        iPotentialCount = lReturnValue.lines().count();
+
+    lReturnValue.setPotentialCount(iPotentialCount);
+    lReturnValue.setStartIndex(iStartIndex);
+
+    emit newOutputCGraphLineCollection(tResult.m_eCommand, lReturnValue);
 }
 
 //-------------------------------------------------------------------------------------------------

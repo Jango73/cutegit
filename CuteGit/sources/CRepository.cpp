@@ -105,11 +105,12 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     connect(m_pCommands, &CCommands::newOutputListOfCRepoFile, this, &CRepository::onNewOutputListOfCRepoFile);
     connect(m_pCommands, &CCommands::newOutputCLogLineCollection, this, &CRepository::onNewOutputCLogLineCollection);
     connect(m_pCommands, &CCommands::newOutputListOfCDiffLine, this, &CRepository::onNewOutputListOfCDiffLine);
-    connect(m_pCommands, &CCommands::newOutputListOfCGraphLine, this, &CRepository::onNewOutputListOfCGraphLine);
+    connect(m_pCommands, &CCommands::newOutputCGraphLineCollection, this, &CRepository::onNewOutputCGraphLineCollection);
 
     // Connect model signals
     connect(m_pBranchLogModel, &CLogModel::requestLogData, this, &CRepository::onRequestBranchLogData);
     connect(m_pFileLogModel, &CLogModel::requestLogData, this, &CRepository::onRequestFileLogData);
+    connect(m_pGraphModel, &CGraphModel::requestGraphData, this, &CRepository::onRequestGraphData);
     connect(m_pFlatFileModel, &CFlatFileModel::currentFileFullName, this, &CRepository::onCurrentFileFullName);
 
     // Connect proxies with their models
@@ -788,6 +789,8 @@ void CRepository::getGraph(QString sPath)
     if (sPath.isEmpty())
         sPath = m_sRepositoryPath;
 
+    // Loaded rows stay visible while the new graph loads: CGraphModel::setLines()
+    // reconciles the content without rebuilding when nothing changed
     m_pCommands->graph(sPath);
 }
 
@@ -1282,7 +1285,7 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::onNewOutputListOfCGraphLine(CEnums::EProcessCommand eCommand, QList<CGraphLine*> lNewLines)
+void CRepository::onNewOutputCGraphLineCollection(CEnums::EProcessCommand eCommand, CGraphLineCollection lNewLines)
 {
     switch (eCommand)
     {
@@ -1345,4 +1348,11 @@ void CRepository::onRequestFileLogData(int iStartIndex, int iCount)
     {
         m_pCommands->fileLog(m_sRepositoryPath, m_pFileLogModel->fullSourceName(), iStartIndex, iCount);
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::onRequestGraphData(int iStartIndex, int iCount)
+{
+    m_pCommands->graph(m_sRepositoryPath, iStartIndex, iCount);
 }

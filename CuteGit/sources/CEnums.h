@@ -20,6 +20,7 @@
 
 #define LOG_COUNT_DEFAULT       20
 #define REF_LOG_COUNT_DEFAULT   50
+#define GRAPH_COUNT_DEFAULT     50
 
 //-------------------------------------------------------------------------------------------------
 

@@ -19,6 +19,7 @@
 #include "../CLogLineCollection.h"
 #include "../CDiffLine.h"
 #include "../CGraphLine.h"
+#include "../CGraphLineCollection.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -192,7 +193,7 @@ signals:
     void newOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines);
 
     //!
-    void newOutputListOfCGraphLine(CEnums::EProcessCommand eCommand, QList<CGraphLine*> lNewLines);
+    void newOutputCGraphLineCollection(CEnums::EProcessCommand eCommand, CGraphLineCollection lNewLines);
 
     //-------------------------------------------------------------------------------------------------
     // Properties

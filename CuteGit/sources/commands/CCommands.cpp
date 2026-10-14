@@ -132,9 +132,11 @@ void CCommands::tagCommits(const QString& sPath, QStringList lTags)
 
 //-------------------------------------------------------------------------------------------------
 
-void CCommands::graph(const QString& sPath)
+void CCommands::graph(const QString& sPath, int iFrom, int iCount)
 {
     Q_UNUSED(sPath);
+    Q_UNUSED(iFrom);
+    Q_UNUSED(iCount);
 }
 
 //-------------------------------------------------------------------------------------------------

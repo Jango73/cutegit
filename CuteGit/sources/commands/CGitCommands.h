@@ -88,7 +88,7 @@ public:
     virtual void tagCommits(const QString& sPath, QStringList lTags) override;
 
     //!
-    virtual void graph(const QString& sPath) override;
+    virtual void graph(const QString& sPath, int iFrom = 0, int iCount = GRAPH_COUNT_DEFAULT) override;
 
     //!
     virtual void branchLog(const QString& sPath, int iFrom = 0, int iCount = LOG_COUNT_DEFAULT) override;
@@ -287,6 +287,7 @@ protected:
     static const QString sCommandGetRebaseApplyPath;
     static const QString sCommandGetRebaseMergePath;
     static const QString sCommandGraph;
+    static const QString sCommandGraphCount;
     static const QString sCommandHeadCommit;
     static const QString sCommandListOtherFiles;
     static const QString sCommandMergeBranch;

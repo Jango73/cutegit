@@ -11,6 +11,7 @@ HEADERS += \
     sources/CFlatFileModel.h \
     sources/CFlatFileModelProxy.h \
     sources/CGraphLine.h \
+    sources/CGraphLineCollection.h \
     sources/CGraphModel.h \
     sources/CGraphLayout.h \
     sources/CLabel.h \
@@ -45,6 +46,7 @@ SOURCES += \
     sources/CFlatFileModelProxy.cpp \
     sources/CGraphModel.cpp \
     sources/CGraphLine.cpp \
+    sources/CGraphLineCollection.cpp \
     sources/CGraphLayout.cpp \
     sources/CLabelModel.cpp \
     sources/CLogLineCollection.cpp \
