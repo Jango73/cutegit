@@ -360,12 +360,13 @@ Item {
     readonly property string graphTabId: "Graph"
     readonly property string refLogTabId: "RefLog"
     readonly property string diffTabId: "Diff"
+    readonly property string commitDiffTabId: "CommitDiff"
     readonly property string fileLogTabId: "FileLog"
     readonly property string blameTabId: "Blame"
     readonly property string outputTabId: "Output"
     readonly property var knownTabIds: [
         filesTabId, branchesTabId, tagsTabId, branchLogTabId, graphTabId, refLogTabId,
-        diffTabId, fileLogTabId, blameTabId, outputTabId
+        diffTabId, commitDiffTabId, fileLogTabId, blameTabId, outputTabId
     ]
     readonly property var tabSources: ({
         "Files": "../tabs/FilesTab.qml",
@@ -375,6 +376,7 @@ Item {
         "Graph": "../tabs/GraphTab.qml",
         "RefLog": "../tabs/RefLogTab.qml",
         "Diff": "../tabs/DiffTab.qml",
+        "CommitDiff": "../tabs/CommitDiffTab.qml",
         "FileLog": "../tabs/FileLogTab.qml",
         "Blame": "../tabs/BlameTab.qml",
         "Output": "../tabs/OutputTab.qml"
@@ -387,6 +389,7 @@ Item {
         "Graph": graphText,
         "RefLog": refLogText,
         "Diff": diffText,
+        "CommitDiff": commitDiffText,
         "FileLog": logText,
         "Blame": blameText,
         "Output": outputText

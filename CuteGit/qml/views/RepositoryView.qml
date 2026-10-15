@@ -307,7 +307,13 @@ Pane {
     Action {
         id: savePatchAction
         property string fileName: ""
-        onTriggered: root.repository.saveFileDiffAsPatch(fileName)
+        property bool forCommit: false
+        onTriggered: {
+            if (forCommit)
+                root.repository.saveCommitDiffAsPatch(fileName)
+            else
+                root.repository.saveWorkingTreeDiffAsPatch(fileName)
+        }
     }
 
     Action {
@@ -426,7 +432,7 @@ Pane {
 
     function requestCommitDiffPrevious(commitId) {
         root.repository.commitDiffPrevious(commitId)
-        root.activateFileDiffView()
+        root.activateCommitDiffView()
     }
 
     function requestCommitDiffFrom(commitId) {
@@ -435,10 +441,11 @@ Pane {
 
     function requestCommitDiffTo(commitId) {
         root.repository.diffToCommitId = commitId
-        root.activateFileDiffView()
+        root.activateCommitDiffView()
     }
 
-    function requestPatchSave() {
+    function requestPatchSave(forCommit) {
+        savePatchAction.forCommit = forCommit === true
         fileDialog.title = Const.selectPatchToSaveText
         fileDialog.fileMode = FileDialog.SaveFile
         fileDialog.actionOnAccept = savePatchAction
@@ -459,12 +466,13 @@ Pane {
         fileMenu.popup()
     }
 
-    function showDiffMenu(staged, operation, text, hunkId, selectedRows) {
+    function showDiffMenu(staged, operation, text, hunkId, selectedRows, fromCommit) {
         diffMenu.staged = staged
         diffMenu.operation = operation
         diffMenu.text = text
         diffMenu.hunkId = hunkId
         diffMenu.selectedRows = selectedRows
+        diffMenu.fromCommit = fromCommit === true
         diffMenu.popup()
     }
 
@@ -571,6 +579,11 @@ Pane {
 
     function activateFileDiffView() {
         root.activateTab(Const.diffTabId)
+    }
+
+    function activateCommitDiffView() {
+        if (root.activateTab(Const.commitDiffTabId) === false)
+            root.activateFileDiffView()
     }
 
     function activateFileBlameView() {

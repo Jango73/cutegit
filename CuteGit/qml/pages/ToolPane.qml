@@ -53,7 +53,7 @@ ExtendablePane {
                 repository: root.repository
 
                 onRequestMenu: root.requestDiffMenu(operation, text)
-                onRequestTextFilter: root.repository.setFileDiffFilter(text)
+                onRequestTextFilter: root.repository.setWorkingTreeDiffFilter(text)
                 onRequestSaveAsPatch: root.requestSaveFileDiffAsPatch()
             }
 

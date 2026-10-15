@@ -24,6 +24,7 @@
                     "Height": "100",
                     "Tab": [
                         { "Id": "Diff" },
+                        { "Id": "CommitDiff" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" },
                         { "Id": "Output" }
@@ -63,6 +64,7 @@
                     "Height": "60",
                     "Tab": [
                         { "Id": "Diff" },
+                        { "Id": "CommitDiff" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" }
                     ]

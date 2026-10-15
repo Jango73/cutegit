@@ -11,30 +11,44 @@
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::saveFileDiffAsPatch(const QString& sFullName)
+/************************************************************************/
+/*!
+    \fn void CRepository::saveWorkingTreeDiffAsPatch(const QString& sFullName)
+    Saves staged and unstaged working tree diffs as a patch.
+*/
+void CRepository::saveWorkingTreeDiffAsPatch(const QString& sFullName)
 {
     QString sFile = CUtils::localFilePath(sFullName);
 
-    if (fileDiffFromCommit())
-        CUtils::setTextFileContents(sFile, m_sFileDiffString);
-    else
-    {
-        // Fixed staged-then-unstaged order with a guaranteed separator:
-        // arrival order of the two asynchronous diffs must not matter
-        QString sPatch(m_sStagedFileDiffString);
+    // Fixed staged-then-unstaged order with a guaranteed separator:
+    // arrival order of the two asynchronous diffs must not matter
+    QString sPatch(m_sStagedFileDiffString);
 
-        if (not sPatch.isEmpty() && not m_sUnstagedFileDiffString.isEmpty() && not sPatch.endsWith(NEW_LINE))
-            sPatch += NEW_LINE;
+    if (not sPatch.isEmpty() && not m_sUnstagedFileDiffString.isEmpty() && not sPatch.endsWith(NEW_LINE))
+        sPatch += NEW_LINE;
 
-        sPatch += m_sUnstagedFileDiffString;
+    sPatch += m_sUnstagedFileDiffString;
 
-        if (not sPatch.isEmpty() && not sPatch.endsWith(NEW_LINE))
-            sPatch += NEW_LINE;
+    if (not sPatch.isEmpty() && not sPatch.endsWith(NEW_LINE))
+        sPatch += NEW_LINE;
 
-        CUtils::setTextFileContents(sFile, sPatch);
-    }
+    CUtils::setTextFileContents(sFile, sPatch);
 
-    qDebug() << "saveFileDiffAsPatch:" << sFile;
+    qDebug() << "saveWorkingTreeDiffAsPatch:" << sFile;
+}
+
+/************************************************************************/
+/*!
+    \fn void CRepository::saveCommitDiffAsPatch(const QString& sFullName)
+    Saves the requested commit diff as a patch.
+*/
+void CRepository::saveCommitDiffAsPatch(const QString& sFullName)
+{
+    QString sFile = CUtils::localFilePath(sFullName);
+
+    CUtils::setTextFileContents(sFile, m_sFileDiffString);
+
+    qDebug() << "saveCommitDiffAsPatch:" << sFile;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -259,17 +273,14 @@ CDiffModel* CRepository::workingTreeDiffModel(CEnums::EProcessCommand eCommand) 
 
 /*!
     \fn CRepository::setWorkingTreeDiffString
-    Stores the raw output of a staged or unstaged diff, dropping late results
-    requested for a commit diff and stale results tagged for another file.
+    Stores the raw output of a staged or unstaged diff, dropping stale
+    results tagged for another file.
 */
 void CRepository::setWorkingTreeDiffString(CEnums::EProcessCommand eCommand, const QString& sOutput, const QString& sUserData)
 {
     CDiffModel* pModel = workingTreeDiffModel(eCommand);
 
     if (pModel == nullptr)
-        return;
-
-    if (fileDiffFromCommit())
         return;
 
     if (not workingTreeDiffMatchesCurrentFile(pModel, sUserData))
@@ -285,15 +296,14 @@ void CRepository::setWorkingTreeDiffString(CEnums::EProcessCommand eCommand, con
 
 /*!
     \fn CRepository::setWorkingTreeDiffLines
-    Stores parsed lines of a staged or unstaged diff, dropping late results
-    requested for a commit diff and stale results tagged for another file.
-    Takes ownership of lNewLines in all cases.
+    Stores parsed lines of a staged or unstaged diff, dropping stale results
+    tagged for another file. Takes ownership of lNewLines in all cases.
 */
 void CRepository::setWorkingTreeDiffLines(CEnums::EProcessCommand eCommand, QList<CDiffLine*> lNewLines, const QString& sUserData)
 {
     CDiffModel* pModel = workingTreeDiffModel(eCommand);
 
-    if (pModel == nullptr || fileDiffFromCommit() || not workingTreeDiffMatchesCurrentFile(pModel, sUserData))
+    if (pModel == nullptr || not workingTreeDiffMatchesCurrentFile(pModel, sUserData))
     {
         qDeleteAll(lNewLines);
         return;

@@ -93,7 +93,6 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_sPollFingerprint("")
     , m_bNeedsRefresh(false)
     , m_bPollPending(false)
-    , m_bFileDiffFromCommit(false)
 {
     if (eType == CEnums::UnknownRepositoryType)
     {
@@ -588,7 +587,6 @@ void CRepository::createTagOnCommit(const QString& sCommitId, const QString& sTa
 
 void CRepository::commitDiffPrevious(const QString& sCommitId)
 {
-    setFileDiffFromCommit(true);
     m_pCommands->commitDiffPrevious(m_sRepositoryPath, sCommitId);
 }
 
@@ -632,14 +630,23 @@ void CRepository::setFileSortDirection(bool bDirection)
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::setFileDiffFilter(const QString& sText)
+void CRepository::setWorkingTreeDiffFilter(const QString& sText)
 {
-    m_pFileDiffModelProxy->setTextFilter(sText);
-    m_pFileDiffModelProxy->filterChanged();
     m_pStagedFileDiffModelProxy->setTextFilter(sText);
     m_pStagedFileDiffModelProxy->filterChanged();
     m_pUnstagedFileDiffModelProxy->setTextFilter(sText);
     m_pUnstagedFileDiffModelProxy->filterChanged();
+}
+
+/************************************************************************/
+/*!
+    \fn void CRepository::setCommitDiffFilter(const QString& sText)
+    Sets the text filter of the commit diff view.
+*/
+void CRepository::setCommitDiffFilter(const QString& sText)
+{
+    m_pFileDiffModelProxy->setTextFilter(sText);
+    m_pFileDiffModelProxy->filterChanged();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -861,7 +868,6 @@ void CRepository::onCurrentFileFullName(QString sFileFullName)
         m_pUnstagedFileDiffModel->setLines(QList<CDiffLine*>());
         setStagedFileDiffString("");
         setUnstagedFileDiffString("");
-        setFileDiffFromCommit(false);
 
         return;
     }
@@ -872,7 +878,6 @@ void CRepository::onCurrentFileFullName(QString sFileFullName)
     m_pStagedFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
     m_pUnstagedFileDiffModel->setFullSourceName(sFileFullName);
     m_pUnstagedFileDiffModel->setRelativeSourceName(relativeFileName(sFileFullName));
-    setFileDiffFromCommit(false);
 
     requestWorkingTreeDiffs(sFileFullName);
     m_pCommands->fileLog(m_sRepositoryPath, sFileFullName);
@@ -887,7 +892,6 @@ void CRepository::onDiffCommitIdChanged()
 
     if (not m_sDiffFromCommitId.isEmpty() && not m_sDiffToCommitId.isEmpty())
     {
-        setFileDiffFromCommit(true);
         m_pCommands->twoCommitDiff(m_sRepositoryPath, m_sDiffFromCommitId, m_sDiffToCommitId);
 
         setDiffFromCommitId("");

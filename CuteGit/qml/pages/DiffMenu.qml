@@ -13,6 +13,9 @@ Menu {
     /*! True when the menu was opened from the staged pane */
     property bool staged: false
 
+    /*! True when the menu was opened from the commit diff pane (no staging there) */
+    property bool fromCommit: false
+
     /*! The currently selected operation */
     property string operation: ""
 
@@ -27,8 +30,8 @@ Menu {
 
     /*! True when line or hunk staging actions apply to the attached repository */
     property bool isStageable: root.repository !== null
+        && root.fromCommit === false
         && Const.supportsStaging(root.repository, CEnums.Git, CEnums.Gerrit)
-        && root.repository.fileDiffFromCommit === false
 
     /*! Requests a copy action */
     signal requestCopyText(var text)

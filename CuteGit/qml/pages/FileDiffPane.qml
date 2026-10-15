@@ -12,11 +12,14 @@ Item {
 
     property variant repository: null
 
+    /*! True to show the requested commit diff, false for the working tree diff */
+    property bool showCommitDiff: false
+
     /*! True when the attached repository holds a staging index */
     property bool stagingSupported: Const.supportsStaging(root.repository, CEnums.Git, CEnums.Gerrit)
 
-    /*! True when a commit diff is shown instead of the working tree */
-    property bool fromCommit: repository !== null && repository.fileDiffFromCommit === true
+    /*! Commit diffs have no staged notion, staging applies to the working tree pane only */
+    property bool fromCommit: root.showCommitDiff
 
     /*! Requests to show the menu */
     signal requestMenu(var staged, var operation, var text, var hunkId, var selectedRows)
@@ -56,7 +59,7 @@ Item {
                 return ""
 
             if (root.fromCommit)
-                return root.repository.fileDiffModel.relativeSourceName
+                return Const.commitDiffText + ": " + root.repository.fileDiffModel.relativeSourceName
 
             var unstagedName = root.repository.unstagedFileDiffModel.relativeSourceName
             if (unstagedName !== "")

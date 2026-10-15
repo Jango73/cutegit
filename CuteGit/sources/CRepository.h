@@ -235,8 +235,11 @@ public:
     //! Pops stash
     Q_INVOKABLE void stashPop();
 
-    //! Saves the file diff as a patch
-    Q_INVOKABLE void saveFileDiffAsPatch(const QString& sFullName);
+    //! Saves the working tree diff as a patch
+    Q_INVOKABLE void saveWorkingTreeDiffAsPatch(const QString& sFullName);
+
+    //! Saves the commit diff as a patch
+    Q_INVOKABLE void saveCommitDiffAsPatch(const QString& sFullName);
 
     //! Applies a patch
     Q_INVOKABLE void patchApply(const QString& sFullName);
@@ -286,8 +289,11 @@ public:
     //! Sets the file sort direction
     Q_INVOKABLE void setFileSortDirection(bool bDirection);
 
-    //! Sets the diff filter
-    Q_INVOKABLE void setFileDiffFilter(const QString& sText);
+    //! Sets the working tree diff filter
+    Q_INVOKABLE void setWorkingTreeDiffFilter(const QString& sText);
+
+    //! Sets the commit diff filter
+    Q_INVOKABLE void setCommitDiffFilter(const QString& sText);
 
     //! Stages selected unstaged diff lines, given as unstaged proxy rows
     Q_INVOKABLE void stageDiffLines(QVariantList lProxyRows);
@@ -331,9 +337,6 @@ protected:
 
     //! True while a poll fingerprint command is waiting for its result
     bool m_bPollPending;
-
-    //! True when the file diff shows a requested commit diff, false for a working tree diff
-    Q_FAST_PROPERTY(bool, b, fileDiffFromCommit, FileDiffFromCommit)
 
     //-------------------------------------------------------------------------------------------------
     // Protected control methods

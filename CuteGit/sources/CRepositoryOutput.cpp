@@ -114,17 +114,14 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     case CEnums::eUnstagedFileDiff:
     case CEnums::eStagedFileDiff:
     {
-        // Drop late working tree diffs once a commit diff has been requested,
-        // and stale diffs tagged for a previously selected file
+        // Drop stale diffs tagged for a previously selected file
         setWorkingTreeDiffString(eCommand, sOutput, sUserData);
         break;
     }
 
     case CEnums::eTwoCommitDiff:
     {
-        // Drop late commit diffs once a working tree diff has been requested
-        if (fileDiffFromCommit())
-            setFileDiffString(sOutput);
+        setFileDiffString(sOutput);
         break;
     }
 
@@ -472,12 +469,7 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         // displayed diff source
         if (not bInventoryOnly)
         {
-            if (fileDiffFromCommit())
-            {
-                // A requested commit diff is independent of the working tree file
-                // list: leave it untouched so refresh never clears it
-            }
-            else if (m_lRepoFiles.count() == 0)
+            if (m_lRepoFiles.count() == 0)
             {
                 onCurrentFileFullName("");
             }
@@ -485,7 +477,8 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
             {
                 // Resynchronize the diff with the file list: after a commit the selected
                 // file turns clean and proxy rows shift without QML currentIndexChanged,
-                // so without this the diff view keeps showing a stale diff
+                // so without this the diff view keeps showing a stale diff.
+                // The requested commit diff is independent and stays untouched.
                 QString sCurrentDiffSource = m_pUnstagedFileDiffModel->fullSourceName();
 
                 if (not sCurrentDiffSource.isEmpty())
@@ -558,19 +551,14 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
     case CEnums::eUnstagedFileDiff:
     case CEnums::eStagedFileDiff:
     {
-        // Drop late working tree diffs once a commit diff has been requested,
-        // and stale diffs tagged for a previously selected file
+        // Drop stale diffs tagged for a previously selected file
         setWorkingTreeDiffLines(eCommand, lNewLines, sUserData);
         break;
     }
 
     case CEnums::eTwoCommitDiff:
     {
-        // Drop late commit diffs once a working tree diff has been requested
-        if (fileDiffFromCommit())
-            m_pFileDiffModel->setLines(lNewLines);
-        else
-            qDeleteAll(lNewLines);
+        m_pFileDiffModel->setLines(lNewLines);
         break;
     }
 
