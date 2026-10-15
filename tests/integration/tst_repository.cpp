@@ -52,8 +52,10 @@ private slots:
         cloneFixture();
         appendWorktreeLines();
 
-        // Real repository object, no controller: file proxies show everything
+        // Real repository object, no controller: file proxies show everything.
+        // Construction is lazy, the first refresh issues the scan like the tab view does
         m_pRepository.reset(new CRepository(m_sClonePath, nullptr));
+        m_pRepository->refresh();
     }
 
     void cleanup()

@@ -91,7 +91,8 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_bHasPullableCommits(false)
     , m_bHasStashableFiles(false)
     , m_sPollFingerprint("")
-    , m_bNeedsRefresh(false)
+    , m_bNeedsRefresh(true)
+    , m_bFileInventoryDone(false)
     , m_bPollPending(false)
 {
     if (eType == CEnums::UnknownRepositoryType)
@@ -132,9 +133,8 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     connect(this, &CRepository::diffToCommitIdChanged, this, &CRepository::onDiffCommitIdChanged);
     connect(this, &CRepository::diffFromCommitIdChanged, this, &CRepository::onDiffCommitIdChanged);
 
-    // Fill-up model data
-    checkAllFileStatus();
-    refresh();
+    // Fill-up of model data is lazy: the controller issues refresh() when the
+    // repository becomes visible, so opening N repositories costs nothing here
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -186,6 +186,13 @@ CRepoFile* CRepository::fileByFullName(const QString& sFullName) const
         return *itr;
 
     return nullptr;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool CRepository::isLoaded() const
+{
+    return m_bFileInventoryDone;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -290,6 +297,14 @@ void CRepository::checkFileStatus(const QString& sFileFullName)
 
 void CRepository::refresh()
 {
+    // The clean file inventory runs once, on the first visible refresh: it
+    // crawls the working folder and must not run for background tabs
+    if (not m_bFileInventoryDone)
+    {
+        m_bFileInventoryDone = true;
+        checkAllFileStatus();
+    }
+
     setDiffFromCommitId("");
     setDiffToCommitId("");
     setNeedsRefresh(false);
@@ -307,6 +322,11 @@ void CRepository::refresh()
 
 void CRepository::pollExternalChanges()
 {
+    // Never loaded repositories already need a refresh, polling them would
+    // spend one git process per tab for no information
+    if (not m_bFileInventoryDone)
+        return;
+
     if (m_bPollPending)
         return;
 

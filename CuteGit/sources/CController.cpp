@@ -584,6 +584,43 @@ void CController::saveConfiguration()
 
 //-------------------------------------------------------------------------------------------------
 
+/************************************************************************/
+/*!
+    \fn CRepository* CController::addOpenRepository(const QString& sRepositoryPath)
+    Validates sRepositoryPath and appends a lazy repository item to the open
+    model. The item issues no git command: refresh() runs when the tab
+    becomes visible. Returns null when the folder holds no known repository.
+*/
+CRepository* CController::addOpenRepository(const QString& sRepositoryPath)
+{
+    if (sRepositoryPath.isEmpty() || not QDir(sRepositoryPath).exists())
+        return nullptr;
+
+    if (m_pOpenRepositoryModel->hasRepository(sRepositoryPath))
+        return nullptr;
+
+    CEnums::ERepositoryType eType = CRepository::getRepositoryTypeFromFolder(sRepositoryPath);
+
+    if (eType == CEnums::UnknownRepositoryType)
+        return nullptr;
+
+    // Create a new repository item
+    CRepository* pRepository = new CRepository(sRepositoryPath, this, this);
+    connect(pRepository, &CRepository::statusTextRequested, this, &CController::setStatusText);
+
+    m_pOpenRepositoryModel->addRepository(pRepository);
+
+    // Add this path to known repository model
+    QStringList lRepositoryPaths = m_pKnownRepositoryModel->stringList();
+    if (not lRepositoryPaths.contains(sRepositoryPath))
+        lRepositoryPaths << sRepositoryPath;
+    m_pKnownRepositoryModel->setStringList(lRepositoryPaths);
+
+    return pRepository;
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CController::loadConfiguration()
 {
     CXMLNode xConfig = CXMLNode::load(configFileName());
@@ -604,13 +641,14 @@ void CController::loadConfiguration()
     }
     m_pKnownRepositoryModel->setStringList(lKnownRepositoryPaths);
 
-    // Load open repositories
+    // Load open repositories without scanning them: only the visible tab
+    // refreshes, once the QML view selects it through currentRepositoryIndex
     CXMLNode xOpenRepositories = xConfig.getNodeByTagName(sParameterOpenRepositories);
     CXMLNodeList xOpenRepositoryList = xOpenRepositories.getNodesByTagName(sParameterRepository);
     for (CXMLNode xOpenRepository : xOpenRepositoryList)
     {
-        QString sPath = xOpenRepository.attributes()[sParameterPath];
-        openRepository(sPath);
+        QString sPath = CUtils::localFilePath(xOpenRepository.attributes()[sParameterPath]);
+        addOpenRepository(sPath);
     }
 
     // Load current repository
@@ -692,25 +730,16 @@ void CController::openRepository(QString sRepositoryPath)
     {
         if (QDir(sRepositoryPath).exists())
         {
-            CEnums::ERepositoryType eType = CRepository::getRepositoryTypeFromFolder(sRepositoryPath);
+            // Remember the repository to show in the tab view
+            m_sCurrentRepositoryPath = sRepositoryPath;
+
+            CRepository* pRepository = addOpenRepository(sRepositoryPath);
 
             // If specified directory is a repository
-            if (eType != CEnums::UnknownRepositoryType)
+            if (pRepository != nullptr)
             {
-                // Remember the repository to show in the tab view
-                m_sCurrentRepositoryPath = sRepositoryPath;
-
-                // Create a new repository item
-                CRepository* pRepository = new CRepository(sRepositoryPath, this, this);
-                connect(pRepository, &CRepository::statusTextRequested, this, &CController::setStatusText);
-
-                m_pOpenRepositoryModel->addRepository(pRepository);
-
-                // Add this path to known repository model
-                QStringList lRepositoryPaths = m_pKnownRepositoryModel->stringList();
-                if (not lRepositoryPaths.contains(sRepositoryPath))
-                    lRepositoryPaths << sRepositoryPath;
-                m_pKnownRepositoryModel->setStringList(lRepositoryPaths);
+                // Interactive open scans immediately, background tabs stay lazy
+                pRepository->refresh();
 
                 setStatusText(QString(Strings::s_sSomeObjectNameOpened).arg(pRepository->repositoryName()));
             }

@@ -144,6 +144,9 @@ public:
     //!
     CRepoFile* fileByFullName(const QString& sFullName) const;
 
+    //! True once the file inventory and the first full scan have been issued
+    bool isLoaded() const;
+
     //!
     QList<CLabel*> labelsForCommit(const QString& sCommitId) const;
 
@@ -334,6 +337,9 @@ protected:
 
     //! Main controller
     CController* m_pController;
+
+    //! True once the file inventory and the first full scan have been issued
+    bool m_bFileInventoryDone;
 
     //! True while a poll fingerprint command is waiting for its result
     bool m_bPollPending;
