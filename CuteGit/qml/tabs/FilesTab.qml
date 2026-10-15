@@ -7,7 +7,6 @@ BaseTab {
     FilePane {
         id: filePane
         anchors.fill: parent
-        extensionParent: root
         repository: root.repository
         flatSelection: root.flatSelection
 
