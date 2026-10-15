@@ -1,6 +1,7 @@
 
 // Qt
 #include <QDebug>
+#include <QSet>
 
 // Application
 #include "CLogModel.h"
@@ -277,21 +278,15 @@ void CLogModel::setCommitMessage(const QString& sCommitId, const QString& sMessa
         {
             if (pLine->commitId() == sCommitId)
             {
-                bool bLabelsMissing = not m_mLabels.contains(sCommitId);
+                bool bLabelsChanged = syncLabelsForCommit(sCommitId);
 
-                // Same full message already shown: skip the notification so refreshes
-                // without changes cause no view update
-                if (pLine->messageIsComplete() && pLine->message() == sMessage && not bLabelsMissing)
+                // Same full message and same labels already shown: skip the
+                // notification so refreshes without changes cause no view update
+                if (pLine->messageIsComplete() && pLine->message() == sMessage && not bLabelsChanged)
                     break;
 
                 pLine->setMessage(sMessage);
                 pLine->setMessageIsComplete(true);
-
-                if (bLabelsMissing)
-                {
-                    m_mLabels[sCommitId] = new CLabelModel();
-                    m_mLabels[sCommitId]->setLabelList(m_pRepository->labelsForCommit(sCommitId));
-                }
 
                 emit dataChanged(index(iLineIndex), index(iLineIndex));
 
@@ -305,6 +300,8 @@ void CLogModel::setCommitMessage(const QString& sCommitId, const QString& sMessa
 
 void CLogModel::commitChanged(const QString& sCommitId)
 {
+    syncLabelsForCommit(sCommitId);
+
     for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
     {
         CLogLine* pLine = m_lLines[iLineIndex];
@@ -317,6 +314,56 @@ void CLogModel::commitChanged(const QString& sCommitId)
                 break;
             }
         }
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CLogModel::refreshLabels()
+{
+    QSet<QString> sHandledCommitIds;
+
+    for (CLogLine* pLine : m_lLines)
+    {
+        if (pLine == nullptr)
+            continue;
+
+        QString sCommitId = pLine->commitId();
+
+        if (sCommitId.isEmpty() || sHandledCommitIds.contains(sCommitId))
+            continue;
+
+        sHandledCommitIds << sCommitId;
+
+        if (not syncLabelsForCommit(sCommitId))
+            continue;
+
+        for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
+        {
+            CLogLine* pOtherLine = m_lLines[iLineIndex];
+
+            if (pOtherLine != nullptr && pOtherLine->commitId() == sCommitId)
+                emit dataChanged(index(iLineIndex), index(iLineIndex));
+        }
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CLogModel::refreshLabelsForCommit(const QString& sCommitId)
+{
+    if (sCommitId.isEmpty())
+        return;
+
+    if (not syncLabelsForCommit(sCommitId))
+        return;
+
+    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
+    {
+        CLogLine* pLine = m_lLines[iLineIndex];
+
+        if (pLine != nullptr && pLine->commitId() == sCommitId)
+            emit dataChanged(index(iLineIndex), index(iLineIndex));
     }
 }
 
@@ -342,6 +389,88 @@ void CLogModel::pruneUnusedLabels(const QString& sCommitId)
     }
 
     delete m_mLabels.take(sCommitId);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/************************************************************************/
+/*!
+    \fn static QString labelSignature(const CLabel* pLabel)
+    Builds a comparable signature of a label, single place for the format.
+*/
+static QString labelSignature(const CLabel* pLabel)
+{
+    return QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
+}
+
+/************************************************************************/
+/*!
+    \fn static bool labelModelsEqual(CLabelModel* pExisting, const QList<CLabel*>& lFresh)
+    Returns true when the existing label model shows the same labels.
+*/
+static bool labelModelsEqual(CLabelModel* pExisting, const QList<CLabel*>& lFresh)
+{
+    if (pExisting == nullptr)
+        return lFresh.isEmpty();
+
+    if (pExisting->rowCount() != lFresh.count())
+        return false;
+
+    QSet<QString> sExistingSignatures;
+
+    for (int iRow = 0; iRow < pExisting->rowCount(); iRow++)
+    {
+        QModelIndex qIndex = pExisting->index(iRow, 0);
+        QString sName = pExisting->data(qIndex, CLabelModel::eNameRole).toString();
+        int iType = pExisting->data(qIndex, CLabelModel::eTypeRole).toInt();
+        sExistingSignatures << QString("%1:%2").arg(iType).arg(sName);
+    }
+
+    QSet<QString> sFreshSignatures;
+
+    for (const CLabel* pLabel : lFresh)
+    {
+        if (pLabel != nullptr)
+            sFreshSignatures << labelSignature(pLabel);
+    }
+
+    return sExistingSignatures == sFreshSignatures;
+}
+
+/************************************************************************/
+/*!
+    \fn bool CLogModel::syncLabelsForCommit(const QString& sCommitId)
+    Rebuilds the label model of a commit from the repository, returns true
+    when the visible labels changed.
+*/
+bool CLogModel::syncLabelsForCommit(const QString& sCommitId)
+{
+    if (sCommitId.isEmpty() || m_pRepository == nullptr)
+        return false;
+
+    QList<CLabel*> lFreshLabels = m_pRepository->labelsForCommit(sCommitId);
+
+    if (labelModelsEqual(m_mLabels.value(sCommitId, nullptr), lFreshLabels))
+    {
+        qDeleteAll(lFreshLabels);
+        return false;
+    }
+
+    if (m_mLabels.contains(sCommitId))
+        delete m_mLabels.take(sCommitId);
+
+    if (not lFreshLabels.isEmpty())
+    {
+        CLabelModel* pModel = new CLabelModel();
+        pModel->setLabelList(lFreshLabels);
+        m_mLabels[sCommitId] = pModel;
+    }
+    else
+    {
+        qDeleteAll(lFreshLabels);
+    }
+
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 
 // Qt
 #include <QDebug>
+#include <QMap>
 
 // Application
 #include "CBranchModel.h"
@@ -90,13 +91,23 @@ void CBranchModel::setBranchList(QList<CBranch*> lNewList, CEnums::ELabelType eT
 {
     beginResetModel();
 
+    QMap<QString, QString> mKnownHeadCommits;
+
+    for (CBranch* pBranch : m_lBranches)
+        mKnownHeadCommits[pBranch->name()] = pBranch->commitId();
+
     qDeleteAll(m_lBranches);
     m_lBranches.clear();
 
     for (CBranch* pBranch : lNewList)
     {
         if (pBranch->type() == eType)
+        {
+            if (mKnownHeadCommits.contains(pBranch->name()))
+                pBranch->setCommitId(mKnownHeadCommits[pBranch->name()]);
+
             m_lBranches << pBranch;
+        }
     }
 
     endResetModel();

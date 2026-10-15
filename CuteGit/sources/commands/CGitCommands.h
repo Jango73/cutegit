@@ -302,6 +302,7 @@ protected:
     static const QString sCommandMergeBranch;
     static const QString sCommandPatchApply;
     static const QString sCommandPollFingerprint;
+    static const QString sCommandPollRefs;
     static const QString sCommandPull;
     static const QString sCommandPush;
     static const QString sCommandPushForce;
@@ -369,4 +370,5 @@ protected:
     ERebaseStep     m_eRebaseStep;
     QString         m_sCommitId;
     QString         m_sCommitMessage;
+    QString         m_sPollStatusPart;
 };

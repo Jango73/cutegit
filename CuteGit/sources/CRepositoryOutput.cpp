@@ -250,7 +250,8 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
     {
         m_pRemoteBranchModel->setBranchHeadCommit(sKey, sValue);
         m_pLocalBranchModel->setBranchHeadCommit(sKey, sValue);
-        m_pBranchLogModel->commitChanged(sValue);
+        m_pBranchLogModel->refreshLabels();
+        m_pFileLogModel->refreshLabels();
         m_pGraphModel->commitChanged(sValue);
         break;
     }
@@ -258,7 +259,8 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
     case CEnums::eTagCommit:
     {
         m_pTagModel->setBranchHeadCommit(sKey, sValue);
-        m_pBranchLogModel->commitChanged(sValue);
+        m_pBranchLogModel->refreshLabels();
+        m_pFileLogModel->refreshLabels();
         m_pGraphModel->commitChanged(sValue);
         break;
     }
@@ -320,6 +322,8 @@ void CRepository::onNewOutputListOfCBranch(CEnums::EProcessCommand eCommand, QLi
     {
         m_pRemoteBranchModel->setBranchList(lNewBranches, CEnums::RemoteBranchLabel);
         m_pLocalBranchModel->setBranchList(lNewBranches, CEnums::LocalBranchLabel);
+        m_pBranchLogModel->refreshLabels();
+        m_pFileLogModel->refreshLabels();
         getBranchHeadCommits();
         getBranchesCommitCountAheadBehind();
         break;
@@ -328,6 +332,8 @@ void CRepository::onNewOutputListOfCBranch(CEnums::EProcessCommand eCommand, QLi
     case CEnums::eTags:
     {
         m_pTagModel->setBranchList(lNewBranches, CEnums::TagLabel);
+        m_pBranchLogModel->refreshLabels();
+        m_pFileLogModel->refreshLabels();
         getTagCommits();
         break;
     }

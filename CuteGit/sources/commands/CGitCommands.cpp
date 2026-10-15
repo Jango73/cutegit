@@ -69,6 +69,7 @@ const QString CGitCommands::sCommandListOtherFiles      = "git ls-files --others
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
 const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
 const QString CGitCommands::sCommandPollFingerprint      = "git status --porcelain=v1 -b --ignored=no --untracked-files=normal";
+const QString CGitCommands::sCommandPollRefs              = "git for-each-ref --format=\"%(objectname:short) %(refname:short)\"";
 const QString CGitCommands::sCommandPull                = "git pull";
 const QString CGitCommands::sCommandPush                = "git push %1 %2";
 const QString CGitCommands::sCommandPushForce           = "git push --force-with-lease %1 %2";
@@ -237,7 +238,9 @@ void CGitCommands::fileStatus(const QString& sPath, const QString& sFullName)
 
 void CGitCommands::pollFingerprint(const QString& sPath)
 {
-    exec(new CProcessCommand(CEnums::ePollFingerprint, sPath, sCommandPollFingerprint));
+    m_sPollStatusPart.clear();
+    exec(new CProcessCommand(CEnums::ePollFingerprint, sPath, sCommandPollFingerprint, true, QMap<QString, QString>(), "status"));
+    exec(new CProcessCommand(CEnums::ePollFingerprint, sPath, sCommandPollRefs, true, QMap<QString, QString>(), "refs"));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1414,8 +1417,21 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
 
     case CEnums::ePollFingerprint:
     {
-        // Throw the raw sentinel output, the repository compares it with the previous one
-        emit newOutputString(tResult.m_eCommand, tResult.m_sValue);
+        if (tResult.m_sUserData == "status")
+        {
+            m_sPollStatusPart = tResult.m_sValue;
+        }
+        else if (tResult.m_sUserData == "refs")
+        {
+            // Throw the combined sentinel output, the repository compares it with the previous one
+            emit newOutputString(tResult.m_eCommand, m_sPollStatusPart + tResult.m_sValue);
+            m_sPollStatusPart.clear();
+        }
+        else
+        {
+            // Throw the raw sentinel output, the repository compares it with the previous one
+            emit newOutputString(tResult.m_eCommand, tResult.m_sValue);
+        }
         break;
     }
 

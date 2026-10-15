@@ -87,6 +87,12 @@ public:
     //!
     void commitChanged(const QString& sCommitId);
 
+    //! Rebuilds branch/tag labels of every loaded commit from the repository
+    void refreshLabels();
+
+    //! Rebuilds branch/tag labels of a single commit from the repository
+    void refreshLabelsForCommit(const QString& sCommitId);
+
     //!
     void invalidate();
 
@@ -105,6 +111,9 @@ private:
 
     //! Returns true when both lines show the same commit
     bool isSameLogLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const;
+
+    //! Rebuilds the label model of a commit, returns true when it changed
+    bool syncLabelsForCommit(const QString& sCommitId);
 
     //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
     CRepository* m_pRepository;
