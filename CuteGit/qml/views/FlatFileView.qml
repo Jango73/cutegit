@@ -35,6 +35,10 @@ StandardListView {
         property bool mustShowRelativeName: model.fileName !== model.relativeName
         property bool selected: indexSelected(index)
 
+        /*! Tracks delegate reuse across rows: index has no notifier of its own */
+        property int rowIndex: index
+        onRowIndexChanged: root.updateModelIndex(rowIndex)
+
         onClicked: function(mouse, previousIndex) {
             root.itemClicked(mouse, index, previousIndex)
 

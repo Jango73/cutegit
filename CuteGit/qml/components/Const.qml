@@ -172,7 +172,7 @@ Item {
     readonly property int firstColumn: 0
     readonly property string collapsedHeaderPrefix: "▶ "
     readonly property string expandedHeaderPrefix: "▼ "
-    readonly property int unstagedDiffStretch: 2
+    readonly property int unstagedDiffStretch: 1
     readonly property int stagedDiffStretch: 1
     readonly property string diffSectionCountText: qsTr("%1 (%2)")
 

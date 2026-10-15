@@ -136,7 +136,31 @@ ListView {
         if (count > 0 && currentIndex == -1) {
             previousIndex = -1
             currentIndex = 0
+        } else if (count > 0 && currentIndex !== -1) {
+            if (currentIndex >= count) {
+                previousIndex = -1
+                currentIndex = count - 1
+            } else {
+                resyncSelectionToCurrentIndex()
+            }
         }
+    }
+
+    /*! Re-asserts the selection current for the visible current row after rows shift without currentIndexChanged */
+    function resyncSelectionToCurrentIndex() {
+        if (!selection || currentIndex < 0 || currentIndex >= count)
+            return
+
+        if (!model || typeof model.index !== "function")
+            return
+
+        var freshIndex = model.index(currentIndex, Const.firstColumn)
+
+        if (!freshIndex)
+            return
+
+        modelIndices[currentIndex] = freshIndex
+        selection.setCurrentIndex(freshIndex, ItemSelectionModel.Current)
     }
 
     /*! Returns \c true if the item at index is selected */
