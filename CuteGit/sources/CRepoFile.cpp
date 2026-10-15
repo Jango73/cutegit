@@ -91,16 +91,10 @@ QString CRepoFile::stagedToString() const
 
 bool CRepoFile::isNotClean() const
 {
-    if (m_eStatus == CEnums::eAdded)
-        return true;
-    if (m_eStatus == CEnums::eModified)
-        return true;
-    if (m_eStatus == CEnums::eRenamed)
-        return true;
-    if (m_eStatus == CEnums::eDeleted)
-        return true;
-
-    return false;
+    // Same rule as the modified-files flag in CRepository::onNewOutputListOfCRepoFile:
+    // every status but clean and ignored counts as a change (untracked and
+    // missing included), so the changing flag is set for those files as well
+    return m_eStatus != CEnums::eClean && m_eStatus != CEnums::eIgnored;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -419,12 +419,12 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
                 {
                     pExistingFile->setStaged(false);
 
-                    if (
-                            pExistingFile->status() == CEnums::eAdded ||
-                            pExistingFile->status() == CEnums::eModified ||
-                            pExistingFile->status() == CEnums::eRenamed ||
-                            pExistingFile->status() == CEnums::eDeleted
-                            )
+                    // Absence from a real status batch means the file carries
+                    // no change anymore: it turned clean, whatever its
+                    // previous state (tracked, untracked or missing). Without
+                    // this, an externally committed untracked file keeps its
+                    // stale status and stays visible after the poll refresh.
+                    if (pExistingFile->status() != CEnums::eClean)
                     {
                         pExistingFile->setStatus(CEnums::eClean);
                     }
