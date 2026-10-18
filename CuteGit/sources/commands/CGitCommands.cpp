@@ -912,7 +912,11 @@ CRepoFile* CGitCommands::repoFileForLine(const QString &sPath, QString sLine, bo
     {
         // Bare relative path from the ignored listing: no status columns
         // to parse, the entry is ignored by construction
-        QString sRelativeName = sLine;
+        QString sRelativeName = sLine.trimmed();
+
+        if (sRelativeName.isEmpty())
+            return nullptr;
+
         QString sFullName = sPath + PATH_SEP + sRelativeName;
         QString sFileName = QFileInfo(sFullName).fileName();
 

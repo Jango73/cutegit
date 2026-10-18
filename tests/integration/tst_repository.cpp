@@ -330,9 +330,13 @@ private slots:
 
         QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->commitCountAhead(), 1, s_iAsyncTimeoutMs);
 
-        // Lightweight tags fall back to their object, annotated tags peel to their commit
+        // Lightweight tags fall back to their object, annotated tags peel to their commit.
+        // The annotated tag carries its own identity like the commit above:
+        // clones never inherit user.name/user.email and CI runners have no
+        // global git identity
         QVERIFY(gitOutput({"tag", "v-batch-light"}, sUnused));
-        QVERIFY(gitOutput({"tag", "-a", "-m", "probe", "v-batch-annotated"}, sUnused));
+        QVERIFY(gitOutput({"-c", "user.name=probe", "-c", "user.email=probe@local",
+                           "tag", "-a", "-m", "probe", "v-batch-annotated"}, sUnused));
 
         m_pRepository->refresh();
 
