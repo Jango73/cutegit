@@ -214,10 +214,13 @@ protected:
     CRepoFile* repoFileForLine(const QString& sPath, QString sLine, bool bSimple);
 
     //!
-    void getFullCommitMessage(QString sPath, const QString &sCommitId);
+    void handleBranchHeadCommitOutput(const CProcessResult& tResult);
 
     //!
-    void handleCommitCountOutput(const CProcessResult& tResult);
+    void handleBranchAheadBehindOutput(const CProcessResult& tResult);
+
+    //!
+    void handleTagCommitOutput(const CProcessResult& tResult);
 
     //!
     void handleDiffOutput(const CProcessResult& tResult);
@@ -235,11 +238,13 @@ protected:
     void handleFileStatusOutput(const CProcessResult& tResult);
 
     //!
+    void handleTrackedFilesOutput(const CProcessResult& tResult);
+
+    //!
     void handleLogOutput(const CProcessResult& tResult);
 
     //!
     void handleRefLogOutput(const CProcessResult& tResult);
-
     //!
     void handleGraphOutput(const CProcessResult& tResult);
 
@@ -252,9 +257,6 @@ protected slots:
     //!
     void onExecFinished(const CProcessResult& tResult);
 
-    //!
-    void onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, CRepoFileList lNewRepoFiles);
-
     //-------------------------------------------------------------------------------------------------
     // Protected constants
     //-------------------------------------------------------------------------------------------------
@@ -263,8 +265,8 @@ protected:
 
     // Constant numbers
 
-    static const int iLogFormatValueCount;
-    static const int iGraphFormatValueCount;
+    static const int iLogFieldCount;
+    static const int iGraphFieldCount;
     static const int iRefLogFormatValueCount;
 
     // Command strings
@@ -273,7 +275,7 @@ protected:
     static const QString sCommandAbortRebase;
     static const QString sCommandAmend;
     static const QString sCommandBlame;
-    static const QString sCommandBranchAhead;
+    static const QString sCommandBranchAheadBehind;
     static const QString sCommandBranches;
     static const QString sCommandBranchFromCommit;
     static const QString sCommandBranchLog;
@@ -281,7 +283,6 @@ protected:
     static const QString sCommandClone;
     static const QString sCommandCommit;
     static const QString sCommandCommitDiffPrevious;
-    static const QString sCommandCommitMessage;
     static const QString sCommandContinueMerge;
     static const QString sCommandContinueRebase;
     static const QString sCommandCreateTagOnCommit;
@@ -297,7 +298,7 @@ protected:
     static const QString sCommandGetRebaseMergePath;
     static const QString sCommandGraph;
     static const QString sCommandGraphCount;
-    static const QString sCommandHeadCommit;
+    static const QString sCommandHeadCommits;
     static const QString sCommandListOtherFiles;
     static const QString sCommandMergeBranch;
     static const QString sCommandPatchApply;
@@ -319,7 +320,8 @@ protected:
     static const QString sCommandStashSave;
     static const QString sCommandStatus;
     static const QString sCommandTags;
-    static const QString sCommandTagCommit;
+    static const QString sCommandTagCommits;
+    static const QString sCommandTrackedFiles;
     static const QString sCommandTwoCommitDiff;
     static const QString sCommandUnstage;
     static const QString sCommandUnstageAll;
@@ -343,6 +345,7 @@ protected:
 
     static const QString sComment;
     static const QString sLogFormatSplitter;
+    static const QChar sRecordSeparator;
     static const QString sRemoteBranchPrefix;
     static const QString sRemoteBranchUselessPrefix;
     static const QString sSequenceEditorToken;

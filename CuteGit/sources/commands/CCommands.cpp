@@ -5,6 +5,7 @@
 #include <QProcess>
 #include <QMutexLocker>
 #include <QDir>
+#include <QFileInfo>
 
 // Application
 #include "CCommands.h"
@@ -46,6 +47,33 @@ bool CCommands::can(CEnums::ECapability eWhat) const
 {
     Q_UNUSED(eWhat);
     return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+CRepoFileList CCommands::cleanFilesForRelativePaths(const QString& sPath, const QStringList& lRelativeNames)
+{
+    CRepoFileList lReturnValue;
+
+    for (QString sRelativeName : lRelativeNames)
+    {
+        QString sTrimmed = sRelativeName.trimmed();
+
+        if (sTrimmed.isEmpty())
+            continue;
+
+        QString sFullName = sPath + PATH_SEP + sTrimmed;
+
+        CRepoFile* pFile = new CRepoFile();
+        pFile->setFullName(sFullName);
+        pFile->setFileName(QFileInfo(sFullName).fileName());
+        pFile->setRelativeName(sTrimmed);
+        pFile->setStatus(CEnums::eClean);
+
+        lReturnValue.addItem(pFile->fullName(), pFile);
+    }
+
+    return lReturnValue;
 }
 
 //-------------------------------------------------------------------------------------------------

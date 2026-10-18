@@ -47,4 +47,9 @@ BaseTab {
     function focusTab() {
         logView.forceActiveFocus()
     }
+
+    function loadData() {
+        if (root.repository !== null)
+            root.repository.refreshBranchLog()
+    }
 }

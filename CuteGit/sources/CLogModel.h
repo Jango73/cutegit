@@ -82,9 +82,6 @@ public:
     virtual void fetchMore(const QModelIndex& parent) override;
 
     //!
-    void setCommitMessage(const QString& sCommitId, const QString& sMessage);
-
-    //!
     void commitChanged(const QString& sCommitId);
 
     //! Rebuilds branch/tag labels of every loaded commit from the repository

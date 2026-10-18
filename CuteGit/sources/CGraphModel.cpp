@@ -35,22 +35,22 @@ void CGraphModel::clear()
 
 /***************************************************************************/
 
-/*! Replaces the label model of a commit with owned labels */
-static void syncLabelModel(QMap<QString, CLabelModel*>& mLabels, const QString& sCommitId, QList<CLabel*> lLabels)
+/*! Updates the label model of a commit with owned labels, keeping the model identity */
+static void syncLabelModel(QObject* pParent, QMap<QString, CLabelModel*>& mLabels, const QString& sCommitId, QList<CLabel*> lLabels)
 {
-    if (mLabels.contains(sCommitId))
-        delete mLabels.take(sCommitId);
+    CLabelModel* pModel = mLabels.value(sCommitId, nullptr);
 
-    if (!lLabels.isEmpty())
+    if (pModel == nullptr)
     {
-        CLabelModel* pModel = new CLabelModel();
-        pModel->setLabelList(lLabels);
+        if (lLabels.isEmpty())
+            return;
+
+        pModel = new CLabelModel(pParent);
         mLabels[sCommitId] = pModel;
     }
-    else
-    {
-        qDeleteAll(lLabels);
-    }
+
+    // Update in place: the model pointer is exposed to QML and must stay valid
+    pModel->syncLabels(lLabels);
 }
 
 /***************************************************************************/
@@ -71,34 +71,16 @@ static QSet<QString> commitIdsOfLines(const QList<CGraphLine*>& lLines)
 
 /***************************************************************************/
 
-/*! Removes the label model of a commit when no remaining line shows it */
-static void removeLabelModelIfOrphaned(QMap<QString, CLabelModel*>& mLabels, const QList<CGraphLine*>& lLines, const QString& sCommitId)
+/*! Clears the label model of a commit when no remaining line shows it, keeping the model identity */
+static void clearLabelModelIfOrphaned(QMap<QString, CLabelModel*>& mLabels, const QList<CGraphLine*>& lLines, const QString& sCommitId)
 {
     if (sCommitId.isEmpty() || !mLabels.contains(sCommitId))
         return;
 
     if (!commitIdsOfLines(lLines).contains(sCommitId))
-        delete mLabels.take(sCommitId);
-}
-
-/***************************************************************************/
-
-/*! Removes label models of commits shown by no remaining line */
-static void pruneOrphanedLabels(QMap<QString, CLabelModel*>& mLabels, const QList<CGraphLine*>& lLines)
-{
-    QSet<QString> sRemainingCommits = commitIdsOfLines(lLines);
-
-    for (auto iIterator = mLabels.begin(); iIterator != mLabels.end();)
     {
-        if (!sRemainingCommits.contains(iIterator.key()))
-        {
-            delete iIterator.value();
-            iIterator = mLabels.erase(iIterator);
-        }
-        else
-        {
-            iIterator++;
-        }
+        QList<CLabel*> lEmptyLabels;
+        mLabels[sCommitId]->setLabelList(lEmptyLabels);
     }
 }
 
@@ -178,7 +160,7 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
                         endRemoveRows();
                         QString sRemovedCommitId = pRemovedLine->commitId();
                         delete pRemovedLine;
-                        removeLabelModelIfOrphaned(m_mLabels, m_lLines, sRemovedCommitId);
+                        clearLabelModelIfOrphaned(m_mLabels, m_lLines, sRemovedCommitId);
                     }
                 }
 
@@ -208,8 +190,8 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
                 m_lLines[iFinalIndex] = lIncomingLines[iIndex];
                 lIncomingLines[iIndex] = nullptr;
 
-                removeLabelModelIfOrphaned(m_mLabels, m_lLines, sOldCommitId);
-                syncLabelModel(m_mLabels, m_lLines[iFinalIndex]->commitId(), m_lLines[iFinalIndex]->createLabels());
+                clearLabelModelIfOrphaned(m_mLabels, m_lLines, sOldCommitId);
+                syncLabelModel(this, m_mLabels, m_lLines[iFinalIndex]->commitId(), m_lLines[iFinalIndex]->createLabels());
 
                 QModelIndex qModelIndex = createIndex(iFinalIndex, 0);
                 emit dataChanged(qModelIndex, qModelIndex);
@@ -217,7 +199,7 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
         }
         else if (iFinalIndex == m_lLines.count())
         {
-            syncLabelModel(m_mLabels, lIncomingLines[iIndex]->commitId(), lIncomingLines[iIndex]->createLabels());
+            syncLabelModel(this, m_mLabels, lIncomingLines[iIndex]->commitId(), lIncomingLines[iIndex]->createLabels());
             beginInsertRows(QModelIndex(), m_lLines.count(), m_lLines.count());
             m_lLines << lIncomingLines[iIndex];
             endInsertRows();
@@ -243,7 +225,7 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
             endRemoveRows();
             QString sRemovedCommitId = pRemovedLine->commitId();
             delete pRemovedLine;
-            removeLabelModelIfOrphaned(m_mLabels, m_lLines, sRemovedCommitId);
+            clearLabelModelIfOrphaned(m_mLabels, m_lLines, sRemovedCommitId);
         }
     }
 }
@@ -352,29 +334,6 @@ void CGraphModel::fetchMore(const QModelIndex& parent)
         iNewCount = m_iPotentialCount - iCurrentCount;
 
     emit requestGraphData(iCurrentCount, iNewCount);
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CGraphModel::setCommitMessage(const QString& sCommitId, const QString& sMessage)
-{
-    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
-    {
-        CLogLine* pLine = m_lLines[iLineIndex];
-
-        if (pLine->commitId() == sCommitId)
-        {
-            // Same full message already shown: skip the notification so refreshes
-            // without changes cause no view update
-            if (pLine->messageIsComplete() && pLine->message() == sMessage)
-                break;
-
-            pLine->setMessage(sMessage);
-            pLine->setMessageIsComplete(true);
-            emit dataChanged(index(iLineIndex), index(iLineIndex));
-            break;
-        }
-    }
 }
 
 //-------------------------------------------------------------------------------------------------

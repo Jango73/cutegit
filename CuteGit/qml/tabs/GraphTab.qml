@@ -14,4 +14,9 @@ BaseTab {
     function focusTab() {
         graphView.forceActiveFocus()
     }
+
+    function loadData() {
+        if (root.repository !== null)
+            root.repository.refreshGraph()
+    }
 }

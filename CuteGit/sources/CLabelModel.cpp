@@ -1,6 +1,7 @@
 
 // Qt
 #include <QDebug>
+#include <QSet>
 
 // Application
 #include "CLabelModel.h"
@@ -17,6 +18,8 @@ CLabelModel::CLabelModel(QObject* parent)
 
 CLabelModel::~CLabelModel()
 {
+    qDeleteAll(m_lLabels);
+    m_lLabels.clear();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -70,4 +73,45 @@ void CLabelModel::setLabelList(QList<CLabel*> lNewList)
         m_lLabels << pLabel;
 
     endResetModel();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool CLabelModel::syncLabels(QList<CLabel*> lFreshLabels)
+{
+    if (isEqualTo(lFreshLabels))
+    {
+        qDeleteAll(lFreshLabels);
+        return false;
+    }
+
+    setLabelList(lFreshLabels);
+
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool CLabelModel::isEqualTo(const QList<CLabel*>& lFreshLabels) const
+{
+    if (m_lLabels.count() != lFreshLabels.count())
+        return false;
+
+    QSet<QString> sExistingSignatures;
+
+    for (const CLabel* pLabel : m_lLabels)
+    {
+        if (pLabel != nullptr)
+            sExistingSignatures << QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
+    }
+
+    QSet<QString> sFreshSignatures;
+
+    for (const CLabel* pLabel : lFreshLabels)
+    {
+        if (pLabel != nullptr)
+            sFreshSignatures << QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
+    }
+
+    return sExistingSignatures == sFreshSignatures;
 }

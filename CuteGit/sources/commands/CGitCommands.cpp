@@ -32,23 +32,22 @@
 //-------------------------------------------------------------------------------------------------
 // Constants
 
-const int CGitCommands::iLogFormatValueCount            = 4;
-const int CGitCommands::iGraphFormatValueCount          = 7;
+const int CGitCommands::iLogFieldCount                   = 5;
+const int CGitCommands::iGraphFieldCount                 = 8;
 const int CGitCommands::iRefLogFormatValueCount         = 3;
 
 const QString CGitCommands::sCommandAbortMerge          = "git merge --abort";
 const QString CGitCommands::sCommandAbortRebase         = "git rebase --abort";
 const QString CGitCommands::sCommandAmend               = "git commit --amend --reset-author --no-edit";
 const QString CGitCommands::sCommandBlame               = "git annotate \"%1\"";
-const QString CGitCommands::sCommandBranchAhead         = "git rev-list --left-right --count \"%2\"...\"%1/%2\"";
+const QString CGitCommands::sCommandBranchAheadBehind = "git for-each-ref --format=\"%(refname:short) %(upstream:track)\" refs/heads";
 const QString CGitCommands::sCommandBranches            = "git branch -a";
 const QString CGitCommands::sCommandBranchFromCommit    = "git checkout -b \"%1\" \"%2\"";
-const QString CGitCommands::sCommandBranchLog           = "git log --pretty=format:\"%h &&& %s &&& %an &&& %aI\" --skip=%1 --max-count=%2";
+const QString CGitCommands::sCommandBranchLog           = "git log --pretty=format:\"%x1e%h &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2";
 const QString CGitCommands::sCommandBranchLogCount      = "git rev-list --count HEAD";
 const QString CGitCommands::sCommandClone               = "git clone --progress \"%1\"";
 const QString CGitCommands::sCommandCommit              = "git commit -m \"%1\"";
 const QString CGitCommands::sCommandCommitDiffPrevious  = "git diff %1~1 %1";
-const QString CGitCommands::sCommandCommitMessage       = "git show --pretty=format:\"%B\" -s \"%1\"";
 const QString CGitCommands::sCommandContinueMerge       = "git merge --continue";
 const QString CGitCommands::sCommandContinueRebase      = "git rebase --continue";
 const QString CGitCommands::sCommandCreateTagOnCommit   = "git tag -m \"%1\" \"%2\" \"%3\"";
@@ -57,14 +56,14 @@ const QString CGitCommands::sCommandDeleteBranch        = "git branch --delete \
 const QString CGitCommands::sCommandDeleteFile          = "git rm \"%1\"";
 const QString CGitCommands::sCommandFetch               = "git fetch";
 const QString CGitCommands::sCommandFetchAndPrune       = "git fetch -p";
-const QString CGitCommands::sCommandFileLog             = "git log --pretty=format:\"%h &&& %s &&& %an &&& %aI\" --skip=%1 --max-count=%2 \"%3\"";
+const QString CGitCommands::sCommandFileLog              = "git log --pretty=format:\"%x1e%h &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2 \"%3\"";
 const QString CGitCommands::sCommandFileLogCount        = "git rev-list --count HEAD \"%1\"";
 const QString CGitCommands::sCommandFileStatus          = "git status --porcelain --ignored --untracked-files=all \"%1\"";
 const QString CGitCommands::sCommandGetRebaseApplyPath  = "git rev-parse --git-path rebase-apply";
 const QString CGitCommands::sCommandGetRebaseMergePath  = "git rev-parse --git-path rebase-merge";
-const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI\" --skip=%1 --max-count=%2";
+const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"%x1e&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2";
 const QString CGitCommands::sCommandGraphCount         = "git rev-list --count --all";
-const QString CGitCommands::sCommandHeadCommit          = "git rev-parse --short \"%1\"";
+const QString CGitCommands::sCommandHeadCommits         = "git for-each-ref --format=\"%(refname:short) %(objectname:short)\" refs/heads refs/remotes";
 const QString CGitCommands::sCommandListOtherFiles      = "git ls-files --others";
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
 const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
@@ -86,7 +85,8 @@ const QString CGitCommands::sCommandStashPop            = "git stash pop";
 const QString CGitCommands::sCommandStashSave           = "git stash save";
 const QString CGitCommands::sCommandStatus              = "git status --porcelain --ignored --untracked-files=all";
 const QString CGitCommands::sCommandTags                = "git tag";
-const QString CGitCommands::sCommandTagCommit           = "git rev-list -n 1 --abbrev-commit \"%1\"";
+const QString CGitCommands::sCommandTagCommits           = "git for-each-ref --format=\"%(refname:short) %(*objectname:short) %(objectname:short)\" refs/tags";
+const QString CGitCommands::sCommandTrackedFiles        = "git ls-files --cached";
 const QString CGitCommands::sCommandTwoCommitDiff       = "git diff --no-color --ignore-all-space \"%1\" \"%2\"";
 const QString CGitCommands::sCommandUnstage             = "git reset HEAD \"%1\"";
 const QString CGitCommands::sCommandUnstageAll          = "git reset .";
@@ -110,6 +110,7 @@ const QString CGitCommands::sBlameLineRegExp            = "([0-9a-fA-F]+)\\s+\\(
 
 const QString CGitCommands::sComment                    = "#";
 const QString CGitCommands::sLogFormatSplitter          = "&&&";
+const QChar CGitCommands::sRecordSeparator(0x1E);
 const QString CGitCommands::sRemoteBranchPrefix         = "origin";
 const QString CGitCommands::sRemoteBranchUselessPrefix  = "remotes/";
 const QString CGitCommands::sSequenceEditorToken        = "GIT_SEQUENCE_EDITOR";
@@ -207,15 +208,7 @@ void CGitCommands::repositoryStatus(const QString& sPath)
 
 void CGitCommands::allFileStatus(const QString& sPath)
 {
-    CCleanFileLister* pLister = new CCleanFileLister();
-
-    pLister->m_eCommand = CEnums::eAllFileStatus;
-    pLister->m_sRootPath = sPath;
-    pLister->setAutoDelete(true);
-
-    connect(pLister, &CCleanFileLister::newOutputListOfCRepoFile, this, &CGitCommands::onNewOutputListOfCRepoFile);
-
-    m_tPool.start(pLister);
+    exec(new CProcessCommand(CEnums::eAllFileStatus, sPath, sCommandTrackedFiles));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -254,26 +247,20 @@ void CGitCommands::branches(const QString& sPath)
 
 void CGitCommands::branchHeadCommits(const QString& sPath, QStringList lBranches)
 {
-    for (QString sBranch: lBranches)
-    {
-        QString sCommand = QString(sCommandHeadCommit).arg(sBranch);
-        exec(new CProcessCommand(CEnums::eBranchHeadCommit, sPath, sCommand, true, QMap<QString, QString>(), sBranch));
-    }
+    Q_UNUSED(lBranches);
+
+    // One batched read covers every branch, no per-item process is needed
+    exec(new CProcessCommand(CEnums::eBranchHeadCommit, sPath, sCommandHeadCommits, true));
 }
 
 //-------------------------------------------------------------------------------------------------
 
 void CGitCommands::branchCommitCountAheadBehind(const QString& sPath, QStringList lBranches)
 {
-    QString sPrefix = QString("%1/").arg(sRemoteBranchPrefix);
-    for (QString sBranch: lBranches)
-    {
-        if (not sBranch.startsWith(sPrefix))
-        {
-            QString sCommand = QString(sCommandBranchAhead).arg(sRemoteBranchPrefix).arg(sBranch);
-            exec(new CProcessCommand(CEnums::eBranchCommitCountAhead, sPath, sCommand, true, QMap<QString, QString>(), sBranch));
-        }
-    }
+    Q_UNUSED(lBranches);
+
+    // One batched read covers every local branch with its upstream tracking state
+    exec(new CProcessCommand(CEnums::eBranchCommitCountAhead, sPath, sCommandBranchAheadBehind, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -287,11 +274,10 @@ void CGitCommands::tags(const QString& sPath)
 
 void CGitCommands::tagCommits(const QString& sPath, QStringList lTags)
 {
-    for (QString sTag: lTags)
-    {
-        QString sCommand = QString(sCommandTagCommit).arg(sTag);
-        exec(new CProcessCommand(CEnums::eTagCommit, sPath, sCommand, true, QMap<QString, QString>(), sTag));
-    }
+    Q_UNUSED(lTags);
+
+    // One batched read covers every tag, peeled to its commit when annotated
+    exec(new CProcessCommand(CEnums::eTagCommit, sPath, sCommandTagCommits, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -930,22 +916,108 @@ CRepoFile* CGitCommands::repoFileForLine(const QString &sPath, QString sLine, bo
 
 //-------------------------------------------------------------------------------------------------
 
-void CGitCommands::getFullCommitMessage(QString sPath, const QString& sCommitId)
+void CGitCommands::handleBranchHeadCommitOutput(const CProcessResult& tResult)
 {
-    QString sCommand = QString(sCommandCommitMessage).arg(sCommitId);
-    exec(new CProcessCommand(CEnums::eCommitMessage, sPath, sCommand, true, QMap<QString, QString>(), sCommitId));
+    QStringList lLines = tResult.m_sValue.split(NEW_LINE);
+
+    for (QString sLine : lLines)
+    {
+        sLine = sLine.trimmed();
+
+        if (sLine.isEmpty())
+            continue;
+
+        // The commit id is the last token, branch names may contain spaces
+        int iSeparator = sLine.lastIndexOf(' ');
+
+        if (iSeparator <= 0)
+            continue;
+
+        emit newOutputKeyValue(tResult.m_eCommand, sLine.left(iSeparator), sLine.mid(iSeparator + 1));
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
 
-void CGitCommands::handleCommitCountOutput(const CProcessResult& tResult)
+void CGitCommands::handleBranchAheadBehindOutput(const CProcessResult& tResult)
 {
-    QStringList sAheadOutputLines = tResult.m_sValue.split("\t");
-    QString sAheadCount = sAheadOutputLines.count() > 0 ? sAheadOutputLines[0].trimmed() : "0";
-    QString sBehindCount = sAheadOutputLines.count() > 1 ? sAheadOutputLines[1].trimmed() : "0";
+    QStringList lLines = tResult.m_sValue.split(NEW_LINE);
 
-    emit newOutputKeyValue(CEnums::eBranchCommitCountAhead, tResult.m_sUserData, sAheadCount);
-    emit newOutputKeyValue(CEnums::eBranchCommitCountBehind, tResult.m_sUserData, sBehindCount);
+    for (QString sLine : lLines)
+    {
+        sLine = sLine.trimmed();
+
+        if (sLine.isEmpty())
+            continue;
+
+        // Tracking states read "[ahead 1]", "[behind 2]", "[ahead 1, behind 2]",
+        // "[gone]" or empty when in sync or without upstream
+        QString sBranch = sLine;
+        QString sTrack;
+
+        if (sLine.endsWith(']'))
+        {
+            int iTrack = sLine.lastIndexOf(" [");
+
+            if (iTrack > 0)
+            {
+                sBranch = sLine.left(iTrack);
+                sTrack = sLine.mid(iTrack + 1);
+            }
+        }
+
+        int iAhead = 0;
+        int iBehind = 0;
+
+        if (sTrack.startsWith('[') && sTrack.endsWith(']'))
+        {
+            QStringList lParts = sTrack.mid(1, sTrack.length() - 2).split(',');
+
+            for (QString sPart : lParts)
+            {
+                sPart = sPart.trimmed();
+
+                if (sPart.startsWith("ahead "))
+                    iAhead = sPart.mid(6).toInt();
+                else if (sPart.startsWith("behind "))
+                    iBehind = sPart.mid(7).toInt();
+            }
+        }
+
+        emit newOutputKeyValue(CEnums::eBranchCommitCountAhead, sBranch, QString::number(iAhead));
+        emit newOutputKeyValue(CEnums::eBranchCommitCountBehind, sBranch, QString::number(iBehind));
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::handleTagCommitOutput(const CProcessResult& tResult)
+{
+    QStringList lLines = tResult.m_sValue.split(NEW_LINE);
+
+    for (QString sLine : lLines)
+    {
+        sLine = sLine.trimmed();
+
+        if (sLine.isEmpty())
+            continue;
+
+        // Lines read "name peeled object", the peeled id stays empty for
+        // lightweight tags and names may contain spaces
+        QStringList lParts = sLine.split(' ', Qt::KeepEmptyParts);
+
+        if (lParts.count() < 3)
+            continue;
+
+        QString sObject = lParts.takeLast();
+        QString sPeeled = lParts.takeLast();
+        QString sTag = lParts.join(' ');
+
+        if (sTag.isEmpty() || sObject.isEmpty())
+            continue;
+
+        emit newOutputKeyValue(tResult.m_eCommand, sTag, sPeeled.isEmpty() ? sObject : sPeeled);
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1191,27 +1263,74 @@ void CGitCommands::handleFileStatusOutput(const CProcessResult& tResult)
 
 //-------------------------------------------------------------------------------------------------
 
+void CGitCommands::handleTrackedFilesOutput(const CProcessResult& tResult)
+{
+    // The tracked listing carries bare relative paths: every entry seeds
+    // the inventory as clean, dirtiness arrives through the status batches
+    CRepoFileList lReturnValue = cleanFilesForRelativePaths(tResult.m_sPath, tResult.m_sValue.split(NEW_LINE));
+
+    emit newOutputListOfCRepoFile(tResult.m_eCommand, lReturnValue);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/************************************************************************/
+/*!
+    \fn static QStringList splitRecordFields(const QString& sRecord, const QString& sSplitter, int iFieldCount)
+    Splits a record into fixed fields, the last field keeps the remainder
+    so bodies containing the splitter stay intact. Returns an empty list
+    when the record holds fewer fields.
+*/
+static QStringList splitRecordFields(const QString& sRecord, const QString& sSplitter, int iFieldCount)
+{
+    QStringList sFields;
+    QString sRemainder = sRecord;
+
+    for (int iField = 0; iField < iFieldCount - 1; iField++)
+    {
+        int iSeparator = sRemainder.indexOf(sSplitter);
+
+        if (iSeparator < 0)
+            return QStringList();
+
+        sFields << sRemainder.left(iSeparator);
+        sRemainder = sRemainder.mid(iSeparator + sSplitter.length());
+    }
+
+    sFields << sRemainder;
+
+    return sFields;
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CGitCommands::handleLogOutput(const CProcessResult& tResult)
 {
     // Create a CLogLineCollection with the returned string of the process
+    // Records start with the record separator: the raw body (%B) is last and
+    // spans lines, so records split on the separator instead of newlines
 
     CLogLineCollection lReturnValue;
-    QStringList lStrings = tResult.m_sValue.split(NEW_LINE);
+    QStringList lStrings = tResult.m_sValue.split(sRecordSeparator);
 
     for (QString sLine : lStrings)
     {
-        QStringList sValues = sLine.split(sLogFormatSplitter);
+        if (sLine.trimmed().isEmpty())
+            continue;
 
-        if (sValues.count() == iLogFormatValueCount)
+        QStringList sValues = splitRecordFields(sLine, sLogFormatSplitter, iLogFieldCount);
+
+        if (sValues.isEmpty())
+            continue;
+
         {
             CLogLine* pLine = new CLogLine();
 
             pLine->setCommitId(sValues[0].trimmed());
-            pLine->setMessage(sValues[1].trimmed());
+            pLine->setMessage(sValues[4]);
+            pLine->setMessageIsComplete(true);
             pLine->setAuthor(sValues[2].trimmed());
             pLine->setDate(QDateTime::fromString(sValues[3].trimmed(), Qt::ISODate));
-
-            getFullCommitMessage(tResult.m_sPath, pLine->commitId());
 
             lReturnValue.add(pLine);
         }
@@ -1312,16 +1431,18 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
     // Create a CGraphLineCollection with the returned string of the process
 
     CGraphLineCollection lReturnValue;
-    QStringList lStrings = tResult.m_sValue.split(NEW_LINE);
+    QStringList lStrings = tResult.m_sValue.split(sRecordSeparator);
 
     for (QString sLine : lStrings)
     {
         if (sLine.trimmed().isEmpty())
             continue;
 
-        QStringList sValues = sLine.split(sLogFormatSplitter);
+        QStringList sValues = splitRecordFields(sLine, sLogFormatSplitter, iGraphFieldCount);
 
-        if (sValues.count() == iGraphFormatValueCount)
+        if (sValues.isEmpty())
+            continue;
+
         {
             QString sCommitId = sValues[1].trimmed();
 
@@ -1333,11 +1454,10 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
             pLine->setCommitId(sCommitId);
             pLine->setParents(splitParentIds(sValues[2]));
             pLine->setDecorations(splitDecorations(sValues[3]));
-            pLine->setMessage(sValues[4].trimmed());
+            pLine->setMessage(sValues[7]);
+            pLine->setMessageIsComplete(true);
             pLine->setAuthor(sValues[5].trimmed());
             pLine->setDate(QDateTime::fromString(sValues[6].trimmed(), Qt::ISODate));
-
-            getFullCommitMessage(tResult.m_sPath, pLine->commitId());
 
             lReturnValue.add(pLine);
         }
@@ -1410,8 +1530,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
 
     case CEnums::eBranchHeadCommit:
     {
-        // Throw the returned string of the process
-        emit newOutputKeyValue(tResult.m_eCommand, tResult.m_sUserData, tResult.m_sValue.trimmed());
+        handleBranchHeadCommitOutput(tResult);
         break;
     }
 
@@ -1437,21 +1556,13 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
 
     case CEnums::eTagCommit:
     {
-        // Throw the returned string of the process
-        emit newOutputKeyValue(tResult.m_eCommand, tResult.m_sUserData, tResult.m_sValue.trimmed());
-        break;
-    }
-
-    case CEnums::eCommitMessage:
-    {
-        emit newOutputKeyValue(tResult.m_eCommand, tResult.m_sUserData, tResult.m_sValue);
+        handleTagCommitOutput(tResult);
         break;
     }
 
     case CEnums::eBranchCommitCountAhead:
-    case CEnums::eBranchCommitCountBehind:
     {
-        handleCommitCountOutput(tResult);
+        handleBranchAheadBehindOutput(tResult);
         break;
     }
 
@@ -1482,6 +1593,11 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     case CEnums::eAllFileStatus:
+    {
+        handleTrackedFilesOutput(tResult);
+        break;
+    }
+
     case CEnums::eChangedFileStatus:
     case CEnums::eIgnoredFileStatus:
     {
@@ -1509,11 +1625,4 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CGitCommands::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, CRepoFileList lNewRepoFiles)
-{
-    emit newOutputListOfCRepoFile(eCommand, lNewRepoFiles);
 }

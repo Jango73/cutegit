@@ -184,6 +184,15 @@ public:
     //!
     Q_INVOKABLE void refresh();
 
+    //! Loads the branch log, unless it is already fresh (called by shown views)
+    Q_INVOKABLE void refreshBranchLog();
+
+    //! Loads the graph, unless it is already fresh (called by shown views)
+    Q_INVOKABLE void refreshGraph();
+
+    //! Loads the ref log, unless it is already fresh (called by shown views)
+    Q_INVOKABLE void refreshRefLog();
+
     //! Enqueues a poll fingerprint command, unless a command is already in flight
     void pollExternalChanges();
 
@@ -344,6 +353,9 @@ protected:
     //! True while a poll fingerprint command is waiting for its result
     bool m_bPollPending;
 
+    //! Log domains that missed a refresh, reloaded on demand by shown views
+    QSet<QString> m_sStaleLogDomains;
+
     //-------------------------------------------------------------------------------------------------
     // Protected control methods
     //-------------------------------------------------------------------------------------------------
@@ -371,6 +383,12 @@ protected:
 
     //!
     void getRefLog(QString sPath = "");
+
+    //! Loads one log domain when stale or never loaded, clears its stale mark
+    void refreshLogDomain(const QString& sDomain);
+
+    //! Rows already held by a log domain model, detects a never loaded domain
+    int logDomainRowCount(const QString& sDomain) const;
 
     //!
     QString relativeFileName(const QString& sFullName);
@@ -413,6 +431,9 @@ signals:
 
     //! Emitted when a text should be shown in the status bar
     void statusTextRequested(const QString& sText);
+
+    //! Emitted when log source data changed, shown views reload on receipt
+    void logDataStaled();
 
     void repositoryTypeStringChanged();
 

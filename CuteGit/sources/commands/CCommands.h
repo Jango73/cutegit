@@ -203,5 +203,9 @@ public:
 
 protected:
 
+    //! Builds clean CRepoFile entries for VCS-tracked relative paths, single
+    //! place for the file inventory seed shared by all backends
+    static CRepoFileList cleanFilesForRelativePaths(const QString& sPath, const QStringList& lRelativeNames);
+
     CController*    m_pController;
 };

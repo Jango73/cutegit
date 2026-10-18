@@ -49,11 +49,18 @@ public:
     //!
     void setLabelList(QList<CLabel*> lNewList);
 
+    //! Replaces the shown labels with owned fresh labels in place, returns true when changed
+    //! The model identity never changes so views bound to it stay valid
+    bool syncLabels(QList<CLabel*> lFreshLabels);
+
     //-------------------------------------------------------------------------------------------------
     // Properties
     //-------------------------------------------------------------------------------------------------
 
 private:
+
+    //! Returns true when the shown labels match the fresh labels
+    bool isEqualTo(const QList<CLabel*>& lFreshLabels) const;
 
     //! List of labels
     QList<CLabel*> m_lLabels;

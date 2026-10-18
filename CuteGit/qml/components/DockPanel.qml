@@ -20,6 +20,8 @@ ExtendablePane {
             anchors.top: parent.top
             visible: root.tabIds.length > 1
 
+            onCurrentIndexChanged: root.loadCurrentTabData()
+
             Repeater {
                 model: root.tabIds
 
@@ -54,6 +56,8 @@ ExtendablePane {
 
                     onLoaded: {
                         root.setupTabItem(item)
+                        if (index === tabBar.currentIndex)
+                            root.loadCurrentTabData()
                     }
                 }
             }
@@ -71,7 +75,17 @@ ExtendablePane {
         }
     ]
 
-    onRepositoryChanged: refreshTabItems()
+    Connections {
+        target: root.repository
+        function onLogDataStaled() {
+            root.loadCurrentTabData()
+        }
+    }
+
+    onRepositoryChanged: {
+        refreshTabItems()
+        loadCurrentTabData()
+    }
     onViewRootChanged: refreshTabItems()
     onFlatSelectionChanged: refreshTabItems()
     onPanelDefinitionChanged: {
@@ -80,6 +94,7 @@ ExtendablePane {
                 tabBar.currentIndex = 0
         }
         refreshTabItems()
+        loadCurrentTabData()
     }
 
     function tabTitle(tabId) {
@@ -113,6 +128,22 @@ ExtendablePane {
             if (loader !== null && loader.item !== null && loader.item !== undefined)
                 setupTabItem(loader.item)
         }
+    }
+
+    function currentTabItem() {
+        var index = tabBar.currentIndex
+        if (index < 0 || index >= swipeView.count)
+            return null
+        var loader = swipeView.itemAt(index)
+        if (loader === null || loader === undefined)
+            return null
+        return loader.item
+    }
+
+    function loadCurrentTabData() {
+        var tabItem = root.currentTabItem()
+        if (tabItem !== null && tabItem !== undefined && "loadData" in tabItem)
+            tabItem.loadData()
     }
 
     function tabIndexOf(tabId) {

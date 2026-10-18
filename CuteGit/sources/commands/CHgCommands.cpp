@@ -48,6 +48,8 @@ static const char* sCommandPushForce          = "hg push --force --new-branch";
 static const char* sCommandRevert             = "hg revert \"%1\"";
 static const char* sCommandStatus             = "hg status";
 static const char* sCommandStatusForFile      = "hg status \"%1\"";
+static const char* sCommandIgnoredStatus      = "hg status --ignored";
+static const char* sCommandTrackedFiles       = "hg manifest";
 static const char* sCommandParentNode         = "hg log -r . --template \"{node}\"";
 static const char* sCommandResetOnCommit      = "hg update \"%1\"";
 
@@ -116,15 +118,7 @@ bool CHgCommands::can(CEnums::ECapability eWhat) const
 
 void CHgCommands::allFileStatus(const QString& sPath)
 {
-    CCleanFileLister* pLister = new CCleanFileLister();
-
-    pLister->m_eCommand = CEnums::eAllFileStatus;
-    pLister->m_sRootPath = sPath;
-    pLister->setAutoDelete(true);
-
-    connect(pLister, &CCleanFileLister::newOutputListOfCRepoFile, this, &CHgCommands::onNewOutputListOfCRepoFile);
-
-    m_tPool.start(pLister);
+    exec(new CProcessCommand(CEnums::eAllFileStatus, sPath, sCommandTrackedFiles));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -132,6 +126,7 @@ void CHgCommands::allFileStatus(const QString& sPath)
 void CHgCommands::changedFileStatus(const QString& sPath)
 {
     exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sCommandStatus));
+    exec(new CProcessCommand(CEnums::eIgnoredFileStatus, sPath, sCommandIgnoredStatus));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -375,6 +370,17 @@ void CHgCommands::handleFileStatusOutput(const CProcessResult& tResult)
 
 //-------------------------------------------------------------------------------------------------
 
+void CHgCommands::handleTrackedFilesOutput(const CProcessResult& tResult)
+{
+    // The manifest carries bare relative paths: every entry seeds the
+    // inventory as clean, dirtiness arrives through the status batches
+    CRepoFileList lReturnValue = cleanFilesForRelativePaths(tResult.m_sPath, tResult.m_sValue.split(NEW_LINE));
+
+    emit newOutputListOfCRepoFile(tResult.m_eCommand, lReturnValue);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CHgCommands::handleLogOutput(const CProcessResult& tResult)
 {
     // Create a CLogLineCollection with the returned string of the process
@@ -458,7 +464,13 @@ void CHgCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     case CEnums::eAllFileStatus:
+    {
+        handleTrackedFilesOutput(tResult);
+        break;
+    }
+
     case CEnums::eChangedFileStatus:
+    case CEnums::eIgnoredFileStatus:
     {
         handleFileStatusOutput(tResult);
         break;
@@ -477,11 +489,4 @@ void CHgCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     }
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CHgCommands::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, CRepoFileList lNewRepoFiles)
-{
-    emit newOutputListOfCRepoFile(eCommand, lNewRepoFiles);
 }

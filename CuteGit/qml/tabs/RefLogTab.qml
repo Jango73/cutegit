@@ -14,4 +14,9 @@ BaseTab {
     function focusTab() {
         refLogView.forceActiveFocus()
     }
+
+    function loadData() {
+        if (root.repository !== null)
+            root.repository.refreshRefLog()
+    }
 }

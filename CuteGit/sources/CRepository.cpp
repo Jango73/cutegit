@@ -33,6 +33,13 @@
 
 //-------------------------------------------------------------------------------------------------
 
+// Internal log domain names, never cross the QML boundary
+static const QString s_sBranchLogDomain("branchLog");
+static const QString s_sGraphDomain("graph");
+static const QString s_sRefLogDomain("refLog");
+
+//-------------------------------------------------------------------------------------------------
+
 /*!
     \class CRepository
     \inmodule CuteGit
@@ -297,13 +304,11 @@ void CRepository::checkFileStatus(const QString& sFileFullName)
 
 void CRepository::refresh()
 {
-    // The clean file inventory runs once, on the first visible refresh: it
-    // crawls the working folder and must not run for background tabs
-    if (not m_bFileInventoryDone)
-    {
-        m_bFileInventoryDone = true;
-        checkAllFileStatus();
-    }
+    // The tracked seed runs on every refresh: one VCS process listing
+    // tracked files, ignore aware by construction, instead of the former
+    // filesystem crawl which drowned the models under ignored folders
+    m_bFileInventoryDone = true;
+    checkAllFileStatus();
 
     setDiffFromCommitId("");
     setDiffToCommitId("");
@@ -313,9 +318,13 @@ void CRepository::refresh()
     checkChangedFileStatus();
     getBranches();
     getTags();
-    getBranchLog();
-    getGraph();
-    getRefLog();
+
+    // Log readers only run for shown views: mark their domains stale and let
+    // the views reload on the logDataStaled signal or when they get shown
+    m_sStaleLogDomains.insert(s_sBranchLogDomain);
+    m_sStaleLogDomains.insert(s_sGraphDomain);
+    m_sStaleLogDomains.insert(s_sRefLogDomain);
+    emit logDataStaled();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -781,8 +790,8 @@ void CRepository::getBranchHeadCommits(QString sPath)
     if (sPath.isEmpty())
         sPath = m_sRepositoryPath;
 
-    m_pCommands->branchHeadCommits(sPath, m_pRemoteBranchModel->branchNames());
-    m_pCommands->branchHeadCommits(sPath, m_pLocalBranchModel->branchNames());
+    // One batched read covers local and remote branches together
+    m_pCommands->branchHeadCommits(sPath, QStringList());
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -792,8 +801,8 @@ void CRepository::getBranchesCommitCountAheadBehind(QString sPath)
     if (sPath.isEmpty())
         sPath = m_sRepositoryPath;
 
-    m_pCommands->branchCommitCountAheadBehind(sPath, m_pRemoteBranchModel->branchNames());
-    m_pCommands->branchCommitCountAheadBehind(sPath, m_pLocalBranchModel->branchNames());
+    // One batched read covers every local branch with its upstream state
+    m_pCommands->branchCommitCountAheadBehind(sPath, QStringList());
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -850,6 +859,62 @@ void CRepository::getRefLog(QString sPath)
     // Loaded rows stay visible while the new log loads: CLogModel::setLines()
     // reconciles the content without rebuilding when nothing changed
     m_pCommands->refLog(sPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+int CRepository::logDomainRowCount(const QString& sDomain) const
+{
+    if (sDomain == s_sBranchLogDomain && m_pBranchLogModel != nullptr)
+        return m_pBranchLogModel->rowCount();
+
+    if (sDomain == s_sGraphDomain && m_pGraphModel != nullptr)
+        return m_pGraphModel->rowCount();
+
+    if (sDomain == s_sRefLogDomain && m_pRefLogModel != nullptr)
+        return m_pRefLogModel->rowCount();
+
+    return 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::refreshLogDomain(const QString& sDomain)
+{
+    // A fresh domain never rereads: several views may share one domain and
+    // the first reload clears the stale mark for the others
+    if (not m_sStaleLogDomains.contains(sDomain) && logDomainRowCount(sDomain) > 0)
+        return;
+
+    m_sStaleLogDomains.remove(sDomain);
+
+    if (sDomain == s_sBranchLogDomain)
+        getBranchLog();
+    else if (sDomain == s_sGraphDomain)
+        getGraph();
+    else if (sDomain == s_sRefLogDomain)
+        getRefLog();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::refreshBranchLog()
+{
+    refreshLogDomain(s_sBranchLogDomain);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::refreshGraph()
+{
+    refreshLogDomain(s_sGraphDomain);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::refreshRefLog()
+{
+    refreshLogDomain(s_sRefLogDomain);
 }
 
 //-------------------------------------------------------------------------------------------------

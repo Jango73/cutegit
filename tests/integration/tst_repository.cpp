@@ -196,6 +196,106 @@ private slots:
         QVERIFY2(sUnstaged.contains("+line-B1"), qPrintable(sUnstaged));
     }
 
+    // Hidden log panes are never read: refresh alone leaves log models empty,
+    // each named refresh loads one domain while the others stay stale
+    void logPane_loadsOnlyOnDemand()
+    {
+        QTest::qWait(3000);
+
+        QCOMPARE(m_pRepository->branchLogModel()->rowCount(), 0);
+        QCOMPARE(m_pRepository->graphModel()->rowCount(), 0);
+        QCOMPARE(m_pRepository->refLogModel()->rowCount(), 0);
+
+        m_pRepository->refreshBranchLog();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->branchLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+
+        QCOMPARE(m_pRepository->graphModel()->rowCount(), 0);
+        QCOMPARE(m_pRepository->refLogModel()->rowCount(), 0);
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+
+        m_pRepository->refreshRefLog();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->refLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+
+        // A refresh marks every domain stale without rereading, the next
+        // named refresh reloads the domain
+        m_pRepository->refresh();
+        m_pRepository->refreshBranchLog();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->branchLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+    }
+
+    // The tracked seed carries versioned files only: ignored content lands
+    // with its ignored status from the status batch, .git internals and
+    // ignored folders never inflate the file models like the old crawl did
+    void trackedSeed_hidesIgnoredAndGitFolder()
+    {
+        QDir tClone(m_sClonePath);
+
+        QVERIFY(tClone.mkpath("ignored-seed"));
+
+        QFile tJunk(tClone.filePath("ignored-seed/junk.bin"));
+        QVERIFY(tJunk.open(QIODevice::WriteOnly));
+        tJunk.write("junk");
+        tJunk.close();
+
+        QFile tIgnore(tClone.filePath(".gitignore"));
+        QVERIFY(tIgnore.open(QIODevice::WriteOnly | QIODevice::Text));
+        tIgnore.write("ignored-seed/\n");
+        tIgnore.close();
+
+        m_pRepository->refresh();
+
+        QString sIgnoredKey = m_sClonePath + "/ignored-seed/junk.bin";
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->repoFiles().containsKey(sIgnoredKey), s_iAsyncTimeoutMs);
+        QCOMPARE(m_pRepository->repoFiles().itemByKey(sIgnoredKey)->status(), CEnums::eIgnored);
+
+        for (CRepoFile* pFile : m_pRepository->repoFiles())
+        {
+            QVERIFY2(not pFile->fullName().contains("/.git/"), qPrintable(pFile->fullName()));
+            QVERIFY2(not pFile->fullName().contains("/ignored-seed/") || pFile->status() == CEnums::eIgnored,
+                     qPrintable(pFile->fullName()));
+        }
+    }
+
+    // Batched branch reads fill every model with one process per domain:
+    // head commits land on branches, tracking counts reach the status bar,
+    // tag commits resolve annotated and lightweight tags
+    void branchBatch_fillsHeadsAndAheadBehind()
+    {        QTRY_VERIFY_WITH_TIMEOUT(not m_pRepository->currentBranch().isEmpty(), s_iAsyncTimeoutMs);
+
+        QString sCurrent = m_pRepository->currentBranch();
+        CBranchModel* pLocal = m_pRepository->localBranchModel();
+
+        // Head commit of the checked out branch arrives from the batched for-each-ref
+        QTRY_VERIFY_WITH_TIMEOUT(not branchCommitId(pLocal, sCurrent).isEmpty(), s_iAsyncTimeoutMs);
+
+        // One commit ahead of origin shows up through the tracking parser
+        QString sUnused;
+
+        QVERIFY(gitOutput({"-c", "user.name=probe", "-c", "user.email=probe@local", "commit", "-qam", "batch-probe"}, sUnused));
+
+        m_pRepository->refresh();
+
+        QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->commitCountAhead(), 1, s_iAsyncTimeoutMs);
+
+        // Lightweight tags fall back to their object, annotated tags peel to their commit
+        QVERIFY(gitOutput({"tag", "v-batch-light"}, sUnused));
+        QVERIFY(gitOutput({"tag", "-a", "-m", "probe", "v-batch-annotated"}, sUnused));
+
+        m_pRepository->refresh();
+
+        CBranchModel* pTags = m_pRepository->tagModel();
+
+        QTRY_VERIFY_WITH_TIMEOUT(not branchCommitId(pTags, "v-batch-light").isEmpty(), s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(not branchCommitId(pTags, "v-batch-annotated").isEmpty(), s_iAsyncTimeoutMs);
+    }
+
 private:
 
     QString m_sFixtureRepo;
@@ -334,6 +434,20 @@ private:
             lLines << pOutput->data(pOutput->index(iRow, 0)).toString();
 
         return lLines.join("\n");
+    }
+
+    // Commit id held by a branch or tag model for a name, empty when missing
+    QString branchCommitId(CBranchModel* pModel, const QString& sName)
+    {
+        for (int iRow = 0; iRow < pModel->rowCount(); iRow++)
+        {
+            QModelIndex tIndex = pModel->index(iRow, 0);
+
+            if (pModel->data(tIndex, CBranchModel::eNameRole).toString() == sName)
+                return pModel->data(tIndex, CBranchModel::eCommitIdRole).toString();
+        }
+
+        return QString();
     }
 };
 

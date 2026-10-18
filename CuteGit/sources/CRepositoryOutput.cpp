@@ -285,14 +285,6 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
         break;
     }
 
-    case CEnums::eCommitMessage:
-    {
-        m_pBranchLogModel->setCommitMessage(sKey, sValue);
-        m_pGraphModel->setCommitMessage(sKey, sValue);
-        m_pFileLogModel->setCommitMessage(sKey, sValue);
-        break;
-    }
-
     default:
     {
         break;

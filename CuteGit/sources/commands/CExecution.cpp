@@ -4,7 +4,6 @@
 #include <QCoreApplication>
 #include <QProcess>
 #include <QMutexLocker>
-#include <QDir>
 
 // Application
 #include "CExecution.h"
@@ -19,8 +18,7 @@
 //-------------------------------------------------------------------------------------------------
 
 CExecution::CExecution()
-    : m_tPool(this)
-    , m_bStop(false)
+    : m_bStop(false)
     , m_bRunning(false)
     , m_mMutex()
     , m_eLastShownCommand(CEnums::eNothing)
@@ -239,53 +237,4 @@ QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sW
     sOutput += process.readAllStandardError();
 
     return sOutput;
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CCleanFileLister::run()
-{
-    CRepoFileList lFileList;
-    getAllFiles(lFileList, m_sRootPath, m_sRootPath);
-
-    emit newOutputListOfCRepoFile(m_eCommand, lFileList);
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CCleanFileLister::getAllFiles(CRepoFileList& lFileList, const QString& sRootPath, const QString& sCurrentPath)
-{
-    QStringList slNameFilter;
-    slNameFilter << "*";
-
-    QDir dRoot(sRootPath);
-    QDir dDirectory(sCurrentPath);
-
-    dDirectory.setFilter(QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::Files);
-    QStringList lFiles = dDirectory.entryList(slNameFilter);
-
-    for (QString sFile : lFiles)
-    {
-        QString sFullName = QString("%1/%2").arg(sCurrentPath).arg(sFile);
-        QFileInfo info(sFullName);
-
-        CRepoFile* pNewFile = new CRepoFile();
-
-        pNewFile->setStatus(CEnums::eClean);
-        pNewFile->setFullName(sFullName);
-        pNewFile->setRelativeName(dRoot.relativeFilePath(sFullName));
-        pNewFile->setFileName(info.fileName());
-
-        lFileList.addItem(pNewFile->fullName(), pNewFile);
-    }
-
-    dDirectory.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-    QStringList lDirectories = dDirectory.entryList();
-
-    for (QString sNewDirectory : lDirectories)
-    {
-        QString sFullName = QString("%1/%2").arg(sCurrentPath).arg(sNewDirectory);
-
-        getAllFiles(lFileList, sRootPath, sFullName);
-    }
 }

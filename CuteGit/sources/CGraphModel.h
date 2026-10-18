@@ -79,9 +79,6 @@ public:
     virtual void fetchMore(const QModelIndex& parent) override;
 
     //!
-    void setCommitMessage(const QString& sCommitId, const QString& sMessage);
-
-    //!
     void commitChanged(const QString& sCommitId);
 
     //!

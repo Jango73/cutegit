@@ -268,36 +268,6 @@ void CLogModel::fetchMore(const QModelIndex& parent)
 
 //-------------------------------------------------------------------------------------------------
 
-void CLogModel::setCommitMessage(const QString& sCommitId, const QString& sMessage)
-{
-    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
-    {
-        CLogLine* pLine = m_lLines[iLineIndex];
-
-        if (pLine != nullptr)
-        {
-            if (pLine->commitId() == sCommitId)
-            {
-                bool bLabelsChanged = syncLabelsForCommit(sCommitId);
-
-                // Same full message and same labels already shown: skip the
-                // notification so refreshes without changes cause no view update
-                if (pLine->messageIsComplete() && pLine->message() == sMessage && not bLabelsChanged)
-                    break;
-
-                pLine->setMessage(sMessage);
-                pLine->setMessageIsComplete(true);
-
-                emit dataChanged(index(iLineIndex), index(iLineIndex));
-
-                break;
-            }
-        }
-    }
-}
-
-//-------------------------------------------------------------------------------------------------
-
 void CLogModel::commitChanged(const QString& sCommitId)
 {
     syncLabelsForCommit(sCommitId);
@@ -388,60 +358,20 @@ void CLogModel::pruneUnusedLabels(const QString& sCommitId)
             return;
     }
 
-    delete m_mLabels.take(sCommitId);
+    // Clear the model in place instead of deleting it: QML delegates cache
+    // the model pointer, deleting it leaves a dangling wrapper behind
+    QList<CLabel*> lEmptyLabels;
+    m_mLabels[sCommitId]->setLabelList(lEmptyLabels);
 }
 
 //-------------------------------------------------------------------------------------------------
 
 /************************************************************************/
 /*!
-    \fn static QString labelSignature(const CLabel* pLabel)
-    Builds a comparable signature of a label, single place for the format.
-*/
-static QString labelSignature(const CLabel* pLabel)
-{
-    return QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
-}
-
-/************************************************************************/
-/*!
-    \fn static bool labelModelsEqual(CLabelModel* pExisting, const QList<CLabel*>& lFresh)
-    Returns true when the existing label model shows the same labels.
-*/
-static bool labelModelsEqual(CLabelModel* pExisting, const QList<CLabel*>& lFresh)
-{
-    if (pExisting == nullptr)
-        return lFresh.isEmpty();
-
-    if (pExisting->rowCount() != lFresh.count())
-        return false;
-
-    QSet<QString> sExistingSignatures;
-
-    for (int iRow = 0; iRow < pExisting->rowCount(); iRow++)
-    {
-        QModelIndex qIndex = pExisting->index(iRow, 0);
-        QString sName = pExisting->data(qIndex, CLabelModel::eNameRole).toString();
-        int iType = pExisting->data(qIndex, CLabelModel::eTypeRole).toInt();
-        sExistingSignatures << QString("%1:%2").arg(iType).arg(sName);
-    }
-
-    QSet<QString> sFreshSignatures;
-
-    for (const CLabel* pLabel : lFresh)
-    {
-        if (pLabel != nullptr)
-            sFreshSignatures << labelSignature(pLabel);
-    }
-
-    return sExistingSignatures == sFreshSignatures;
-}
-
-/************************************************************************/
-/*!
     \fn bool CLogModel::syncLabelsForCommit(const QString& sCommitId)
     Rebuilds the label model of a commit from the repository, returns true
-    when the visible labels changed.
+    when the visible labels changed. The model is updated in place so QML
+    delegates caching its pointer stay valid.
 */
 bool CLogModel::syncLabelsForCommit(const QString& sCommitId)
 {
@@ -450,27 +380,18 @@ bool CLogModel::syncLabelsForCommit(const QString& sCommitId)
 
     QList<CLabel*> lFreshLabels = m_pRepository->labelsForCommit(sCommitId);
 
-    if (labelModelsEqual(m_mLabels.value(sCommitId, nullptr), lFreshLabels))
-    {
-        qDeleteAll(lFreshLabels);
-        return false;
-    }
+    CLabelModel* pModel = m_mLabels.value(sCommitId, nullptr);
 
-    if (m_mLabels.contains(sCommitId))
-        delete m_mLabels.take(sCommitId);
-
-    if (not lFreshLabels.isEmpty())
+    if (pModel == nullptr)
     {
-        CLabelModel* pModel = new CLabelModel();
-        pModel->setLabelList(lFreshLabels);
+        if (lFreshLabels.isEmpty())
+            return false;
+
+        pModel = new CLabelModel(this);
         m_mLabels[sCommitId] = pModel;
     }
-    else
-    {
-        qDeleteAll(lFreshLabels);
-    }
 
-    return true;
+    return pModel->syncLabels(lFreshLabels);
 }
 
 //-------------------------------------------------------------------------------------------------

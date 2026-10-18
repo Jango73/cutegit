@@ -8,8 +8,6 @@
 #include <QThread>
 #include <QMutex>
 #include <QRecursiveMutex>
-#include <QThreadPool>
-#include <QRunnable>
 #include <QProcess>
 
 // Application
@@ -207,8 +205,6 @@ signals:
 
 protected:
 
-    QThreadPool                 m_tPool;
-
 private:
 
     bool                        m_bStop;
@@ -216,41 +212,4 @@ private:
     QRecursiveMutex             m_mMutex;
     CEnums::EProcessCommand     m_eLastShownCommand;
     QList<CProcessCommand*>     m_lCommandStack;
-};
-
-//-------------------------------------------------------------------------------------------------
-
-class CCleanFileLister : public QObject, public QRunnable
-{
-    Q_OBJECT
-
-    //-------------------------------------------------------------------------------------------------
-    // Protected control methods
-    //-------------------------------------------------------------------------------------------------
-
-protected:
-
-    //!
-    virtual void run() override;
-
-    //!
-    void getAllFiles(CRepoFileList& lFileList, const QString& sRootPath, const QString& sCurrentPath);
-
-    //-------------------------------------------------------------------------------------------------
-    // Signals
-    //-------------------------------------------------------------------------------------------------
-
-signals:
-
-    //!
-    void newOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, CRepoFileList lNewRepoFiles);
-
-    //-------------------------------------------------------------------------------------------------
-    // Properties
-    //-------------------------------------------------------------------------------------------------
-
-public:
-
-    CEnums::EProcessCommand     m_eCommand;
-    QString                     m_sRootPath;
 };

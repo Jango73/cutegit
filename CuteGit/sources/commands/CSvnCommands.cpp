@@ -45,6 +45,8 @@ const QString CSvnCommands::sCommandListBranches       = "svn list \"^/branches\
 const QString CSvnCommands::sCommandRevert             = "svn revert \"%1\"";
 const QString CSvnCommands::sCommandStatus             = "svn status";
 const QString CSvnCommands::sCommandStatusForFile      = "svn status \"%1\"";
+const QString CSvnCommands::sCommandStatusNoIgnore     = "svn status --no-ignore";
+const QString CSvnCommands::sCommandTrackedFiles       = "svn info -R --xml";
 const QString CSvnCommands::sCommandSwitchBranch       = "svn switch \"^/branches/%1\"";
 const QString CSvnCommands::sCommandSwitchTrunk        = "svn switch \"^/trunk\"";
 const QString CSvnCommands::sCommandUpdate             = "svn update";
@@ -222,22 +224,14 @@ void CSvnCommands::repositoryStatus(const QString& sPath)
 
 void CSvnCommands::allFileStatus(const QString& sPath)
 {
-    CCleanFileLister* pLister = new CCleanFileLister();
-
-    pLister->m_eCommand = CEnums::eAllFileStatus;
-    pLister->m_sRootPath = sPath;
-    pLister->setAutoDelete(true);
-
-    connect(pLister, &CCleanFileLister::newOutputListOfCRepoFile, this, &CSvnCommands::onNewOutputListOfCRepoFile);
-
-    m_tPool.start(pLister);
+    exec(new CProcessCommand(CEnums::eAllFileStatus, sPath, sCommandTrackedFiles));
 }
 
 //-------------------------------------------------------------------------------------------------
 
 void CSvnCommands::changedFileStatus(const QString& sPath)
 {
-    exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sCommandStatus));
+    exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sCommandStatusNoIgnore));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -598,6 +592,27 @@ void CSvnCommands::handleFileStatusOutput(const CProcessResult& tResult)
 
 //-------------------------------------------------------------------------------------------------
 
+void CSvnCommands::handleTrackedFilesOutput(const CProcessResult& tResult)
+{
+    // The recursive info carries one entry per versioned node: file kind
+    // entries seed the inventory as clean, dirtiness arrives through the
+    // status batches. XML stays locale independent, unlike human output
+    QStringList lRelativeNames;
+    CXMLNode xInfo = CXMLNode::parseXML(tResult.m_sValue);
+
+    for (CXMLNode xEntry : xInfo.getNodesByTagName("entry"))
+    {
+        if (xEntry.attributes().value("kind").trimmed() == "file")
+            lRelativeNames << xEntry.attributes().value("path").trimmed();
+    }
+
+    CRepoFileList lReturnValue = cleanFilesForRelativePaths(tResult.m_sPath, lRelativeNames);
+
+    emit newOutputListOfCRepoFile(tResult.m_eCommand, lReturnValue);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CSvnCommands::handleLogOutput(const CProcessResult& tResult)
 {
     CLogLineCollection lReturnValue;
@@ -853,6 +868,11 @@ void CSvnCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     case CEnums::eAllFileStatus:
+    {
+        handleTrackedFilesOutput(tResult);
+        break;
+    }
+
     case CEnums::eChangedFileStatus:
     {
         handleFileStatusOutput(tResult);
@@ -881,8 +901,3 @@ void CSvnCommands::onExecFinished(const CProcessResult& tResult)
 }
 
 //-------------------------------------------------------------------------------------------------
-
-void CSvnCommands::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, CRepoFileList lNewRepoFiles)
-{
-    emit newOutputListOfCRepoFile(eCommand, lNewRepoFiles);
-}

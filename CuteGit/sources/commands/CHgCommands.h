@@ -100,6 +100,9 @@ protected:
     void handleFileStatusOutput(const CProcessResult& tResult);
 
     //!
+    void handleTrackedFilesOutput(const CProcessResult& tResult);
+
+    //!
     void handleLogOutput(const CProcessResult& tResult);
 
     //-------------------------------------------------------------------------------------------------
@@ -110,9 +113,6 @@ protected slots:
 
     //!
     void onExecFinished(const CProcessResult& tResult);
-
-    //!
-    void onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, CRepoFileList lNewRepoFiles);
 
     //-------------------------------------------------------------------------------------------------
     // Properties
