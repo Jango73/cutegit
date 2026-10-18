@@ -64,7 +64,7 @@ const QString CGitCommands::sCommandGetRebaseMergePath  = "git rev-parse --git-p
 const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"%x1e&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2";
 const QString CGitCommands::sCommandGraphCount         = "git rev-list --count --all";
 const QString CGitCommands::sCommandHeadCommits         = "git for-each-ref --format=\"%(refname:short) %(objectname:short)\" refs/heads refs/remotes";
-const QString CGitCommands::sCommandListOtherFiles      = "git ls-files --others";
+const QString CGitCommands::sCommandIgnoredFiles        = "git ls-files --others --ignored --exclude-standard";
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
 const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
 const QString CGitCommands::sCommandPollFingerprint      = "git status --porcelain=v1 -b --ignored=no --untracked-files=normal";
@@ -83,7 +83,7 @@ const QString CGitCommands::sCommandStage               = "git add -f \"%1\"";
 const QString CGitCommands::sCommandStageAll            = "git add -u";
 const QString CGitCommands::sCommandStashPop            = "git stash pop";
 const QString CGitCommands::sCommandStashSave           = "git stash save";
-const QString CGitCommands::sCommandStatus              = "git status --porcelain --ignored --untracked-files=all";
+const QString CGitCommands::sCommandStatus              = "git status --porcelain --untracked-files=all";
 const QString CGitCommands::sCommandTags                = "git tag";
 const QString CGitCommands::sCommandTagCommits           = "git for-each-ref --format=\"%(refname:short) %(*objectname:short) %(objectname:short)\" refs/tags";
 const QString CGitCommands::sCommandTrackedFiles        = "git ls-files --cached";
@@ -215,8 +215,18 @@ void CGitCommands::allFileStatus(const QString& sPath)
 
 void CGitCommands::changedFileStatus(const QString& sPath)
 {
-    exec(new CProcessCommand(CEnums::eIgnoredFileStatus, sPath, sCommandListOtherFiles));
+    // Untracked files arrive one by one through --untracked-files=all, the
+    // former ls-files batch only duplicated them. Ignored files stay out:
+    // 17k node_modules rows must not cross the models on every refresh,
+    // they are fetched on demand through ignoredFileStatus
     exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sCommandStatus));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::ignoredFileStatus(const QString& sPath)
+{
+    exec(new CProcessCommand(CEnums::eIgnoredFileStatus, sPath, sCommandIgnoredFiles));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -900,6 +910,8 @@ CRepoFile* CGitCommands::repoFileForLine(const QString &sPath, QString sLine, bo
     }
     else
     {
+        // Bare relative path from the ignored listing: no status columns
+        // to parse, the entry is ignored by construction
         QString sRelativeName = sLine;
         QString sFullName = sPath + PATH_SEP + sRelativeName;
         QString sFileName = QFileInfo(sFullName).fileName();
@@ -909,6 +921,8 @@ CRepoFile* CGitCommands::repoFileForLine(const QString &sPath, QString sLine, bo
         pFile->setFileName(sFileName);
         pFile->setRelativeName(sRelativeName);
         pFile->setStatus(CEnums::eIgnored);
+
+        return pFile;
     }
 
     return nullptr;

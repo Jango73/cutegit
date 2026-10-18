@@ -46,6 +46,9 @@ public:
     virtual void changedFileStatus(const QString& sPath) override;
 
     //!
+    virtual void ignoredFileStatus(const QString& sPath) override;
+
+    //!
     virtual void branches(const QString& sPath) override;
 
     //!

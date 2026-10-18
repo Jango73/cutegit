@@ -231,7 +231,16 @@ void CSvnCommands::allFileStatus(const QString& sPath)
 
 void CSvnCommands::changedFileStatus(const QString& sPath)
 {
-    exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sCommandStatusNoIgnore));
+    // Ignored files stay out of the default refresh, they are fetched on
+    // demand through ignoredFileStatus like the other backends
+    exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sCommandStatus));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CSvnCommands::ignoredFileStatus(const QString& sPath)
+{
+    exec(new CProcessCommand(CEnums::eIgnoredFileStatus, sPath, sCommandStatusNoIgnore));
 }
 
 //-------------------------------------------------------------------------------------------------

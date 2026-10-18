@@ -251,8 +251,16 @@ void CController::setCurrentRepositoryIndex(int iValue)
             {
                 setCurrentRepository(pRepository);
 
-                if (pRepository->needsRefresh())
+                bool bNeedsRefresh = pRepository->needsRefresh();
+
+                if (bNeedsRefresh)
                     pRepository->refresh();
+
+                // With ignored shown, a refreshed repository already
+                // re-ran its ignored batch; an up-to-date one fetches it
+                // here so the toggle never shows an empty list
+                if (m_bShowIgnored && !bNeedsRefresh)
+                    pRepository->setShowIgnored(true);
             }
         }
         else
@@ -448,6 +456,24 @@ void CController::setShowIgnored(bool bValue)
     {
         m_bShowIgnored = bValue;
         emit showIgnoredChanged();
+
+        // The ignored rows live in the repository models, not in the proxy:
+        // fetch them on demand for the shown repository, purge them
+        // everywhere when switched off so the default refresh never
+        // carries them
+        if (bValue)
+        {
+            if (m_pCurrentRepository != nullptr)
+                m_pCurrentRepository->setShowIgnored(true);
+        }
+        else
+        {
+            for (CRepository* pRepository : m_pOpenRepositoryModel->repositories())
+            {
+                if (pRepository != nullptr)
+                    pRepository->setShowIgnored(false);
+            }
+        }
 
         m_pOpenRepositoryModel->fileFiltersChanged();
     }

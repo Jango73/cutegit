@@ -67,6 +67,9 @@ public:
     virtual void changedFileStatus(const QString& sPath) override;
 
     //!
+    virtual void ignoredFileStatus(const QString& sPath) override;
+
+    //!
     virtual void fileStatus(const QString& sPath, const QString& sFullName) override;
 
     //!
@@ -299,7 +302,7 @@ protected:
     static const QString sCommandGraph;
     static const QString sCommandGraphCount;
     static const QString sCommandHeadCommits;
-    static const QString sCommandListOtherFiles;
+    static const QString sCommandIgnoredFiles;
     static const QString sCommandMergeBranch;
     static const QString sCommandPatchApply;
     static const QString sCommandPollFingerprint;

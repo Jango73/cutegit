@@ -155,6 +155,11 @@ void CLogModel::setLines(CLogLineCollection tCollection)
             pruneUnusedLabels(sRemovedCommitId);
         }
     }
+
+    // Lines may load after the branch data: the label refreshes triggered
+    // by branch arrivals ran over no rows then, so sync here. Unchanged
+    // rows report no change and emit nothing
+    refreshLabels();
 }
 
 //-------------------------------------------------------------------------------------------------

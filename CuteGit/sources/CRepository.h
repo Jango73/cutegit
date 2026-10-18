@@ -178,6 +178,15 @@ public:
     //! Creates a list of CRepoFile from the repo at sPath
     Q_INVOKABLE void checkChangedFileStatus(QString sPath = "");
 
+    //! Fetches the ignored files on demand, the default refresh skips them
+    Q_INVOKABLE void checkIgnoredFileStatus();
+
+    //! Drops the ignored rows, the proxy hides them but the models own them
+    Q_INVOKABLE void purgeIgnoredFiles();
+
+    //! Shows ignored files, fetching them first when switched on
+    void setShowIgnored(bool bValue);
+
     //! Creates a list of CRepoFile from the repo at sPath
     Q_INVOKABLE void checkFileStatus(const QString& sFileFullName);
 
@@ -349,6 +358,9 @@ protected:
 
     //! True once the file inventory and the first full scan have been issued
     bool m_bFileInventoryDone;
+
+    //! True when ignored files are shown, their batch runs on every refresh
+    bool m_bShowIgnored;
 
     //! True while a poll fingerprint command is waiting for its result
     bool m_bPollPending;

@@ -125,7 +125,15 @@ void CHgCommands::allFileStatus(const QString& sPath)
 
 void CHgCommands::changedFileStatus(const QString& sPath)
 {
+    // Ignored files stay out of the default refresh, they are fetched on
+    // demand through ignoredFileStatus like the other backends
     exec(new CProcessCommand(CEnums::eChangedFileStatus, sPath, sCommandStatus));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CHgCommands::ignoredFileStatus(const QString& sPath)
+{
     exec(new CProcessCommand(CEnums::eIgnoredFileStatus, sPath, sCommandIgnoredStatus));
 }
 

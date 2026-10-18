@@ -53,6 +53,9 @@ public:
     //! Creates a list of CRepoFile from the repo at sPath
     virtual void changedFileStatus(const QString& sPath);
 
+    //! Creates a list of ignored CRepoFile from the repo at sPath, on demand only
+    virtual void ignoredFileStatus(const QString& sPath);
+
     //! Creates a list of CRepoFile from the repo at sPath
     virtual void fileStatus(const QString& sPath, const QString& sFullName);
 

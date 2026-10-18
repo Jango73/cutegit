@@ -347,6 +347,7 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
 
     case CEnums::eAllFileStatus:
     case CEnums::eChangedFileStatus:
+    case CEnums::eIgnoredFileStatus:
     {
         bool bHasModifiedFiles = false;
         bool bHasCommitableFiles = false;
@@ -356,6 +357,26 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         // resync below wipes the displayed diff source and line staging
         // silently stops working until the file is selected again
         bool bInventoryOnly = (eCommand == CEnums::eAllFileStatus);
+
+        // The ignored batch replaces its own rows: it owns the eIgnored
+        // entries and must never reset, flag or resync the other files
+        bool bIgnoredOnly = (eCommand == CEnums::eIgnoredFileStatus);
+
+        // A fresh ignored listing supersedes the previous one: drop the
+        // owned rows first so un-ignored files disappear with it
+        if (bIgnoredOnly)
+        {
+            for (int iIgnoredIndex = 0; iIgnoredIndex < m_lRepoFiles.count(); iIgnoredIndex++)
+            {
+                if (m_lRepoFiles[iIgnoredIndex]->status() == CEnums::eIgnored)
+                {
+                    QString sIgnoredKey = m_lRepoFiles[iIgnoredIndex]->fullName();
+                    delete m_lRepoFiles[iIgnoredIndex];
+                    m_lRepoFiles.removeItem(sIgnoredKey);
+                    iIgnoredIndex--;
+                }
+            }
+        }
 
         // Browse every file in lNewFiles and add/update. Consumed entries
         // stay alive until the presence checks below are done: deleting
@@ -399,8 +420,9 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
 
         // Absence from a real status batch means clean; absence from the
         // clean inventory means nothing, the existence check below handles
-        // deleted files
-        if (not bInventoryOnly)
+        // deleted files. Ignored rows belong to the on-demand batch: the
+        // changed batch never carries them and must leave them alone
+        if (not bInventoryOnly && not bIgnoredOnly)
         {
             // For every file not existing in lNewFiles, mark 'not staged' and 'clean' if required
             for (CRepoFile* pExistingFile : m_lRepoFiles)
@@ -416,7 +438,7 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
                     // previous state (tracked, untracked or missing). Without
                     // this, an externally committed untracked file keeps its
                     // stale status and stays visible after the poll refresh.
-                    if (pExistingFile->status() != CEnums::eClean)
+                    if (pExistingFile->status() != CEnums::eClean && pExistingFile->status() != CEnums::eIgnored)
                     {
                         pExistingFile->setStatus(CEnums::eClean);
                     }
@@ -446,8 +468,9 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         }
 
         // Update some flags: only real status batches own them, the clean
-        // inventory would clear them on every pass
-        if (not bInventoryOnly)
+        // inventory would clear them on every pass and the ignored batch
+        // carries no dirtiness information
+        if (not bInventoryOnly && not bIgnoredOnly)
         {
             setHasModifiedFiles(bHasModifiedFiles);
             setHasCommitableFiles(bHasCommitableFiles);
@@ -464,8 +487,8 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
 
         // Check if file log must be reset: only real status batches carry
         // dirtiness information, the clean inventory must never wipe the
-        // displayed diff source
-        if (not bInventoryOnly)
+        // displayed diff source and the ignored batch replaces its own rows
+        if (not bInventoryOnly && not bIgnoredOnly)
         {
             if (m_lRepoFiles.count() == 0)
             {

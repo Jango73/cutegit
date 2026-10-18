@@ -9,6 +9,8 @@
 
 // Application
 #include "CRepository.h"
+#include "CLogModel.h"
+#include "CLabelModel.h"
 #include "CPatchBuilder.h"
 #include "CDiffModel.h"
 #include "CDiffModelProxy.h"
@@ -229,10 +231,10 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->branchLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
     }
 
-    // The tracked seed carries versioned files only: ignored content lands
-    // with its ignored status from the status batch, .git internals and
-    // ignored folders never inflate the file models like the old crawl did
-    void trackedSeed_hidesIgnoredAndGitFolder()
+    // Ignored files stay out of the default refresh: the status batch
+    // skips them and the models never inflate like the old crawl did.
+    // They arrive through the on-demand batch and leave on purge
+    void trackedSeed_defersIgnoredUntilRequested()
     {
         QDir tClone(m_sClonePath);
 
@@ -243,6 +245,11 @@ private slots:
         tJunk.write("junk");
         tJunk.close();
 
+        QFile tPlain(tClone.filePath("plain.txt"));
+        QVERIFY(tPlain.open(QIODevice::WriteOnly));
+        tPlain.write("plain");
+        tPlain.close();
+
         QFile tIgnore(tClone.filePath(".gitignore"));
         QVERIFY(tIgnore.open(QIODevice::WriteOnly | QIODevice::Text));
         tIgnore.write("ignored-seed/\n");
@@ -251,16 +258,55 @@ private slots:
         m_pRepository->refresh();
 
         QString sIgnoredKey = m_sClonePath + "/ignored-seed/junk.bin";
+        QString sPlainKey = m_sClonePath + "/plain.txt";
 
-        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->repoFiles().containsKey(sIgnoredKey), s_iAsyncTimeoutMs);
-        QCOMPARE(m_pRepository->repoFiles().itemByKey(sIgnoredKey)->status(), CEnums::eIgnored);
+        // Plain untracked files still list one by one through the status
+        // batch while ignored content stays out entirely
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->repoFiles().containsKey(sPlainKey), s_iAsyncTimeoutMs);
+        QCOMPARE(m_pRepository->repoFiles().itemByKey(sPlainKey)->status(), CEnums::eUntracked);
+        QTest::qWait(1000);
+        QVERIFY(not m_pRepository->repoFiles().containsKey(sIgnoredKey));
 
         for (CRepoFile* pFile : m_pRepository->repoFiles())
         {
             QVERIFY2(not pFile->fullName().contains("/.git/"), qPrintable(pFile->fullName()));
-            QVERIFY2(not pFile->fullName().contains("/ignored-seed/") || pFile->status() == CEnums::eIgnored,
-                     qPrintable(pFile->fullName()));
+            QVERIFY2(not pFile->fullName().contains("/ignored-seed/"), qPrintable(pFile->fullName()));
         }
+
+        // The on-demand batch brings the ignored rows with their status
+        m_pRepository->checkIgnoredFileStatus();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->repoFiles().containsKey(sIgnoredKey), s_iAsyncTimeoutMs);
+        QCOMPARE(m_pRepository->repoFiles().itemByKey(sIgnoredKey)->status(), CEnums::eIgnored);
+
+        // Purging drops them again without touching the other rows
+        m_pRepository->purgeIgnoredFiles();
+
+        QVERIFY(not m_pRepository->repoFiles().containsKey(sIgnoredKey));
+        QVERIFY(m_pRepository->repoFiles().containsKey(sPlainKey));
+    }
+
+    // Labels survive on-demand loading whatever the arrival order: branch
+    // data lands at refresh while lines load when the tab shows, each side
+    // syncs the other so loaded rows end up labeled
+    void branchLogLabels_syncOnLoad()
+    {
+        // Settle: capture the current fingerprint and let a full poll tick
+        // pass, so no pending refresh relabels rows behind this test
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->localBranchModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+        QTest::qWait(4500);
+
+        // Load the log on demand like the tab view does. The wait below
+        // stays under one poll interval: without a sync on load, no later
+        // refresh can bring the labels in time
+        m_pRepository->refreshBranchLog();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->branchLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+        QTest::qWait(500);
+
+        QVERIFY2(branchLogHasLabeledRow(), "branch log rows arrived without labels");
     }
 
     // Batched branch reads fill every model with one process per domain:
@@ -296,7 +342,24 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(not branchCommitId(pTags, "v-batch-annotated").isEmpty(), s_iAsyncTimeoutMs);
     }
 
-private:
+ private:
+
+    // True when any loaded branch log row carries at least one label
+    bool branchLogHasLabeledRow() const
+    {
+        CLogModel* pModel = m_pRepository->branchLogModel();
+
+        for (int iRow = 0; iRow < pModel->rowCount(); iRow++)
+        {
+            QVariant vLabels = pModel->data(pModel->index(iRow), CLogModel::eLabelsRole);
+            CLabelModel* pLabels = vLabels.value<CLabelModel*>();
+
+            if (pLabels != nullptr && pLabels->rowCount() > 0)
+                return true;
+        }
+
+        return false;
+    }
 
     QString m_sFixtureRepo;
     QScopedPointer<QTemporaryDir> m_pWorkDir;

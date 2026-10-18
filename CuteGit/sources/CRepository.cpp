@@ -100,6 +100,7 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_sPollFingerprint("")
     , m_bNeedsRefresh(true)
     , m_bFileInventoryDone(false)
+    , m_bShowIgnored(false)
     , m_bPollPending(false)
 {
     if (eType == CEnums::UnknownRepositoryType)
@@ -295,6 +296,55 @@ void CRepository::checkChangedFileStatus(QString sPath)
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::checkIgnoredFileStatus()
+{
+    m_pCommands->ignoredFileStatus(m_sRepositoryPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::purgeIgnoredFiles()
+{
+    for (int iIndex = 0; iIndex < m_lRepoFiles.count(); iIndex++)
+    {
+        if (m_lRepoFiles[iIndex]->status() == CEnums::eIgnored)
+        {
+            QString sKey = m_lRepoFiles[iIndex]->fullName();
+            delete m_lRepoFiles[iIndex];
+            m_lRepoFiles.removeItem(sKey);
+            iIndex--;
+        }
+    }
+
+    // Removal keeps the sort order, only the models need a refresh. A diff
+    // shown on a purged file would point at nothing: clear it like the
+    // status resync does when its source disappears
+    m_pFlatFileModel->handleRepoFilesChanged();
+    m_pFlatFileModelProxy->filterChanged();
+
+    QString sCurrentDiffSource = m_pUnstagedFileDiffModel->fullSourceName();
+
+    if (not sCurrentDiffSource.isEmpty() && fileByFullName(sCurrentDiffSource) == nullptr)
+        onCurrentFileFullName("");
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::setShowIgnored(bool bValue)
+{
+    if (m_bShowIgnored == bValue)
+        return;
+
+    m_bShowIgnored = bValue;
+
+    if (m_bShowIgnored)
+        checkIgnoredFileStatus();
+    else
+        purgeIgnoredFiles();
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::checkFileStatus(const QString& sFileFullName)
 {
     m_pCommands->fileStatus(m_sRepositoryPath, sFileFullName);
@@ -316,6 +366,12 @@ void CRepository::refresh()
 
     checkRepositoryStatus();
     checkChangedFileStatus();
+
+    // The ignored rows belong to their on-demand batch: re-run it so the
+    // set stays coherent while shown, skip it otherwise
+    if (m_bShowIgnored)
+        checkIgnoredFileStatus();
+
     getBranches();
     getTags();
 

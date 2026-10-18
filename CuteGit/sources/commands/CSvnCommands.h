@@ -48,6 +48,9 @@ public:
     virtual void changedFileStatus(const QString& sPath) override;
 
     //!
+    virtual void ignoredFileStatus(const QString& sPath) override;
+
+    //!
     virtual void pollFingerprint(const QString& sPath) override;
 
     //!
