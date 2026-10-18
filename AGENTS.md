@@ -76,15 +76,16 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 - Do NOT cut lines at 80 (or 100, or whatever) when writing plain text documents such as markdown. This does NOT apply to code.
 
 ### Commit message
-The agent always signs its commits: append a last line `Agent: <agent-name>`
+Describe the changes in a short sentence.
+
+Test: append a second line with the test results: `Tests: <passed>/<total>`
+Omit the line only when no test ran.
+
+Sign: append a last line `Agent: <agent-name>`
 (for example `Agent: opencode/muse-spark`) so authorship stays identifiable
-in the log, whatever the commit prefix above. Never leave a blank line in
-the commit message: lines follow each other directly.
-The commit message states the automated test result: append a line `Tests:`
-followed by the sections run and their outcome (for example `Tests:
-tests.sh --debug diff startup repository green` or `Tests: tests.sh --debug
-repository 1 failure in tst_Repository::stageSingleLine_refreshesBothModels`),
-so the log records what was verified and what was left broken.
+in the log, whatever the commit prefix above.
+
+Never leave a blank line in the commit message: lines follow each other directly.
 
 ## Common Build Commands
 - Dependencies: `./scripts/linux/deps.sh` (submodules + apt/dnf/pacman packages;
