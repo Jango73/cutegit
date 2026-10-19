@@ -357,6 +357,7 @@ Item {
     readonly property string panelHeightKey: "height"
     readonly property string panelTabsKey: "tabs"
     readonly property string panelTabIdKey: "tabId"
+    readonly property string panelTabVisibleWhenKey: "visibleWhen"
 
     // Single QML source of the tab vocabulary, mirrors CLayout::knownTabIds()
     readonly property string filesTabId: "Files"

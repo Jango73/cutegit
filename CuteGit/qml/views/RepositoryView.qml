@@ -16,6 +16,7 @@ Pane {
     property variant controller: null
     property variant repository: null
     property string menuBranchName: ""
+    property var activeTabIds: []
 
     //--------------------------------------------------------------------------------
     // Status
@@ -118,6 +119,9 @@ Pane {
             id: panelRepeater
             objectName: "panelRepeater"
             model: root.controller ? root.controller.currentLayoutPanels : []
+
+            onItemAdded: root.refreshActiveTabs()
+            onItemRemoved: root.refreshActiveTabs()
 
             DockPanel {
                 objectName: "dockPanel." + index
@@ -435,6 +439,10 @@ Pane {
         root.activateCommitDiffView()
     }
 
+    function showCommitDiffPrevious(commitId) {
+        root.repository.commitDiffPrevious(commitId)
+    }
+
     function requestCommitDiffFrom(commitId) {
         root.repository.diffFromCommitId = commitId
     }
@@ -554,15 +562,57 @@ Pane {
             root.controller.statusText = message
     }
 
+    function activeTabIdsEqual(first, second) {
+        if (first.length !== second.length)
+            return false
+        for (var index = 0; index < first.length; index++) {
+            if (second.indexOf(first[index]) === -1)
+                return false
+        }
+        return true
+    }
+
+    function refreshActiveTabs() {
+        var collectedTabIds = []
+        root.forEachPanel(function(panel) {
+            if (panel.currentTabId !== undefined && panel.currentTabId !== null && panel.currentTabId !== "") {
+                if (collectedTabIds.indexOf(panel.currentTabId) === -1)
+                    collectedTabIds.push(panel.currentTabId)
+            }
+        })
+        if (root.activeTabIdsEqual(root.activeTabIds, collectedTabIds) === false)
+            root.activeTabIds = collectedTabIds
+    }
+
+    function hasTab(tabId) {
+        var found = false
+        root.forEachPanel(function(panel) {
+            if (found === false && "hasTab" in panel && panel.hasTab(tabId))
+                found = true
+        })
+        return found
+    }
+
     function activateTab(tabId) {
         var activated = false
         root.forEachPanel(function(panel) {
             if (activated === false && panel.activateTab(tabId))
                 activated = true
         })
-        if (activated === false)
+        if (activated === false && root.hasTab(tabId) === false)
             root.reportMissingTab(tabId)
         return activated
+    }
+
+    function showTab(tabId) {
+        var shown = false
+        root.forEachPanel(function(panel) {
+            if (shown === false && panel.showTab(tabId))
+                shown = true
+        })
+        if (shown === false && root.hasTab(tabId) === false)
+            root.reportMissingTab(tabId)
+        return shown
     }
 
     function activateFlatFileView() {

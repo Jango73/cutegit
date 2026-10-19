@@ -9,15 +9,26 @@
 
 //-------------------------------------------------------------------------------------------------
 
-//! Single panel of a layout, placed by relative geometry (percent of content area)
+//! Single tab of a panel, with an optional visibility condition
+//! lVisibleWhen holds source tab identifiers that make this tab visible
+//! An empty list means the tab is always visible
 typedef struct
 {
     QString     sIdentifier;
-    double      fPositionX;
-    double      fPositionY;
-    double      fWidth;
-    double      fHeight;
-    QStringList lTabIdentifiers;
+    QStringList lVisibleWhen;
+} SLayoutTab;
+
+//-------------------------------------------------------------------------------------------------
+
+//! Single panel of a layout, placed by relative geometry (percent of content area)
+typedef struct
+{
+    QString            sIdentifier;
+    double             fPositionX;
+    double             fPositionY;
+    double             fWidth;
+    double             fHeight;
+    QVector<SLayoutTab> vTabs;
 } SLayoutPanel;
 
 //-------------------------------------------------------------------------------------------------
@@ -63,6 +74,8 @@ public:
     static const QString sKeyHeight;
     static const QString sKeyTabs;
     static const QString sKeyTabIdentifier;
+    static const QString sKeyVisibleWhen;
+    static const QString sAttributeVisibleWhen;
 
     //! Minimum and maximum values for panel geometry expressed in percent
     static const double fMinimumPercent;

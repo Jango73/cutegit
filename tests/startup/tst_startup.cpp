@@ -9,6 +9,7 @@
 #include <QQmlContext>
 #include <QQmlError>
 #include <QQuickStyle>
+#include <QStandardPaths>
 
 // Application
 #include "CController.h"
@@ -41,6 +42,12 @@ private slots:
 
     void initTestCase()
     {
+        // Isolate the controller from any real configuration on disk:
+        // CController persists open repositories and reloads them on
+        // construction, so stale entries would break the rowCount() == 1
+        // expectation below. Must run before any CController is created.
+        QStandardPaths::setTestModeEnabled(true);
+
         QVERIFY2(not m_sFixtureRepo.isEmpty(), "DIFF_FIXTURE_REPO is not set");
         QVERIFY2(QFile::exists(m_sFixtureRepo + "/.git/HEAD"), "Fixture repository has no .git");
     }
@@ -69,10 +76,14 @@ private slots:
 
         CController tController("");
         QQmlApplicationEngine tEngine;
-        QQmlComponent tRepositoryView(&tEngine, QUrl(QStringLiteral("qrc:/qml/views/RepositoryView.qml")));
         QStringList lWarnings;
 
+        // Registers the CuteGit QML module and the Material style before any
+        // QML file is parsed: creating a component first poisons the engine
+        // with a "module CuteGit is not installed" import error
         prepareEngine(tController, tEngine, lWarnings);
+
+        QQmlComponent tRepositoryView(&tEngine, QUrl(QStringLiteral("qrc:/qml/views/RepositoryView.qml")));
 
         // The application chrome loads without an open repository
         tEngine.load(QUrl(QStringLiteral("qrc:/qml/App.qml")));

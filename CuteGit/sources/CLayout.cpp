@@ -34,6 +34,8 @@ const QString CLayout::sKeyWidth = "width";
 const QString CLayout::sKeyHeight = "height";
 const QString CLayout::sKeyTabs = "tabs";
 const QString CLayout::sKeyTabIdentifier = "tabId";
+const QString CLayout::sKeyVisibleWhen = "visibleWhen";
+const QString CLayout::sAttributeVisibleWhen = "VisibleWhen";
 
 const double CLayout::fMinimumPercent = 0.0;
 const double CLayout::fMaximumPercent = 100.0;
@@ -64,6 +66,48 @@ static double toPercent(const QString& sValue, double fFallback)
 
 /*************************************************************************/
 /*!
+    \fn static QStringList toVisibleWhen(const CXMLNode& xTabNode)
+    Collects the visibility condition of a Tab node.
+    Accepts a comma separated VisibleWhen attribute and VisibleWhen child nodes
+    (JSON array form), trims entries and drops empties.
+*/
+static QStringList toVisibleWhen(const CXMLNode& xTabNode)
+{
+    QStringList lVisibleWhen;
+    const QStringList& lKnownTabIdentifiers = CLayout::knownTabIds();
+    QString sAttributeValue = xTabNode.attributes().value(CLayout::sAttributeVisibleWhen, "");
+    for (const QString& sPart : sAttributeValue.split(","))
+    {
+        QString sIdentifier = sPart.trimmed();
+        if (sIdentifier.isEmpty())
+            continue;
+        if (lKnownTabIdentifiers.contains(sIdentifier) == false)
+        {
+            qWarning() << QString("CLayout: unknown VisibleWhen identifier [%1] ignored").arg(sIdentifier);
+            continue;
+        }
+        if (lVisibleWhen.contains(sIdentifier) == false)
+            lVisibleWhen << sIdentifier;
+    }
+    CXMLNodeList lConditionNodes = xTabNode.getNodesByTagName(CLayout::sAttributeVisibleWhen);
+    for (const CXMLNode& xConditionNode : lConditionNodes)
+    {
+        QString sIdentifier = xConditionNode.value().trimmed();
+        if (sIdentifier.isEmpty())
+            continue;
+        if (lKnownTabIdentifiers.contains(sIdentifier) == false)
+        {
+            qWarning() << QString("CLayout: unknown VisibleWhen identifier [%1] ignored").arg(sIdentifier);
+            continue;
+        }
+        if (lVisibleWhen.contains(sIdentifier) == false)
+            lVisibleWhen << sIdentifier;
+    }
+    return lVisibleWhen;
+}
+
+/*************************************************************************/
+/*!
     \fn static SLayoutPanel toPanel(const CXMLNode& xPanelNode)
     Builds a single panel definition from a Panel node of the layout file.
 */
@@ -87,7 +131,10 @@ static SLayoutPanel toPanel(const CXMLNode& xPanelNode)
             qWarning() << QString("CLayout: unknown tab identifier [%1] ignored").arg(sTabIdentifier);
             continue;
         }
-        tPanel.lTabIdentifiers << sTabIdentifier;
+        SLayoutTab tTab;
+        tTab.sIdentifier = sTabIdentifier;
+        tTab.lVisibleWhen = toVisibleWhen(xTabNode);
+        tPanel.vTabs << tTab;
     }
     return tPanel;
 }
@@ -111,7 +158,7 @@ static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRootNode)
         for (const CXMLNode& xPanelNode : lPanelNodes)
         {
             SLayoutPanel tPanel = toPanel(xPanelNode);
-            if (tPanel.lTabIdentifiers.isEmpty())
+            if (tPanel.vTabs.isEmpty())
                 continue;
             tLayoutDefinition.vPanels << tPanel;
         }
@@ -123,10 +170,27 @@ static QVector<SLayoutDefinition> parseLayoutNodes(const CXMLNode& xRootNode)
 
 /*************************************************************************/
 /*!
-    \fn static SLayoutPanel createPanel(const QString& sIdentifier, double fPositionX, double fPositionY, double fWidth, double fHeight, const QStringList& lTabIdentifiers)
+    \fn static QVector<SLayoutTab> toTabsWithoutCondition(const QStringList& lTabIdentifiers)
+    Wraps plain tab identifiers into always visible tab definitions.
+*/
+static QVector<SLayoutTab> toTabsWithoutCondition(const QStringList& lTabIdentifiers)
+{
+    QVector<SLayoutTab> vTabs;
+    for (const QString& sTabIdentifier : lTabIdentifiers)
+    {
+        SLayoutTab tTab;
+        tTab.sIdentifier = sTabIdentifier;
+        vTabs << tTab;
+    }
+    return vTabs;
+}
+
+/*************************************************************************/
+/*!
+    \fn static SLayoutPanel createPanel(const QString& sIdentifier, double fPositionX, double fPositionY, double fWidth, double fHeight, const QVector<SLayoutTab>& vTabs)
     Builds a single panel without repeating member assignments at every call site.
 */
-static SLayoutPanel createPanel(const QString& sIdentifier, double fPositionX, double fPositionY, double fWidth, double fHeight, const QStringList& lTabIdentifiers)
+static SLayoutPanel createPanel(const QString& sIdentifier, double fPositionX, double fPositionY, double fWidth, double fHeight, const QVector<SLayoutTab>& vTabs)
 {
     SLayoutPanel tPanel;
     tPanel.sIdentifier = sIdentifier;
@@ -134,7 +198,7 @@ static SLayoutPanel createPanel(const QString& sIdentifier, double fPositionX, d
     tPanel.fPositionY = fPositionY;
     tPanel.fWidth = fWidth;
     tPanel.fHeight = fHeight;
-    tPanel.lTabIdentifiers = lTabIdentifiers;
+    tPanel.vTabs = vTabs;
     return tPanel;
 }
 
@@ -149,7 +213,7 @@ static QVector<SLayoutDefinition> minimalFallbackLayouts()
 {
     SLayoutDefinition tFallback;
     tFallback.sName = "Fallback";
-    tFallback.vPanels << createPanel("Fallback", CLayout::fMinimumPercent, CLayout::fMinimumPercent, CLayout::fMaximumPercent, CLayout::fMaximumPercent, CLayout::knownTabIds());
+    tFallback.vPanels << createPanel("Fallback", CLayout::fMinimumPercent, CLayout::fMinimumPercent, CLayout::fMaximumPercent, CLayout::fMaximumPercent, toTabsWithoutCondition(CLayout::knownTabIds()));
     return QVector<SLayoutDefinition>() << tFallback;
 }
 
@@ -211,10 +275,11 @@ QVariantList CLayout::toVariantPanels(const SLayoutDefinition& tLayoutDefinition
         mPanel[sKeyWidth] = tPanel.fWidth;
         mPanel[sKeyHeight] = tPanel.fHeight;
         QVariantList lTabs;
-        for (const QString& sTabIdentifier : tPanel.lTabIdentifiers)
+        for (const SLayoutTab& tTab : tPanel.vTabs)
         {
             QVariantMap mTab;
-            mTab[sKeyTabIdentifier] = sTabIdentifier;
+            mTab[sKeyTabIdentifier] = tTab.sIdentifier;
+            mTab[sKeyVisibleWhen] = tTab.lVisibleWhen;
             lTabs << mTab;
         }
         mPanel[sKeyTabs] = lTabs;

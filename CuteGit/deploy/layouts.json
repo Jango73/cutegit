@@ -23,9 +23,9 @@
                     "Width": "45",
                     "Height": "100",
                     "Tab": [
-                        { "Id": "CommitDetails" },
-                        { "Id": "FileDiff" },
-                        { "Id": "CommitDiff" },
+                        { "Id": "CommitDetails", "VisibleWhen": "BranchLog,Graph,RefLog" },
+                        { "Id": "FileDiff", "VisibleWhen": "Files" },
+                        { "Id": "CommitDiff", "VisibleWhen": "BranchLog,Graph,RefLog" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" },
                         { "Id": "Output" }
@@ -64,9 +64,9 @@
                     "Width": "40",
                     "Height": "60",
                     "Tab": [
-                        { "Id": "CommitDetails" },
-                        { "Id": "FileDiff" },
-                        { "Id": "CommitDiff" },
+                        { "Id": "CommitDetails", "VisibleWhen": "BranchLog,Graph,RefLog" },
+                        { "Id": "FileDiff", "VisibleWhen": "Files" },
+                        { "Id": "CommitDiff", "VisibleWhen": "BranchLog,Graph,RefLog" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" }
                     ]

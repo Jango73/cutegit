@@ -38,6 +38,7 @@ BaseTab {
         diffFromCommitId: root.repository ? root.repository.diffFromCommitId : ""
         diffToCommitId: root.repository ? root.repository.diffToCommitId : ""
 
+        onItemClicked: root.viewRoot.showCommitDiffPrevious(commitId)
         onItemRightClicked: root.viewRoot.showLogMenu(commitId, message)
         onRequestCommitDiffPrevious: root.viewRoot.requestCommitDiffPrevious(commitId)
         onRequestCommitDiffFrom: root.viewRoot.requestCommitDiffFrom(commitId)
