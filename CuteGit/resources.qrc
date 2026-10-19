@@ -60,7 +60,7 @@
         <file>qml/tabs/BranchesTab.qml</file>
         <file>qml/tabs/BranchLogTab.qml</file>
         <file>qml/tabs/CommitDiffTab.qml</file>
-        <file>qml/tabs/DiffTab.qml</file>
+        <file>qml/tabs/FileDiffTab.qml</file>
         <file>qml/tabs/FileLogTab.qml</file>
         <file>qml/tabs/FilesTab.qml</file>
         <file>qml/tabs/GraphTab.qml</file>

@@ -23,7 +23,7 @@
                     "Width": "45",
                     "Height": "100",
                     "Tab": [
-                        { "Id": "Diff" },
+                        { "Id": "FileDiff" },
                         { "Id": "CommitDiff" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" },
@@ -63,7 +63,7 @@
                     "Width": "40",
                     "Height": "60",
                     "Tab": [
-                        { "Id": "Diff" },
+                        { "Id": "FileDiff" },
                         { "Id": "CommitDiff" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" }

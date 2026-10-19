@@ -189,7 +189,7 @@ Item {
     readonly property string nameText: qsTr("Name")
     readonly property string tagsText: qsTr("Tags")
     readonly property string flatText: qsTr("Flat")
-    readonly property string diffText: qsTr("Diff")
+    readonly property string diffText: qsTr("File diff")
     readonly property string pushText: qsTr("Push")
     readonly property string forcePushText: qsTr("Force push")
     readonly property string pullText: qsTr("Pull")
@@ -359,7 +359,7 @@ Item {
     readonly property string branchLogTabId: "BranchLog"
     readonly property string graphTabId: "Graph"
     readonly property string refLogTabId: "RefLog"
-    readonly property string diffTabId: "Diff"
+    readonly property string diffTabId: "FileDiff"
     readonly property string commitDiffTabId: "CommitDiff"
     readonly property string fileLogTabId: "FileLog"
     readonly property string blameTabId: "Blame"
@@ -375,7 +375,7 @@ Item {
         "BranchLog": "../tabs/BranchLogTab.qml",
         "Graph": "../tabs/GraphTab.qml",
         "RefLog": "../tabs/RefLogTab.qml",
-        "Diff": "../tabs/DiffTab.qml",
+        "FileDiff": "../tabs/FileDiffTab.qml",
         "CommitDiff": "../tabs/CommitDiffTab.qml",
         "FileLog": "../tabs/FileLogTab.qml",
         "Blame": "../tabs/BlameTab.qml",
@@ -388,7 +388,7 @@ Item {
         "BranchLog": branchLogText,
         "Graph": graphText,
         "RefLog": refLogText,
-        "Diff": diffText,
+        "FileDiff": diffText,
         "CommitDiff": commitDiffText,
         "FileLog": logText,
         "Blame": blameText,
