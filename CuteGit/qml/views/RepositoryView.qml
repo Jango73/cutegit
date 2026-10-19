@@ -435,6 +435,11 @@ Pane {
         root.activateCommitDiffView()
     }
 
+    function showCommitDiffPrevious(commitId) {
+        root.repository.commitDiffPrevious(commitId)
+        root.showCommitDiffView()
+    }
+
     function requestCommitDiffFrom(commitId) {
         root.repository.diffFromCommitId = commitId
     }
@@ -565,6 +570,17 @@ Pane {
         return activated
     }
 
+    function showTab(tabId) {
+        var shown = false
+        root.forEachPanel(function(panel) {
+            if (shown === false && panel.showTab(tabId))
+                shown = true
+        })
+        if (shown === false)
+            root.reportMissingTab(tabId)
+        return shown
+    }
+
     function activateFlatFileView() {
         root.activateTab(Const.filesTabId)
     }
@@ -584,6 +600,11 @@ Pane {
     function activateCommitDiffView() {
         if (root.activateTab(Const.commitDiffTabId) === false)
             root.activateFileDiffView()
+    }
+
+    function showCommitDiffView() {
+        if (root.showTab(Const.commitDiffTabId) === false)
+            root.showTab(Const.diffTabId)
     }
 
     function activateFileBlameView() {

@@ -9,6 +9,14 @@ BaseTab {
         anchors.fill: parent
 
         model: root.repository !== null ? root.repository.graphModel : undefined
+        diffFromCommitId: root.repository ? root.repository.diffFromCommitId : ""
+        diffToCommitId: root.repository ? root.repository.diffToCommitId : ""
+
+        onItemClicked: root.viewRoot.showCommitDiffPrevious(commitId)
+        onItemRightClicked: root.viewRoot.showLogMenu(commitId, message)
+        onRequestCommitDiffPrevious: root.viewRoot.requestCommitDiffPrevious(commitId)
+        onRequestCommitDiffFrom: root.viewRoot.requestCommitDiffFrom(commitId)
+        onRequestCommitDiffTo: root.viewRoot.requestCommitDiffTo(commitId)
     }
 
     function focusTab() {

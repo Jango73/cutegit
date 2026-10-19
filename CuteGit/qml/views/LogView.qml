@@ -19,6 +19,7 @@ StandardListView {
     /*! The id of the diff 'to' commit */
     property string diffToCommitId: ""
 
+    signal itemClicked(var commitId)
     signal itemRightClicked(var commitId, var message)
     signal requestCommitDiffPrevious(var commitId)
     signal requestCommitDiffFrom(var commitId)
@@ -84,6 +85,8 @@ StandardListView {
         onClicked: function(mouse) {
             if (mouse.button === Qt.RightButton) {
                 root.itemRightClicked(model.commitId, model.fullMessage)
+            } else if (mouse.button === Qt.LeftButton) {
+                root.itemClicked(model.commitId)
             }
         }
 

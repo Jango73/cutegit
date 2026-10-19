@@ -177,6 +177,14 @@ ExtendablePane {
         return true
     }
 
+    function showTab(tabId) {
+        var index = root.tabIndexOf(tabId)
+        if (index === -1)
+            return false
+        tabBar.currentIndex = index
+        return true
+    }
+
     function getSelectedFiles() {
         var filesTab = findTab(Const.filesTabId)
         if (filesTab !== null && filesTab !== undefined && "getSelectedFiles" in filesTab)
