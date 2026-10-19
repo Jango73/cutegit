@@ -352,6 +352,25 @@ void CGraphModel::commitChanged(const QString& sCommitId)
     }
 }
 
+/*************************************************************************/
+/*!
+    \fn const CGraphLine* CGraphModel::findLine(const QString& sCommitId) const
+    Returns the loaded line showing a commit, nullptr when not loaded.
+*/
+const CGraphLine* CGraphModel::findLine(const QString& sCommitId) const
+{
+    if (sCommitId.isEmpty())
+        return nullptr;
+
+    for (const CGraphLine* pLine : m_lLines)
+    {
+        if (pLine != nullptr && pLine->commitId() == sCommitId)
+            return pLine;
+    }
+
+    return nullptr;
+}
+
 //-------------------------------------------------------------------------------------------------
 
 void CGraphModel::invalidate()

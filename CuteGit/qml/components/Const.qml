@@ -159,6 +159,12 @@ Item {
     readonly property string stagedDiffText: qsTr("Staged")
     readonly property string unstagedDiffText: qsTr("Unstaged")
     readonly property string commitDiffText: qsTr("Commit diff")
+    readonly property string commitDetailsText: qsTr("Commit details")
+    readonly property string commitIdText: qsTr("Commit ID")
+    readonly property string authorText: qsTr("Author")
+    readonly property string dateText: qsTr("Date")
+    readonly property string addedLinesText: qsTr("Added lines")
+    readonly property string removedLinesText: qsTr("Removed lines")
     readonly property string noStagedChangesText: qsTr("No staged changes")
     readonly property string noUnstagedChangesText: qsTr("No unstaged changes")
     readonly property string stageSelectedLinesText: qsTr("Stage selected &lines")
@@ -360,13 +366,14 @@ Item {
     readonly property string graphTabId: "Graph"
     readonly property string refLogTabId: "RefLog"
     readonly property string diffTabId: "FileDiff"
+    readonly property string commitDetailsTabId: "CommitDetails"
     readonly property string commitDiffTabId: "CommitDiff"
     readonly property string fileLogTabId: "FileLog"
     readonly property string blameTabId: "Blame"
     readonly property string outputTabId: "Output"
     readonly property var knownTabIds: [
         filesTabId, branchesTabId, tagsTabId, branchLogTabId, graphTabId, refLogTabId,
-        diffTabId, commitDiffTabId, fileLogTabId, blameTabId, outputTabId
+        commitDetailsTabId, diffTabId, commitDiffTabId, fileLogTabId, blameTabId, outputTabId
     ]
     readonly property var tabSources: ({
         "Files": "../tabs/FilesTab.qml",
@@ -376,6 +383,7 @@ Item {
         "Graph": "../tabs/GraphTab.qml",
         "RefLog": "../tabs/RefLogTab.qml",
         "FileDiff": "../tabs/FileDiffTab.qml",
+        "CommitDetails": "../tabs/CommitDetailsTab.qml",
         "CommitDiff": "../tabs/CommitDiffTab.qml",
         "FileLog": "../tabs/FileLogTab.qml",
         "Blame": "../tabs/BlameTab.qml",
@@ -389,6 +397,7 @@ Item {
         "Graph": graphText,
         "RefLog": refLogText,
         "FileDiff": diffText,
+        "CommitDetails": commitDetailsText,
         "CommitDiff": commitDiffText,
         "FileLog": logText,
         "Blame": blameText,

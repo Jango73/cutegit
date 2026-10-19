@@ -81,6 +81,9 @@ public:
     //!
     void commitChanged(const QString& sCommitId);
 
+    //! Returns the line showing a commit, nullptr when not loaded
+    const CGraphLine* findLine(const QString& sCommitId) const;
+
     //!
     void invalidate();
 

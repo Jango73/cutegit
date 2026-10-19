@@ -42,6 +42,7 @@
 
         <file>qml/pages/BranchMenu.qml</file>
         <file>qml/pages/BranchPane.qml</file>
+        <file>qml/pages/CommitDetailsPane.qml</file>
         <file>qml/pages/DiffMenu.qml</file>
         <file>qml/pages/DiffMenuAction.qml</file>
         <file>qml/pages/FileLogPane.qml</file>
@@ -59,6 +60,7 @@
         <file>qml/tabs/BranchesTab.qml</file>
         <file>qml/tabs/BranchLogTab.qml</file>
         <file>qml/tabs/CommitDiffTab.qml</file>
+        <file>qml/tabs/CommitDetailsTab.qml</file>
         <file>qml/tabs/FileDiffTab.qml</file>
         <file>qml/tabs/FileLogTab.qml</file>
         <file>qml/tabs/FilesTab.qml</file>

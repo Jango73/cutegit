@@ -560,6 +560,8 @@ void CRepository::onNewOutputCLogLineCollection(CEnums::EProcessCommand eCommand
     }
 
     }
+
+    updateCommitDetails();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -580,6 +582,7 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
     case CEnums::eTwoCommitDiff:
     {
         m_pFileDiffModel->setLines(lNewLines);
+        updateCommitDetails();
         break;
     }
 
@@ -607,6 +610,7 @@ void CRepository::onNewOutputCGraphLineCollection(CEnums::EProcessCommand eComma
     case CEnums::eGraph:
     {
         m_pGraphModel->setLines(lNewLines);
+        updateCommitDetails();
         break;
     }
 

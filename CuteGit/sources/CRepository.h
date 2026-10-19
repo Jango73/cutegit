@@ -2,6 +2,7 @@
 #pragma once
 
 // Qt
+#include <QDateTime>
 #include <QHash>
 #include <QSet>
 #include <QStringListModel>
@@ -85,6 +86,14 @@ public:
     Q_FAST_PROPERTY(CDiffModel*, p, fileDiffModel, FileDiffModel)
     Q_FAST_PROPERTY(CDiffModelProxy*, p, fileDiffModelProxy, FileDiffModelProxy)
     Q_FAST_PROPERTY(QString, s, fileDiffString, FileDiffString)
+
+    // Details of the commit shown in the commit diff view
+    Q_FAST_PROPERTY(QString, s, commitDetailsId, CommitDetailsId)
+    Q_FAST_PROPERTY(QString, s, commitDetailsAuthor, CommitDetailsAuthor)
+    Q_FAST_PROPERTY(QDateTime, d, commitDetailsDate, CommitDetailsDate)
+    Q_FAST_PROPERTY(QString, s, commitDetailsMessage, CommitDetailsMessage)
+    Q_FAST_PROPERTY(int, i, commitDetailsAddedCount, CommitDetailsAddedCount)
+    Q_FAST_PROPERTY(int, i, commitDetailsRemovedCount, CommitDetailsRemovedCount)
 
     // Models for staged versus unstaged working tree diffs
     Q_FAST_PROPERTY(CDiffModel*, p, stagedFileDiffModel, StagedFileDiffModel)
@@ -295,6 +304,9 @@ public:
     //! View diff with previous commit
     Q_INVOKABLE void commitDiffPrevious(const QString& sCommitId);
 
+    //! Refreshes the commit details from the loaded logs and commit diff
+    Q_INVOKABLE void refreshCommitDetails();
+
     //! Shows info about last modifications in a file
     Q_INVOKABLE void blame(QString sFileFullName);
 
@@ -407,6 +419,12 @@ protected:
 
     //! Requests staged and unstaged diffs for a file
     void requestWorkingTreeDiffs(const QString& sFileFullName);
+
+    //! Returns the loaded log line showing a commit, nullptr when not loaded
+    const CLogLine* findCommitLine(const QString& sCommitId) const;
+
+    //! Refreshes the commit details from the loaded logs and commit diff
+    void updateCommitDetails();
 
     //! Returns true when a working tree diff result still belongs to the displayed file
     bool workingTreeDiffMatchesCurrentFile(CDiffModel* pModel, const QString& sUserData) const;

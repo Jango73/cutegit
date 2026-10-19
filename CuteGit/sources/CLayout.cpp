@@ -228,6 +228,6 @@ const QStringList& CLayout::knownTabIds()
 {
     static const QStringList lTabIdentifiers = QStringList()
         << "Files" << "Branches" << "Tags" << "BranchLog" << "Graph" << "RefLog"
-        << "FileDiff" << "CommitDiff" << "FileLog" << "Blame" << "Output";
+        << "CommitDetails" << "FileDiff" << "CommitDiff" << "FileLog" << "Blame" << "Output";
     return lTabIdentifiers;
 }

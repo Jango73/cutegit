@@ -102,6 +102,11 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_bFileInventoryDone(false)
     , m_bShowIgnored(false)
     , m_bPollPending(false)
+    , m_sCommitDetailsId("")
+    , m_sCommitDetailsAuthor("")
+    , m_sCommitDetailsMessage("")
+    , m_iCommitDetailsAddedCount(0)
+    , m_iCommitDetailsRemovedCount(0)
 {
     if (eType == CEnums::UnknownRepositoryType)
     {
@@ -672,7 +677,20 @@ void CRepository::createTagOnCommit(const QString& sCommitId, const QString& sTa
 
 void CRepository::commitDiffPrevious(const QString& sCommitId)
 {
+    setCommitDetailsId(sCommitId);
+    updateCommitDetails();
+
     m_pCommands->commitDiffPrevious(m_sRepositoryPath, sCommitId);
+}
+
+/*************************************************************************/
+/*!
+    \fn void CRepository::refreshCommitDetails()
+    Refreshes the commit details from the loaded logs and commit diff.
+*/
+void CRepository::refreshCommitDetails()
+{
+    updateCommitDetails();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -981,6 +999,79 @@ QString CRepository::relativeFileName(const QString& sFullName)
     return dRoot.relativeFilePath(sFullName);
 }
 
+/*************************************************************************/
+/*!
+    \fn const CLogLine* CRepository::findCommitLine(const QString& sCommitId) const
+    Returns the loaded log line showing a commit, nullptr when not loaded.
+    Branch log wins over graph, then file and ref logs.
+*/
+const CLogLine* CRepository::findCommitLine(const QString& sCommitId) const
+{
+    if (sCommitId.isEmpty())
+        return nullptr;
+
+    const CLogLine* pLine = nullptr;
+
+    if (m_pBranchLogModel != nullptr)
+        pLine = m_pBranchLogModel->findLine(sCommitId);
+
+    if (pLine == nullptr && m_pGraphModel != nullptr)
+        pLine = m_pGraphModel->findLine(sCommitId);
+
+    if (pLine == nullptr && m_pFileLogModel != nullptr)
+        pLine = m_pFileLogModel->findLine(sCommitId);
+
+    if (pLine == nullptr && m_pRefLogModel != nullptr)
+        pLine = m_pRefLogModel->findLine(sCommitId);
+
+    return pLine;
+}
+
+/*************************************************************************/
+/*!
+    \fn void CRepository::updateCommitDetails()
+    Refreshes the commit details from the loaded logs and commit diff.
+    Author, date and message come from the loaded logs, added and removed
+    counts come from the commit diff lines.
+*/
+void CRepository::updateCommitDetails()
+{
+    const CLogLine* pLine = findCommitLine(m_sCommitDetailsId);
+
+    if (pLine != nullptr)
+    {
+        setCommitDetailsAuthor(pLine->author());
+        setCommitDetailsDate(pLine->date());
+        setCommitDetailsMessage(pLine->message());
+    }
+    else
+    {
+        setCommitDetailsAuthor("");
+        setCommitDetailsDate(QDateTime());
+        setCommitDetailsMessage("");
+    }
+
+    int iAddedCount = 0;
+    int iRemovedCount = 0;
+
+    if (m_pFileDiffModel != nullptr)
+    {
+        for (const CDiffLine* pDiffLine : m_pFileDiffModel->lines())
+        {
+            if (pDiffLine == nullptr)
+                continue;
+
+            if (pDiffLine->operation() == CEnums::DiffAdd)
+                iAddedCount++;
+            else if (pDiffLine->operation() == CEnums::DiffDelete)
+                iRemovedCount++;
+        }
+    }
+
+    setCommitDetailsAddedCount(iAddedCount);
+    setCommitDetailsRemovedCount(iRemovedCount);
+}
+
 //-------------------------------------------------------------------------------------------------
 
 void CRepository::onCurrentFileFullName(QString sFileFullName)
@@ -1033,6 +1124,9 @@ void CRepository::onDiffCommitIdChanged()
 
     if (not m_sDiffFromCommitId.isEmpty() && not m_sDiffToCommitId.isEmpty())
     {
+        setCommitDetailsId(m_sDiffToCommitId);
+        updateCommitDetails();
+
         m_pCommands->twoCommitDiff(m_sRepositoryPath, m_sDiffFromCommitId, m_sDiffToCommitId);
 
         setDiffFromCommitId("");

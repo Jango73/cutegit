@@ -81,6 +81,9 @@ public:
     //!
     virtual void fetchMore(const QModelIndex& parent) override;
 
+    //! Returns the line showing a commit, nullptr when not loaded
+    const CLogLine* findLine(const QString& sCommitId) const;
+
     //!
     void commitChanged(const QString& sCommitId);
 
