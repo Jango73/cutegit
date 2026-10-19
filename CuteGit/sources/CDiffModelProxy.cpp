@@ -24,6 +24,7 @@ void CDiffModelProxy::setSourceModel(QAbstractItemModel* pSourceModel)
         sourceModel()->disconnect(this);
 
     QSortFilterProxyModel::setSourceModel(pSourceModel);
+    m_CollapsedFileNames.clear();
     invalidateFileNameCache();
 
     if (pSourceModel != nullptr)
@@ -34,6 +35,8 @@ void CDiffModelProxy::setSourceModel(QAbstractItemModel* pSourceModel)
         connect(pSourceModel, &QAbstractItemModel::rowsRemoved, this, &CDiffModelProxy::invalidateFileNameCache);
         connect(pSourceModel, &QAbstractItemModel::dataChanged, this, &CDiffModelProxy::invalidateFileNameCache);
     }
+
+    emit collapsedChanged();
 }
 
 /***************************************************************************/
@@ -88,6 +91,129 @@ void CDiffModelProxy::rebuildFileNameCache() const
 void CDiffModelProxy::invalidateFileNameCache()
 {
     m_CachedFileNames.clear();
+    emit collapsedChanged();
+}
+
+/***************************************************************************/
+
+/*! Returns all file names in the source model
+ */
+QStringList CDiffModelProxy::fileHeaderNames() const
+{
+    QStringList lFileNames;
+
+    CDiffModel* pModel = sourceDiffModel();
+
+    if (pModel == nullptr || sourceModel() == nullptr)
+        return lFileNames;
+
+    int iRowCount = sourceModel()->rowCount();
+
+    for (int iRow = 0; iRow < iRowCount; iRow++)
+    {
+        QModelIndex tIndex = sourceModel()->index(iRow, 0);
+
+        if (pModel->data(tIndex, CDiffModel::eOperationRole).toInt() == CEnums::DiffFileName)
+            lFileNames.append(pModel->data(tIndex, CDiffModel::eTextRole).toString());
+    }
+
+    return lFileNames;
+}
+
+/***************************************************************************/
+
+/*! True when at least one file is expanded
+ */
+bool CDiffModelProxy::hasExpandedFiles() const
+{
+    QStringList lFileNames = fileHeaderNames();
+
+    if (lFileNames.isEmpty())
+        return false;
+
+    for (const QString& sFileName : lFileNames)
+    {
+        if (m_CollapsedFileNames.contains(sFileName) == false)
+            return true;
+    }
+
+    return false;
+}
+
+/***************************************************************************/
+
+/*! True when at least one file is collapsed
+ */
+bool CDiffModelProxy::hasCollapsedFiles() const
+{
+    QStringList lFileNames = fileHeaderNames();
+
+    for (const QString& sFileName : lFileNames)
+    {
+        if (m_CollapsedFileNames.contains(sFileName))
+            return true;
+    }
+
+    return false;
+}
+
+/***************************************************************************/
+
+/*! Collapses all files
+ */
+void CDiffModelProxy::collapseAll()
+{
+    QStringList lFileNames = fileHeaderNames();
+
+    if (lFileNames.isEmpty())
+        return;
+
+    bool bChanged = false;
+
+    for (const QString& sFileName : lFileNames)
+    {
+        if (m_CollapsedFileNames.contains(sFileName) == false)
+        {
+            m_CollapsedFileNames.insert(sFileName);
+            bChanged = true;
+        }
+    }
+
+    if (bChanged == false)
+        return;
+
+    invalidateFilter();
+
+    if (rowCount() > 0)
+    {
+        QModelIndex tTopLeft = index(0, 0);
+        QModelIndex tBottomRight = index(rowCount() - 1, 0);
+        emit dataChanged(tTopLeft, tBottomRight, { eCollapsedRole });
+    }
+
+    emit collapsedChanged();
+}
+
+/***************************************************************************/
+
+/*! Expands all files
+ */
+void CDiffModelProxy::expandAll()
+{
+    if (m_CollapsedFileNames.isEmpty())
+        return;
+
+    m_CollapsedFileNames.clear();
+    invalidateFilter();
+
+    if (rowCount() > 0)
+    {
+        QModelIndex tTopLeft = index(0, 0);
+        QModelIndex tBottomRight = index(rowCount() - 1, 0);
+        emit dataChanged(tTopLeft, tBottomRight, { eCollapsedRole });
+    }
+
+    emit collapsedChanged();
 }
 
 /***************************************************************************/
@@ -215,4 +341,6 @@ void CDiffModelProxy::toggleCollapsedFile(const QString& sFileName)
         QModelIndex tBottomRight = index(rowCount() - 1, 0);
         emit dataChanged(tTopLeft, tBottomRight, { eCollapsedRole });
     }
+
+    emit collapsedChanged();
 }

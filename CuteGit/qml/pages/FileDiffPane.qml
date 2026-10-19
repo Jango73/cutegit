@@ -35,6 +35,36 @@ Item {
         root.requestMenu(staged, operation, text, hunkId, selectedRows)
     }
 
+    /*! True when at least one visible diff file is expanded */
+    property bool hasExpandedFiles: {
+        if (root.fromCommit)
+            return commitDiffView.model ? commitDiffView.model.hasExpandedFiles : false
+
+        var unstagedExpanded = unstagedDiffView.model ? unstagedDiffView.model.hasExpandedFiles : false
+        var stagedExpanded = stagedDiffView.model ? stagedDiffView.model.hasExpandedFiles : false
+        return unstagedExpanded || stagedExpanded
+    }
+
+    /*! Collapses every file in all visible diff views */
+    function collapseAll() {
+        if (commitDiffView.model)
+            commitDiffView.model.collapseAll()
+        if (unstagedDiffView.model)
+            unstagedDiffView.model.collapseAll()
+        if (stagedDiffView.model)
+            stagedDiffView.model.collapseAll()
+    }
+
+    /*! Expands every file in all visible diff views */
+    function expandAll() {
+        if (commitDiffView.model)
+            commitDiffView.model.expandAll()
+        if (unstagedDiffView.model)
+            unstagedDiffView.model.expandAll()
+        if (stagedDiffView.model)
+            stagedDiffView.model.expandAll()
+    }
+
     StandardLabel {
         anchors.fill: parent
         horizontalAlignment: Text.AlignHCenter
@@ -93,6 +123,22 @@ Item {
             onClicked: {
                 root.requestSaveAsPatch()
             }
+        }
+
+        StandardButton {
+            id: collapseAllButton
+            text: Const.collapseAllText
+            visible: root.hasExpandedFiles
+
+            onClicked: root.collapseAll()
+        }
+
+        StandardButton {
+            id: expandAllButton
+            text: Const.expandAllText
+            visible: !root.hasExpandedFiles
+
+            onClicked: root.expandAll()
         }
     }
 
