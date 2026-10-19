@@ -68,6 +68,15 @@ const QString sParameterLastBrowsedRepositoryPath = "LastBrowsedRepositoryPath";
 const QString sParameterLanguage = "Language";
 const QString sParameterTheme = "Theme";
 const QString sParameterLayoutIndex = "LayoutIndex";
+const QString sParameterViewFilters = "ViewFilters";
+const QString sParameterShowClean = "ShowClean";
+const QString sParameterShowAdded = "ShowAdded";
+const QString sParameterShowModified = "ShowModified";
+const QString sParameterShowRenamed = "ShowRenamed";
+const QString sParameterShowDeleted = "ShowDeleted";
+const QString sParameterShowMissing = "ShowMissing";
+const QString sParameterShowUntracked = "ShowUntracked";
+const QString sParameterShowIgnored = "ShowIgnored";
 const QString sThemeMaterialDark = "MaterialDark";
 const QString sThemeMaterialLight = "MaterialLight";
 
@@ -96,7 +105,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_bShowRenamed(true)
     , m_bShowDeleted(true)
     , m_bShowMissing(true)
-    , m_bShowUntracked(false)
+    , m_bShowUntracked(true)
     , m_bShowIgnored(false)
     , m_bMasterMode(true)
     , m_tShared(m_sSharedKey, this)
@@ -169,7 +178,7 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_bShowRenamed(true)
     , m_bShowDeleted(true)
     , m_bShowMissing(true)
-    , m_bShowUntracked(false)
+    , m_bShowUntracked(true)
     , m_bShowIgnored(false)
     , m_bMasterMode(false)
     , m_tShared(m_sSharedKey, this)
@@ -286,6 +295,28 @@ static int clampLayoutIndex(int iValue, int iCount)
     if (iValue >= iCount)
         return iCount - 1;
     return iValue;
+}
+
+/************************************************************************/
+/*!
+    \fn static bool readBoolAttribute(const QMap<QString, QString>& mAttributes, const QString& sName, bool bDefaultValue)
+    Returns the boolean stored under sName, bDefaultValue when missing or invalid.
+    Stored form is "1"/"0", "true"/"false" accepted on read for robustness.
+*/
+static bool readBoolAttribute(const QMap<QString, QString>& mAttributes, const QString& sName, bool bDefaultValue)
+{
+    if (not mAttributes.contains(sName))
+        return bDefaultValue;
+
+    QString sValue = mAttributes[sName].trimmed().toLower();
+
+    if (sValue == "1" || sValue == "true")
+        return true;
+
+    if (sValue == "0" || sValue == "false")
+        return false;
+
+    return bDefaultValue;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -605,6 +636,18 @@ void CController::saveConfiguration()
     xLayout.attributes()[sParameterName] = QString::number(m_iCurrentLayoutIndex);
     xConfig << xLayout;
 
+    // Save view filters
+    CXMLNode xViewFilters(sParameterViewFilters);
+    xViewFilters.attributes()[sParameterShowClean] = QString::number(m_bShowClean ? 1 : 0);
+    xViewFilters.attributes()[sParameterShowAdded] = QString::number(m_bShowAdded ? 1 : 0);
+    xViewFilters.attributes()[sParameterShowModified] = QString::number(m_bShowModified ? 1 : 0);
+    xViewFilters.attributes()[sParameterShowRenamed] = QString::number(m_bShowRenamed ? 1 : 0);
+    xViewFilters.attributes()[sParameterShowDeleted] = QString::number(m_bShowDeleted ? 1 : 0);
+    xViewFilters.attributes()[sParameterShowMissing] = QString::number(m_bShowMissing ? 1 : 0);
+    xViewFilters.attributes()[sParameterShowUntracked] = QString::number(m_bShowUntracked ? 1 : 0);
+    xViewFilters.attributes()[sParameterShowIgnored] = QString::number(m_bShowIgnored ? 1 : 0);
+    xConfig << xViewFilters;
+
     xConfig.saveXMLToFile(configFileName());
 }
 
@@ -697,6 +740,18 @@ void CController::loadConfiguration()
     int iLayoutIndex = xLayout.attributes()[sParameterName].toInt(&bLayoutConversionSucceeded);
     if (bLayoutConversionSucceeded)
         setCurrentLayoutIndex(iLayoutIndex);
+
+    // Load view filters, defaults apply when the node or an attribute is missing
+    CXMLNode xViewFilters = xConfig.getNodeByTagName(sParameterViewFilters);
+    const QMap<QString, QString>& mViewAttributes = xViewFilters.attributes();
+    m_bShowClean = readBoolAttribute(mViewAttributes, sParameterShowClean, m_bShowClean);
+    m_bShowAdded = readBoolAttribute(mViewAttributes, sParameterShowAdded, m_bShowAdded);
+    m_bShowModified = readBoolAttribute(mViewAttributes, sParameterShowModified, m_bShowModified);
+    m_bShowRenamed = readBoolAttribute(mViewAttributes, sParameterShowRenamed, m_bShowRenamed);
+    m_bShowDeleted = readBoolAttribute(mViewAttributes, sParameterShowDeleted, m_bShowDeleted);
+    m_bShowMissing = readBoolAttribute(mViewAttributes, sParameterShowMissing, m_bShowMissing);
+    m_bShowUntracked = readBoolAttribute(mViewAttributes, sParameterShowUntracked, m_bShowUntracked);
+    m_bShowIgnored = readBoolAttribute(mViewAttributes, sParameterShowIgnored, m_bShowIgnored);
 }
 
 //-------------------------------------------------------------------------------------------------
