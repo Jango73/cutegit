@@ -37,6 +37,16 @@ public:
     static const QString sDiffIndexPrefix;
     static const QString sDiffNoNewlinePrefix;
     static const QString sDiffContextPrefix;
+    static const QString sDiffNewFilePrefix;
+    static const QString sDiffDeletedFilePrefix;
+    static const QString sDiffOldModePrefix;
+    static const QString sDiffNewModePrefix;
+    static const QString sDiffSimilarityPrefix;
+    static const QString sDiffDissimilarityPrefix;
+    static const QString sDiffRenameFromPrefix;
+    static const QString sDiffRenameToPrefix;
+    static const QString sDiffCopyFromPrefix;
+    static const QString sDiffCopyToPrefix;
 
     //-------------------------------------------------------------------------------------------------
     // Patch blocks shared by patch generation

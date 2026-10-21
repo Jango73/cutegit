@@ -95,6 +95,8 @@ const QString CGitCommands::sCommandUnstageAll          = "git reset .";
 // zero-context hunks (--unidiff-zero) for the same reason: kept hunks
 // hold only selected changes plus kept context.
 const QString CGitCommands::sCommandUnstagedDiff        = "git diff --no-color -U3 -- \"%1\"";
+const QString CGitCommands::sCommandUnstagedDiffUntracked = "git diff --no-color -U3 --no-index -- \"/dev/null\" \"%1\"";
+const QString CGitCommands::sCommandIsTracked            = "git ls-files --error-unmatch -- \"%1\"";
 const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCachedReverse = "git apply --cached --reverse --unidiff-zero \"%1\"";
@@ -494,7 +496,26 @@ void CGitCommands::patchApply(const QString& sPath, const QString& sFullName)
 
 void CGitCommands::unstagedFileDiff(const QString& sPath, const QString& sFullName)
 {
-    QString sCommand = QString(sCommandUnstagedDiff).arg(sFullName);
+    // Untracked files are invisible to plain git diff: compare the working
+    // tree file against /dev/null so its content shows up as added lines.
+    // A relative path keeps the diff headers (a/<relative> b/<relative>)
+    // consistent with tracked files, so patch building and staging keep
+    // working on the parsed lines
+    QString sCommand;
+    int iExitCode = 0;
+
+    execNow(sPath, QString(sCommandIsTracked).arg(sFullName), QMap<QString, QString>(), &iExitCode);
+
+    if (iExitCode == 0)
+    {
+        sCommand = QString(sCommandUnstagedDiff).arg(sFullName);
+    }
+    else
+    {
+        QString sRelativeName = QDir(sPath).relativeFilePath(sFullName);
+        sCommand = QString(sCommandUnstagedDiffUntracked).arg(sRelativeName);
+    }
+
     exec(new CProcessCommand(CEnums::eUnstagedFileDiff, sPath, sCommand, false, QMap<QString, QString>(), sFullName));
 }
 
@@ -1087,7 +1108,12 @@ void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
         {
             bAtLeastOneLineOK = true;
 
-            if (sLine.startsWith(CDiffConstants::sDiffIndexPrefix) || sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix))
+            if (sLine.startsWith(CDiffConstants::sDiffIndexPrefix) || sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffNewFilePrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedFilePrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffOldModePrefix) || sLine.startsWith(CDiffConstants::sDiffNewModePrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffSimilarityPrefix) || sLine.startsWith(CDiffConstants::sDiffDissimilarityPrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffRenameFromPrefix) || sLine.startsWith(CDiffConstants::sDiffRenameToPrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffCopyFromPrefix) || sLine.startsWith(CDiffConstants::sDiffCopyToPrefix))
             {
                 continue;
             }

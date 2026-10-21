@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QDateTime>
+#include <QDir>
 #include <QFileInfo>
 
 // qt-plus
@@ -10,6 +11,7 @@
 
 // Application
 #include "CSvnCommands.h"
+#include "../CUtils.h"
 
 /*!
     \class CSvnCommands
@@ -41,6 +43,7 @@ const QString CSvnCommands::sCommandDiffTwoRevisions   = "svn diff -r %1:%2";
 const QString CSvnCommands::sCommandFileLog            = "svn log --limit %1 --xml \"%2\"";
 const QString CSvnCommands::sCommandGraphLog           = "svn log --limit %1 --xml";
 const QString CSvnCommands::sCommandInfo               = "svn info";
+const QString CSvnCommands::sCommandInfoForFile         = "svn info \"%1\"";
 const QString CSvnCommands::sCommandListBranches       = "svn list \"^/branches\"";
 const QString CSvnCommands::sCommandRevert             = "svn revert \"%1\"";
 const QString CSvnCommands::sCommandStatus             = "svn status";
@@ -398,8 +401,44 @@ void CSvnCommands::pull(const QString& sPath)
 
 void CSvnCommands::unstagedFileDiff(const QString& sPath, const QString& sFullName)
 {
-    QString sCommand = QString(sCommandDiffFile).arg(sFullName);
-    exec(new CProcessCommand(CEnums::eUnstagedFileDiff, sPath, sCommand));
+    // Unversioned files are invisible to svn diff: synthesize an svn-style
+    // new-file diff from the working tree content so it shows up as added
+    // lines. The synthetic text reuses handleDiffOutput, so display stays
+    // consistent with tracked files
+    int iExitCode = 0;
+
+    execNow(sPath, QString(sCommandInfoForFile).arg(sFullName), QMap<QString, QString>(), &iExitCode);
+
+    if (iExitCode == 0)
+    {
+        QString sCommand = QString(sCommandDiffFile).arg(sFullName);
+        exec(new CProcessCommand(CEnums::eUnstagedFileDiff, sPath, sCommand));
+        return;
+    }
+
+    QString sRelativeName = QDir(sPath).relativeFilePath(sFullName);
+    QString sContent = CUtils::getTextFileContents(sFullName);
+    QStringList lFileLines;
+
+    if (not sContent.isEmpty())
+    {
+        lFileLines = sContent.split(NEW_LINE);
+
+        // A trailing newline is a line terminator, not an extra empty line
+        if (not lFileLines.isEmpty() && lFileLines.last().isEmpty() && sContent.endsWith(NEW_LINE))
+            lFileLines.removeLast();
+    }
+
+    QStringList lDiff;
+    lDiff << QString("Index: %1").arg(sRelativeName);
+    lDiff << QString("--- %1\t(revision 0)").arg(sRelativeName);
+    lDiff << QString("+++ %1\t(working copy)").arg(sRelativeName);
+    lDiff << QString("@@ -0,0 +1,%1 @@").arg(lFileLines.count());
+
+    for (QString sLine : lFileLines)
+        lDiff << ("+" + sLine);
+
+    handleDiffOutput(CProcessResult(sPath, CEnums::eUnstagedFileDiff, lDiff.join(NEW_LINE), ""));
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -27,8 +27,8 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 (Qt 6.2.4 on this machine); the reference Linux build is qmake6 + make via
 `scripts/linux/`.
 
-## Main rule
-**If the guidelines below are not followed, all modifications will be rejected.**
+## Release vs debug
+- Work and build in RELEASE mode. DEBUG is used when tracking bugs (hence its name) : either when debug logs or an attachement with a debugger is needed.
 
 ## Communication Guidelines
 - NEVER use emojis in responses.

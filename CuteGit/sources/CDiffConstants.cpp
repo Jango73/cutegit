@@ -23,6 +23,16 @@ const QString CDiffConstants::sDiffDeletedHeaderPrefix = "---";
 const QString CDiffConstants::sDiffIndexPrefix = "index";
 const QString CDiffConstants::sDiffNoNewlinePrefix = "\\";
 const QString CDiffConstants::sDiffContextPrefix = " ";
+const QString CDiffConstants::sDiffNewFilePrefix = "new file";
+const QString CDiffConstants::sDiffDeletedFilePrefix = "deleted file";
+const QString CDiffConstants::sDiffOldModePrefix = "old mode";
+const QString CDiffConstants::sDiffNewModePrefix = "new mode";
+const QString CDiffConstants::sDiffSimilarityPrefix = "similarity";
+const QString CDiffConstants::sDiffDissimilarityPrefix = "dissimilarity";
+const QString CDiffConstants::sDiffRenameFromPrefix = "rename from";
+const QString CDiffConstants::sDiffRenameToPrefix = "rename to";
+const QString CDiffConstants::sDiffCopyFromPrefix = "copy from";
+const QString CDiffConstants::sDiffCopyToPrefix = "copy to";
 
 const QString CDiffConstants::sNullFileName = "/dev/null";
 const QString CDiffConstants::sPatchOldSideFormat = "a/%1";

@@ -329,6 +329,8 @@ protected:
     static const QString sCommandUnstage;
     static const QString sCommandUnstageAll;
     static const QString sCommandUnstagedDiff;
+    static const QString sCommandUnstagedDiffUntracked;
+    static const QString sCommandIsTracked;
     static const QString sCommandStagedDiff;
     static const QString sCommandApplyPatchCached;
     static const QString sCommandApplyPatchCachedReverse;

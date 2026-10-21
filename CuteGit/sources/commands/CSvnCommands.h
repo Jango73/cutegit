@@ -172,6 +172,7 @@ protected:
     static const QString sCommandFileLog;
     static const QString sCommandGraphLog;
     static const QString sCommandInfo;
+    static const QString sCommandInfoForFile;
     static const QString sCommandListBranches;
     static const QString sCommandRevert;
     static const QString sCommandStatus;
