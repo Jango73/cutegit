@@ -445,7 +445,8 @@ protected:
     void setStatusText(const QString& sText);
 
     //! Shows the finished or failed status text of a commit, amend, push, pull or fetch operation
-    void reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode);
+    //! On failure the status bar shows the process error summary when one is found, the generic failed text otherwise
+    void reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode, const QString& sOutput);
 
     //! Stores the raw output of a staged or unstaged diff
     void setWorkingTreeDiffString(CEnums::EProcessCommand eCommand, const QString& sOutput, const QString& sUserData);

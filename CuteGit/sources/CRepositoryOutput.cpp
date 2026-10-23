@@ -54,40 +54,107 @@ void CRepository::setStatusText(const QString& sText)
 
 /************************************************************************/
 /*!
-    \fn void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode)
+    \fn QString failureSummary(const QString& sOutput)
+    Returns the most meaningful error line of a failed process output, for the status bar.
+    Prefers the remote hook message, then the rejected reference line, then the first
+    fatal, error or abort line. Returns an empty string when no error line is found.
+*/
+static QString failureSummary(const QString& sOutput)
+{
+    QString sRejectedLine;
+    QString sErrorLine;
+
+    for (QString sLine : sOutput.split(NEW_LINE))
+    {
+        sLine = sLine.trimmed();
+
+        if (sLine.isEmpty())
+            continue;
+
+        if (sLine.startsWith("remote:"))
+        {
+            QString sRemoteLine = sLine.mid(QString("remote:").length()).trimmed();
+
+            if (not sRemoteLine.isEmpty())
+                return sRemoteLine;
+        }
+        else if (sLine.startsWith("!"))
+        {
+            if (sRejectedLine.isEmpty())
+                sRejectedLine = sLine.mid(1).trimmed();
+        }
+        else if (sLine.startsWith("fatal:") || sLine.startsWith("error:") || sLine.startsWith("abort:"))
+        {
+            if (sErrorLine.isEmpty())
+                sErrorLine = sLine;
+        }
+    }
+
+    if (not sRejectedLine.isEmpty())
+        return sRejectedLine;
+
+    return sErrorLine;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/************************************************************************/
+/*!
+    \fn void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode, const QString& sOutput)
     Shows the finished or failed status text of a commit, amend, push, pull or fetch operation.
     A zero exit code means success, anything else means failure.
+    On failure the status bar shows the process error summary when one is found, the generic failed text otherwise.
 */
-void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode)
+void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode, const QString& sOutput)
 {
     bool bSucceeded = (iExitCode == 0);
+    QString sFinishedText;
+    QString sFailedText;
 
     switch (eCommand)
     {
     case CEnums::eCommit:
-        setStatusText(bSucceeded ? Strings::s_sCommitFinished : Strings::s_sCommitFailed);
+        sFinishedText = Strings::s_sCommitFinished;
+        sFailedText = Strings::s_sCommitFailed;
         break;
 
     case CEnums::eAmend:
-        setStatusText(bSucceeded ? Strings::s_sAmendFinished : Strings::s_sAmendFailed);
+        sFinishedText = Strings::s_sAmendFinished;
+        sFailedText = Strings::s_sAmendFailed;
         break;
 
     case CEnums::ePush:
     case CEnums::eForcePush:
     case CEnums::ePushAsWIP:
-        setStatusText(bSucceeded ? Strings::s_sPushFinished : Strings::s_sPushFailed);
+        sFinishedText = Strings::s_sPushFinished;
+        sFailedText = Strings::s_sPushFailed;
         break;
 
     case CEnums::ePull:
-        setStatusText(bSucceeded ? Strings::s_sPullFinished : Strings::s_sPullFailed);
+        sFinishedText = Strings::s_sPullFinished;
+        sFailedText = Strings::s_sPullFailed;
         break;
 
     case CEnums::eFetch:
-        setStatusText(bSucceeded ? Strings::s_sFetchFinished : Strings::s_sFetchFailed);
+        sFinishedText = Strings::s_sFetchFinished;
+        sFailedText = Strings::s_sFetchFailed;
         break;
 
     default:
         break;
+    }
+
+    if (sFinishedText.isEmpty())
+        return;
+
+    if (bSucceeded)
+    {
+        setStatusText(sFinishedText);
+    }
+    else
+    {
+        QString sSummary = failureSummary(sOutput);
+        setStatusText(sSummary.isEmpty() ? sFailedText : sSummary);
     }
 }
 
@@ -173,7 +240,7 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
 
         refresh();
 
-        reportOperationStatus(eCommand, iExitCode);
+        reportOperationStatus(eCommand, iExitCode, sOutput);
         break;
     }
 
