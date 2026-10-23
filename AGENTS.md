@@ -75,6 +75,66 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 - It is *STRICTLY FORBIDDEN* to launch MORE THAN ONE subagent at a time.
 - Do NOT cut lines at 80 (or 100, or whatever) when writing plain text documents such as markdown. This does NOT apply to code.
 
+### Header format
+- Always respect the following format for classes :
+```
+class <export> CSomeClass : public CSomeParentClass
+{
+    friend class CSomeFriendClass;
+
+public:
+
+    //-------------------------------------------------------------------------------------------------
+    // Constructors and destructor
+    //-------------------------------------------------------------------------------------------------
+
+    //!
+    CSomeClass();
+
+    //-------------------------------------------------------------------------------------------------
+    // Setters
+    //-------------------------------------------------------------------------------------------------
+
+    //! Sets something
+    void setSomeMember(QString sSomeString);
+
+    //-------------------------------------------------------------------------------------------------
+    // Getters
+    //-------------------------------------------------------------------------------------------------
+
+    //! Gets something
+    QString getSomeMember();
+
+    //-------------------------------------------------------------------------------------------------
+    // Virtual methods
+    //-------------------------------------------------------------------------------------------------
+
+    virtual QString someVirtualMethod();
+
+    //-------------------------------------------------------------------------------------------------
+    // Overridden methods
+    //-------------------------------------------------------------------------------------------------
+
+    virtual QString someOverridenMethod() Q_DECL_OVERRIDE;
+
+    //-------------------------------------------------------------------------------------------------
+    // Control methods
+    //-------------------------------------------------------------------------------------------------
+
+    //! Does something
+    void doSomething();
+
+    //-------------------------------------------------------------------------------------------------
+    // Properties
+    //-------------------------------------------------------------------------------------------------
+
+protected:
+
+    QString   m_sSomeString1;
+    QString   m_sSomeString2;
+};
+```
+
 ### Commit message
 Describe the changes in a short sentence.
 
