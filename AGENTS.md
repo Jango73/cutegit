@@ -18,7 +18,7 @@ for Qt6 (see `README.md`). Layout:
 - `CuteGit/` (application): `CuteGit.pro` (subdirs) + `CuteGit.pri`, sources in
   `CuteGit/sources/` (`CController`, `CRepository`, models, `commands/`),
   QML UI in `CuteGit/qml/`, `deploy/`.
-- `scripts/linux/`: `build.sh`, `clean.sh`, `deps.sh`, `run.sh`, `smoke.sh`,
+- `scripts/linux/`: `build.sh`, `ci-local.sh`, `clean.sh`, `deps.sh`, `run.sh`,
   `package.sh`, `set-version.sh`. `scripts/windows/`: `build.bat`, `run.bat`.
 - `Media/`: assets.
 
@@ -155,12 +155,13 @@ Never leave a blank line in the commit message: lines follow each other directly
   then `make -j`). Builds `qt-plus` (`libqt-plus[d].so` in `qt-plus/bin/`),
   then `CuteGit` (`CuteGitApp[d]` in `build-<debug|release>/CuteGit/bin/`).
 - Clean: `./scripts/linux/clean.sh [--debug|--release|--all]`
+- Local CI: `./scripts/linux/ci-local.sh [--debug|--release]`
+  (local mirror of the GitHub CI: builds, then runs the unit tests
+  `tst_patchbuilder / tst_DiffView / tst_startup / tst_repository`,
+  logs to `tmp/ci-local.log`). This is the only supported
+  way to run the tests.
 - Run (interactive GUI, blocks): `./scripts/linux/run.sh [--debug|--release]`
   (logs to `tmp/run.log`, sets `LD_LIBRARY_PATH` on `qt-plus/bin/`).
-- Headless smoke test (non-blocking, for agents): `./scripts/linux/smoke.sh
-  [--debug|--release] [--wait SECONDS]` (default 8s, max 15s). Starts the
-  binary offscreen via `timeout`, success = still alive at the end. NEVER run
-  the GUI directly from an agent shell: it never exits.
 
 ## Tool Execution Policy
 - `tmp/` at the repo root is the folder for temporary/scratch files. It is

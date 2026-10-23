@@ -24,9 +24,9 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 ```
 ./scripts/linux/build.sh [--debug|--release]
 ```
-* Run the automated tests:
+* Run the automated tests (local CI, same as GitHub CI):
 ```
-./scripts/linux/tests.sh [--debug|--release]
+./scripts/linux/ci-local.sh [--debug|--release]
 ```
 * Run the application:
 ```

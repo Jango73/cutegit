@@ -53,11 +53,8 @@ jobs:
             qml6-module-qtquick-window \
             libqt6serialport6-dev
 
-      - name: Build release
-        run: ./scripts/linux/build.sh --release
-
-      - name: Run tests
-        run: ./scripts/linux/tests.sh --release
+      - name: Local CI check (build + tests)
+        run: ./scripts/linux/ci-local.sh
 
       - name: Upload Linux binary
         uses: actions/upload-artifact@v6
