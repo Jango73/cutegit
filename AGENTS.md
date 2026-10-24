@@ -23,7 +23,7 @@ for Qt6 (see `README.md`). Layout:
 - `Media/`: assets.
 
 Fresh clones have an empty `qt-plus/` until submodules are initialized
-(`git submodule update --init --recursive`). The application targets **Qt6**
+(`git submodule update --init --recursive`). The application targets Qt6
 (Qt 6.2.4 on this machine); the reference Linux build is qmake6 + make via
 `scripts/linux/`.
 
@@ -38,33 +38,33 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 - NEVER create a commit unless the user explicitly asks for it in the current conversation.
 
 ## Architecture and Reuse Rules
-- Bidirectional coupling is **STRICTLY FORBIDDEN**, both when writing code from scratch and when delivering a fix. Keep dependencies unidirectional and break cycles instead of introducing or preserving them. This applies to headers first: no inclusion cycles, even "managed" by forward declarations (Qt6 `moc` needs complete types, see below).
+- Bidirectional coupling is STRICTLY FORBIDDEN, both when writing code from scratch and when delivering a fix. Keep dependencies unidirectional and break cycles instead of introducing or preserving them. This applies to headers first: no inclusion cycles, even "managed" by forward declarations (Qt6 `moc` needs complete types, see below).
 - Ownership flows `CController` -> `CRepository` -> models. Back-pointers use plain members, never `Q_PROPERTY` (which would reintroduce a header cycle).
 - Any behavior likely to appear in multiple places MUST be implemented as a reusable module in `qt-plus/source/cpp`, not duplicated in the application.
-- **Container usage**: use Qt containers (`QVector`, `QMap`, `QStringList`) where they exist. Do not introduce custom linked-list infrastructure.
-- **Qt6 moc completeness**: every type used in a class's own `Q_PROPERTY`, signals and slots MUST be completely defined in that header (directly or transitively). Forward-declared pointer types are NOT enough: `moc` generates static metatype code requiring `sizeof`. When adding a property over an application type, include its header; if that creates a cycle, remove the property or break the cycle first.
-- **No globals**: Before adding a global variable, **ALWAYS ASK** if permitted.
+- Container usage: use Qt containers (`QVector`, `QMap`, `QStringList`) where they exist. Do not introduce custom linked-list infrastructure.
+- Qt6 moc completeness: every type used in a class's own `Q_PROPERTY`, signals and slots MUST be completely defined in that header (directly or transitively). Forward-declared pointer types are NOT enough: `moc` generates static metatype code requiring `sizeof`. When adding a property over an application type, include its header; if that creates a cycle, remove the property or break the cycle first.
+- No globals: Before adding a global variable, ALWAYS ASK if permitted.
 
 ## Coding Conventions
-- **Types**: Use Qt types (`QString`, `QMap`, ...) where they exist instead of introducing parallel raw-C representations.
-- **Dependencies**: This is a Qt user-space project. Qt and the STL are allowed. Do NOT add new third-party libraries/modules (vendored or system) without asking.
-- **TEXT literals**: Write log/UI messages directly as `QString`.
-- **Declaration order**: Group declarations by type. 1: macros / 2: type definitions / 3: inline functions / 4: external functions / 5: other
-- **Function order**: DO NOT OVERUSE forward declarations. Define functions before they are used.
-- **I18n**: Write comments, console output and technical doc in english.
-- **Naming**: PascalCase for classes/variables/members (`C`-prefixed classes, `m_`/`g_`/`p_` prefixes as in the existing code), SCREAMING_SNAKE_CASE for structs/defines.
-- **Naming clarity**: In addition to using full words, every name must express its intent clearly and without ambiguity.
-- **Comments**: For single-line comments, use `//`, not `/*`.
-- **Style**: 4-space indentation. Match surrounding code instead of reformatting whole files.
-- **Numbers**: Hexadecimal for constant numbers, except for sizes, vectors, points and time.
-- **Number suffixes**: Do not add numeric suffixes like `u` to constants; they are not wanted here.
-- **Documentation wording**: Use timeless technical wording. Do not use temporal terms like "now", "currently", "at this time" in documentation/comments.
-- **Languages**: C++ for the application, QML for the UI, avoid Python.
-- **Unused parameters**: Use `Q_UNUSED()` to suppress the "unused parameter" warning.
-- **Clean code**: No duplicate code. Create intermediate functions to avoid it. This also applies to data: create intermediate structures to avoid duplicating data.
-- **Functions**: Add a doxygen header to functions and separate all functions with a 75 character line such as : /************************************************************************/
-- **File size**: Keep source files under 1000 lines; split by responsibility before crossing this limit.
-- **Vocabulary**:
+- Types: Use Qt types (`QString`, `QMap`, ...) where they exist instead of introducing parallel raw-C representations.
+- Dependencies: This is a Qt user-space project. Qt and the STL are allowed. Do NOT add new third-party libraries/modules (vendored or system) without asking.
+- TEXT literals: Write log/UI messages directly as `QString`.
+- Declaration order: Group declarations by type. 1: macros / 2: type definitions / 3: inline functions / 4: external functions / 5: other
+- Function order: DO NOT OVERUSE forward declarations. Define functions before they are used.
+- I18n: Write comments, console output and technical doc in english.
+- Naming: PascalCase for classes/variables/members (`C`-prefixed classes, `m_`/`g_`/`p_` prefixes as in the existing code), SCREAMING_SNAKE_CASE for structs/defines.
+- Naming clarity: In addition to using full words, every name must express its intent clearly and without ambiguity.
+- Comments: For single-line comments, use `//`, not `/*`.
+- Style: 4-space indentation. Match surrounding code instead of reformatting whole files.
+- Numbers: Hexadecimal for constant numbers, except for sizes, vectors, points and time.
+- Number suffixes: Do not add numeric suffixes like `u` to constants; they are not wanted here.
+- Documentation wording: Use timeless technical wording. Do not use temporal terms like "now", "currently", "at this time" in documentation/comments.
+- Languages: C++ for the application, QML for the UI, avoid Python.
+- Unused parameters: Use `Q_UNUSED()` to suppress the "unused parameter" warning.
+- Clean code: No duplicate code. Create intermediate functions to avoid it. This also applies to data: create intermediate structures to avoid duplicating data.
+- Functions: Add a doxygen header to functions and separate all functions with a 75 character line such as : //
+- File size: Keep source files under 1000 lines; split by responsibility before crossing this limit.
+- Vocabulary:
   - NEVER use abbreviations; ALWAYS use full words (acronyms are OK, `RegExp` is allowed as the standard short form of `RegularExpression`).
   - No figurative language: respect the repository vocabulary, use every word
     in its primary (literal) sense. Name things for what they are, not for
