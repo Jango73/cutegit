@@ -426,6 +426,12 @@ protected:
     //! Refreshes the commit details from the loaded logs and commit diff
     void updateCommitDetails();
 
+    //! Refreshes branch/tag labels of every commit model from the repository
+    void refreshCommitLabels();
+
+    //! Refreshes branch/tag labels of a single commit on every commit model
+    void refreshLabelsForCommitOnModels(const QString& sCommitId);
+
     //! Returns true when a working tree diff result still belongs to the displayed file
     bool workingTreeDiffMatchesCurrentFile(CDiffModel* pModel, const QString& sUserData) const;
 
@@ -518,7 +524,4 @@ protected slots:
 
     //! Indirectly called by models when they need more data for graph (lazy loading)
     void onRequestGraphData(int iStartIndex, int iCount);
-
-    //! Refreshes branch/tag labels of every commit model from the repository
-    void refreshCommitLabels();
 };

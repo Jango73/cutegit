@@ -115,7 +115,7 @@ void CBranchModel::setBranchList(QList<CBranch*> lNewList, CEnums::ELabelType eT
 
 //-------------------------------------------------------------------------------------------------
 
-void CBranchModel::setBranchHeadCommit(const QString& sBranch, const QString& sCommitId)
+QString CBranchModel::setBranchHeadCommit(const QString& sBranch, const QString& sCommitId)
 {
     for (int iBranchIndex = 0; iBranchIndex < m_lBranches.count(); iBranchIndex++)
     {
@@ -123,9 +123,13 @@ void CBranchModel::setBranchHeadCommit(const QString& sBranch, const QString& sC
 
         if (pBranch->name() == sBranch)
         {
+            QString sPreviousCommitId = pBranch->commitId();
             pBranch->setCommitId(sCommitId);
             emit dataChanged(index(iBranchIndex), index(iBranchIndex));
-            break;
+
+            return sPreviousCommitId;
         }
     }
+
+    return QString("");
 }

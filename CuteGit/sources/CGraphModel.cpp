@@ -1,4 +1,7 @@
 
+// Qt
+#include <QDebug>
+
 // Application
 #include "CGraphModel.h"
 #include "CGraphLayout.h"
@@ -42,9 +45,21 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
     QList<CLogLine*> lIncomingLines;
 
     for (CLogLine* pLine : tCollection.lines())
-        lIncomingLines << pLine;
+    {
+        CGraphLine* pGraphLine = qobject_cast<CGraphLine*>(pLine);
+        Q_ASSERT(pGraphLine != nullptr);
 
-    CCommitLogModel::setLines(lIncomingLines, tCollection.startIndex(), tCollection.potentialCount());
+        if (pGraphLine == nullptr)
+        {
+            qWarning() << "CGraphModel::setLines() : skipping a non-graph line";
+            delete pLine;
+            continue;
+        }
+
+        lIncomingLines << pGraphLine;
+    }
+
+    reconcileLines(lIncomingLines, tCollection.startIndex(), tCollection.potentialCount());
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -67,7 +82,10 @@ QVariant CGraphModel::data(const QModelIndex& index, int role) const
     if (pLine == nullptr)
         return QVariant();
 
+    // Only graph lines ever enter this model: the reconciler is protected and
+    // the typed setLines wrapper guards every incoming line
     const CGraphLine* pGraphLine = static_cast<const CGraphLine*>(pLine);
+    Q_ASSERT(qobject_cast<const CGraphLine*>(pLine) != nullptr);
 
     switch (role)
     {
@@ -93,10 +111,16 @@ void CGraphModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>&
     QList<CGraphLine*> lIncomingGraphLines;
 
     for (CLogLine* pLine : lLoadedLines)
+    {
+        Q_ASSERT(qobject_cast<CGraphLine*>(pLine) != nullptr);
         lLoadedGraphLines << static_cast<CGraphLine*>(pLine);
+    }
 
     for (CLogLine* pLine : lIncomingLines)
+    {
+        Q_ASSERT(qobject_cast<CGraphLine*>(pLine) != nullptr);
         lIncomingGraphLines << static_cast<CGraphLine*>(pLine);
+    }
 
     layoutIncomingLines(lLoadedGraphLines, lIncomingGraphLines, iStartIndex);
 }
@@ -105,14 +129,14 @@ void CGraphModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>&
 
 bool CGraphModel::isSameLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const
 {
+    if (not isSameCommitContent(pExistingLine, pIncomingLine))
+        return false;
+
     if (pExistingLine == nullptr || pIncomingLine == nullptr)
-        return pExistingLine == pIncomingLine;
+        return true;
 
     const CGraphLine* pExistingGraphLine = static_cast<const CGraphLine*>(pExistingLine);
     const CGraphLine* pIncomingGraphLine = static_cast<const CGraphLine*>(pIncomingLine);
-
-    if (pExistingGraphLine->commitId() != pIncomingGraphLine->commitId())
-        return false;
 
     if (pExistingGraphLine->decorations() != pIncomingGraphLine->decorations())
         return false;
@@ -126,15 +150,19 @@ bool CGraphModel::isSameLine(const CLogLine* pExistingLine, const CLogLine* pInc
     if (pExistingGraphLine->graphConnections() != pIncomingGraphLine->graphConnections())
         return false;
 
-    if (pExistingGraphLine->author() != pIncomingGraphLine->author())
-        return false;
+    return true;
+}
 
-    if (pExistingGraphLine->date() != pIncomingGraphLine->date())
-        return false;
+//-------------------------------------------------------------------------------------------------
 
-    // Existing lines may hold the full message while incoming lines hold the subject:
-    // compare the first line only
-    return pExistingGraphLine->message().split(NEW_LINE).first() == pIncomingGraphLine->message().split(NEW_LINE).first();
+QList<CLabel*> CGraphModel::labelsFromLine(const CLogLine* pLine) const
+{
+    const CGraphLine* pGraphLine = qobject_cast<const CGraphLine*>(pLine);
+
+    if (pGraphLine == nullptr)
+        return QList<CLabel*>();
+
+    return pGraphLine->createLabels();
 }
 
 //-------------------------------------------------------------------------------------------------

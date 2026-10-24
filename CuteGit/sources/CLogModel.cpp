@@ -20,28 +20,14 @@ CLogModel::~CLogModel()
 
 void CLogModel::setLines(CLogLineCollection tCollection)
 {
-    CCommitLogModel::setLines(tCollection.lines(), tCollection.startIndex(), tCollection.potentialCount());
+    reconcileLines(tCollection.lines(), tCollection.startIndex(), tCollection.potentialCount());
 }
 
 //-------------------------------------------------------------------------------------------------
 
 bool CLogModel::isSameLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const
 {
-    if (pExistingLine == nullptr || pIncomingLine == nullptr)
-        return pExistingLine == pIncomingLine;
-
-    if (pExistingLine->commitId() != pIncomingLine->commitId())
-        return false;
-
-    if (pExistingLine->author() != pIncomingLine->author())
-        return false;
-
-    if (pExistingLine->date() != pIncomingLine->date())
-        return false;
-
-    // Existing lines may hold the full message while incoming lines hold the subject:
-    // compare the first line only
-    return pExistingLine->message().split(NEW_LINE).first() == pIncomingLine->message().split(NEW_LINE).first();
+    return isSameCommitContent(pExistingLine, pIncomingLine);
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -38,7 +38,7 @@ CommitLogTabBase {
         diffFromCommitId: root.diffFromCommitId
         diffToCommitId: root.diffToCommitId
 
-        onItemClicked: root.showCommitDiff(commitId)
+        onItemClicked: root.showCommitDiffPrevious(commitId)
         onItemRightClicked: root.showCommitMenu(commitId, message)
         onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
         onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)

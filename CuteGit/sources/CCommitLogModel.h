@@ -47,7 +47,7 @@ public:
 public:
 
     //-------------------------------------------------------------------------------------------------
-    // Constructor and destructor
+    // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
     //! Default constructor
@@ -63,9 +63,6 @@ public:
     //! Clears all lines
     void clear();
 
-    //! Reconciles loaded rows with incoming lines without flicker
-    void setLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount);
-
     //! Returns role names
     virtual QHash<int, QByteArray> roleNames() const override;
 
@@ -75,16 +72,16 @@ public:
     //! Returns data
     virtual QVariant data(const QModelIndex& index, int role) const override;
 
-    //!
+    //! Returns true when more lines remain unloaded
     virtual bool canFetchMore(const QModelIndex& parent) const override;
 
-    //!
+    //! Loads the next page of lines through the subclass request
     virtual void fetchMore(const QModelIndex& parent) override;
 
     //! Returns the line showing a commit, nullptr when not loaded
     const CLogLine* findLine(const QString& sCommitId) const;
 
-    //!
+    //! Refreshes the rows showing a commit after its diff markers changed
     void commitChanged(const QString& sCommitId);
 
     //! Rebuilds branch/tag labels of every loaded commit from the repository
@@ -93,13 +90,13 @@ public:
     //! Rebuilds branch/tag labels of a single commit from the repository
     void refreshLabelsForCommit(const QString& sCommitId);
 
-    //!
+    //! Resets the model so views reload every row
     void invalidate();
 
 protected:
 
     //-------------------------------------------------------------------------------------------------
-    // Hooks for subclasses
+    // Virtual methods
     //-------------------------------------------------------------------------------------------------
 
     //! Lays out incoming lines before reconciliation, no-op by default
@@ -114,8 +111,28 @@ protected:
     //! Emits the fetchMore request of the subclass
     virtual void requestLines(int iStartIndex, int iCount) = 0;
 
+    //! Returns owned labels carried by a line itself, empty by default
+    virtual QList<CLabel*> labelsFromLine(const CLogLine* pLine) const;
+
+    //-------------------------------------------------------------------------------------------------
+    // Control methods
+    //-------------------------------------------------------------------------------------------------
+
+    //! Reconciles loaded rows with incoming lines without flicker
+    //! Only typed subclass wrappers call it, so stored lines always match the subclass line type
+    void reconcileLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount);
+
     //! Returns the line at a row, nullptr when out of range
     const CLogLine* lineAtRow(int iRow) const;
+
+    //! Returns true when both lines show the same commit content
+    static bool isSameCommitContent(const CLogLine* pExistingLine, const CLogLine* pIncomingLine);
+
+    //! Drops loaded rows beyond a kept row count, deleting their lines and orphaned labels
+    void trimTailToCount(int iKeepCount);
+
+    //! Emits dataChanged on every row showing a commit
+    void emitRowsForCommit(const QString& sCommitId);
 
     //! Deletes the labels of a commit when no remaining line shows it
     void pruneUnusedLabels(const QString& sCommitId);

@@ -15,7 +15,7 @@ public:
 
     enum ERoles
     {
-        eGraphCommitLaneRole = Qt::UserRole + 10,
+        eGraphCommitLaneRole = Qt::UserRole + 0x0A,
         eGraphVerticalsRole,
         eGraphConnectionsRole,
     };
@@ -23,7 +23,7 @@ public:
 public:
 
     //-------------------------------------------------------------------------------------------------
-    // Constructor & destructor
+    // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
     //! Default constructor
@@ -36,7 +36,7 @@ public:
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
-    //! Sets some lines
+    //! Lays out graph lines, then reconciles loaded rows with them without flicker
     void setLines(CGraphLineCollection tCollection);
 
     //! Returns role names
@@ -56,11 +56,12 @@ signals:
 protected:
 
     //-------------------------------------------------------------------------------------------------
-    // CCommitLogModel hooks
+    // Overridden methods
     //-------------------------------------------------------------------------------------------------
 
     virtual void prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>& lIncomingLines, int iStartIndex) override;
     virtual bool isSameLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const override;
     virtual int defaultPageSize() const override;
     virtual void requestLines(int iStartIndex, int iCount) override;
+    virtual QList<CLabel*> labelsFromLine(const CLogLine* pLine) const override;
 };

@@ -30,6 +30,8 @@ public:
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
-    //!
+    using CLogLineCollection::add;
+
+    //! Appends a graph line, keeping the typed overload visible alongside the base one
     void add(CGraphLine* pLine);
 };

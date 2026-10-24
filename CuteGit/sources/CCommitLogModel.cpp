@@ -5,6 +5,8 @@
 
 // Application
 #include "CCommitLogModel.h"
+#include "CEnums.h"
+#include "CLabel.h"
 #include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -35,7 +37,7 @@ void CCommitLogModel::clear()
 
 //-------------------------------------------------------------------------------------------------
 
-void CCommitLogModel::setLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount)
+void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount)
 {
     setPotentialCount(iPotentialCount);
 
@@ -80,18 +82,7 @@ void CCommitLogModel::setLines(QList<CLogLine*> lIncomingLines, int iStartIndex,
             if (bIdentical)
             {
                 if (m_iPotentialCount > iIncomingCount)
-                {
-                    while (m_lLines.count() > m_iPotentialCount)
-                    {
-                        int iLastIndex = m_lLines.count() - 1;
-                        beginRemoveRows(QModelIndex(), iLastIndex, iLastIndex);
-                        CLogLine* pRemovedLine = m_lLines.takeLast();
-                        endRemoveRows();
-                        QString sRemovedCommitId = pRemovedLine->commitId();
-                        delete pRemovedLine;
-                        pruneUnusedLabels(sRemovedCommitId);
-                    }
-                }
+                    trimTailToCount(m_iPotentialCount);
 
                 qDeleteAll(lIncomingLines);
 
@@ -134,7 +125,7 @@ void CCommitLogModel::setLines(QList<CLogLine*> lIncomingLines, int iStartIndex,
         }
         else
         {
-            qDebug() << "CCommitLogModel::setLines() : log lines must be sequential";
+            qDebug() << "CCommitLogModel::reconcileLines() : log lines must be sequential";
             delete lIncomingLines[iIndex];
             lIncomingLines[iIndex] = nullptr;
         }
@@ -143,18 +134,7 @@ void CCommitLogModel::setLines(QList<CLogLine*> lIncomingLines, int iStartIndex,
     // A divergent refresh makes rows beyond the new coverage stale: drop them so
     // later paginated loads restart from fresh data
     if (iStartIndex == 0)
-    {
-        while (m_lLines.count() > iStartIndex + iIncomingCount)
-        {
-            int iLastIndex = m_lLines.count() - 1;
-            beginRemoveRows(QModelIndex(), iLastIndex, iLastIndex);
-            CLogLine* pRemovedLine = m_lLines.takeLast();
-            endRemoveRows();
-            QString sRemovedCommitId = pRemovedLine->commitId();
-            delete pRemovedLine;
-            pruneUnusedLabels(sRemovedCommitId);
-        }
-    }
+        trimTailToCount(iStartIndex + iIncomingCount);
 
     // Lines may load after the branch data: the label refreshes triggered
     // by branch arrivals ran over no rows then, so sync here. Unchanged
@@ -274,20 +254,7 @@ void CCommitLogModel::fetchMore(const QModelIndex& parent)
 void CCommitLogModel::commitChanged(const QString& sCommitId)
 {
     syncLabelsForCommit(sCommitId);
-
-    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
-    {
-        CLogLine* pLine = m_lLines[iLineIndex];
-
-        if (pLine != nullptr)
-        {
-            if (pLine->commitId() == sCommitId)
-            {
-                emit dataChanged(index(iLineIndex), index(iLineIndex));
-                break;
-            }
-        }
-    }
+    emitRowsForCommit(sCommitId);
 }
 
 /*************************************************************************/
@@ -314,6 +281,7 @@ const CLogLine* CCommitLogModel::findLine(const QString& sCommitId) const
 void CCommitLogModel::refreshLabels()
 {
     QSet<QString> sHandledCommitIds;
+    QSet<QString> sChangedCommitIds;
 
     for (CLogLine* pLine : m_lLines)
     {
@@ -327,17 +295,33 @@ void CCommitLogModel::refreshLabels()
 
         sHandledCommitIds << sCommitId;
 
-        if (not syncLabelsForCommit(sCommitId))
-            continue;
+        if (syncLabelsForCommit(sCommitId))
+            sChangedCommitIds << sCommitId;
+    }
 
-        for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
+    if (sChangedCommitIds.isEmpty())
+        return;
+
+    // One notification covers every changed row: per-row emissions scale
+    // poorly on large graphs and this refresh runs on every branch/tag arrival
+    int iFirstRow = -1;
+    int iLastRow = -1;
+
+    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
+    {
+        CLogLine* pLine = m_lLines[iLineIndex];
+
+        if (pLine != nullptr && sChangedCommitIds.contains(pLine->commitId()))
         {
-            CLogLine* pOtherLine = m_lLines[iLineIndex];
+            if (iFirstRow < 0)
+                iFirstRow = iLineIndex;
 
-            if (pOtherLine != nullptr && pOtherLine->commitId() == sCommitId)
-                emit dataChanged(index(iLineIndex), index(iLineIndex));
+            iLastRow = iLineIndex;
         }
     }
+
+    if (iFirstRow >= 0)
+        emit dataChanged(index(iFirstRow), index(iLastRow), {eLabelsRole});
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -350,13 +334,7 @@ void CCommitLogModel::refreshLabelsForCommit(const QString& sCommitId)
     if (not syncLabelsForCommit(sCommitId))
         return;
 
-    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
-    {
-        CLogLine* pLine = m_lLines[iLineIndex];
-
-        if (pLine != nullptr && pLine->commitId() == sCommitId)
-            emit dataChanged(index(iLineIndex), index(iLineIndex));
-    }
+    emitRowsForCommit(sCommitId);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -374,6 +352,80 @@ void CCommitLogModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLin
     Q_UNUSED(lLoadedLines)
     Q_UNUSED(lIncomingLines)
     Q_UNUSED(iStartIndex)
+}
+
+//-------------------------------------------------------------------------------------------------
+
+QList<CLabel*> CCommitLogModel::labelsFromLine(const CLogLine* pLine) const
+{
+    Q_UNUSED(pLine)
+
+    return QList<CLabel*>();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*************************************************************************/
+// Returns the signature identifying a label: its type and name
+static QString labelSignature(const CLabel* pLabel)
+{
+    return QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
+}
+
+//-------------------------------------------------------------------------------------------------
+
+// Returns true when both lines show the same commit content
+// Existing lines may hold the full message while incoming lines hold the subject:
+// only the first line is compared
+bool CCommitLogModel::isSameCommitContent(const CLogLine* pExistingLine, const CLogLine* pIncomingLine)
+{
+    if (pExistingLine == nullptr || pIncomingLine == nullptr)
+        return pExistingLine == pIncomingLine;
+
+    if (pExistingLine->commitId() != pIncomingLine->commitId())
+        return false;
+
+    if (pExistingLine->author() != pIncomingLine->author())
+        return false;
+
+    if (pExistingLine->date() != pIncomingLine->date())
+        return false;
+
+    return pExistingLine->message().split(NEW_LINE).first() == pIncomingLine->message().split(NEW_LINE).first();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+// Drops loaded rows beyond a kept row count, deleting their lines and orphaned labels
+void CCommitLogModel::trimTailToCount(int iKeepCount)
+{
+    while (m_lLines.count() > iKeepCount)
+    {
+        int iLastIndex = m_lLines.count() - 1;
+        beginRemoveRows(QModelIndex(), iLastIndex, iLastIndex);
+        CLogLine* pRemovedLine = m_lLines.takeLast();
+        endRemoveRows();
+        QString sRemovedCommitId = pRemovedLine->commitId();
+        delete pRemovedLine;
+        pruneUnusedLabels(sRemovedCommitId);
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+// Emits dataChanged on every row showing a commit
+void CCommitLogModel::emitRowsForCommit(const QString& sCommitId)
+{
+    if (sCommitId.isEmpty())
+        return;
+
+    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
+    {
+        CLogLine* pLine = m_lLines[iLineIndex];
+
+        if (pLine != nullptr && pLine->commitId() == sCommitId)
+            emit dataChanged(index(iLineIndex), index(iLineIndex));
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -404,10 +456,10 @@ void CCommitLogModel::pruneUnusedLabels(const QString& sCommitId)
             return;
     }
 
-    // Clear the model in place instead of deleting it: QML delegates cache
-    // the model pointer, deleting it leaves a dangling wrapper behind
-    QList<CLabel*> lEmptyLabels;
-    m_mLabels[sCommitId]->setLabelList(lEmptyLabels);
+    // No remaining row shows the commit: QML wrappers null themselves on
+    // QObject destruction, so the orphaned model is deleted instead of kept
+    // empty, otherwise the map grows by one entry per commit ever seen
+    delete m_mLabels.take(sCommitId);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -415,9 +467,9 @@ void CCommitLogModel::pruneUnusedLabels(const QString& sCommitId)
 /************************************************************************/
 /*!
     \fn bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
-    Rebuilds the label model of a commit from the repository, returns true
-    when the visible labels changed. The model is updated in place so QML
-    delegates caching its pointer stay valid.
+    Rebuilds the label model of a commit from the repository and from the
+    loaded lines, returns true when the visible labels changed. The model is
+    updated in place so QML delegates caching its pointer stay valid.
 */
 bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
 {
@@ -425,6 +477,36 @@ bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
         return false;
 
     QList<CLabel*> lFreshLabels = m_pRepository->labelsForCommit(sCommitId);
+
+    QSet<QString> sKnownSignatures;
+
+    for (const CLabel* pLabel : lFreshLabels)
+    {
+        if (pLabel != nullptr)
+            sKnownSignatures << labelSignature(pLabel);
+    }
+
+    // Lines may carry labels the repository models do not know, such as a
+    // detached HEAD decoration: merge them, skipping duplicates already known
+    for (const CLogLine* pLine : m_lLines)
+    {
+        if (pLine == nullptr || pLine->commitId() != sCommitId)
+            continue;
+
+        for (CLabel* pLabel : labelsFromLine(pLine))
+        {
+            if (pLabel == nullptr)
+                continue;
+
+            if (sKnownSignatures.contains(labelSignature(pLabel)))
+                delete pLabel;
+            else
+            {
+                sKnownSignatures << labelSignature(pLabel);
+                lFreshLabels << pLabel;
+            }
+        }
+    }
 
     CLabelModel* pModel = m_mLabels.value(sCommitId, nullptr);
 

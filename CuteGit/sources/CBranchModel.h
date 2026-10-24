@@ -59,8 +59,8 @@ public:
     //!
     void setBranchList(QList<CBranch*> lNewList, CEnums::ELabelType eType);
 
-    //!
-    void setBranchHeadCommit(const QString& sBranch, const QString& sCommitId);
+    //! Moves a branch head to a commit, returns the previous commit id
+    QString setBranchHeadCommit(const QString& sBranch, const QString& sCommitId);
 
     //-------------------------------------------------------------------------------------------------
     // Properties

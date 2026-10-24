@@ -40,6 +40,6 @@ public:
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
-    //!
-    void add(CLogLine* pLine);
+    //! Appends a line, taking no ownership transfer beyond the collection copy
+    virtual void add(CLogLine* pLine);
 };

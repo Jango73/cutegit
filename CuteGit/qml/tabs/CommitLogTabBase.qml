@@ -6,7 +6,7 @@ BaseTab {
     property string diffFromCommitId: root.repository ? root.repository.diffFromCommitId : ""
     property string diffToCommitId: root.repository ? root.repository.diffToCommitId : ""
 
-    function showCommitDiff(commitId) {
+    function showCommitDiffPrevious(commitId) {
         root.viewRoot.showCommitDiffPrevious(commitId)
     }
 

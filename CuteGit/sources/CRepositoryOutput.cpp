@@ -317,6 +317,18 @@ void CRepository::refreshCommitLabels()
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::refreshLabelsForCommitOnModels(const QString& sCommitId)
+{
+    if (sCommitId.isEmpty())
+        return;
+
+    m_pBranchLogModel->refreshLabelsForCommit(sCommitId);
+    m_pFileLogModel->refreshLabelsForCommit(sCommitId);
+    m_pGraphModel->refreshLabelsForCommit(sCommitId);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString sKey, QString sValue)
 {
     switch (eCommand)
@@ -324,16 +336,21 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
 
     case CEnums::eBranchHeadCommit:
     {
-        m_pRemoteBranchModel->setBranchHeadCommit(sKey, sValue);
-        m_pLocalBranchModel->setBranchHeadCommit(sKey, sValue);
-        refreshCommitLabels();
+        // A moved head changes two commits: the one it left and the one it
+        // reached, so both refresh their labels without a full resync
+        QString sPreviousRemoteCommitId = m_pRemoteBranchModel->setBranchHeadCommit(sKey, sValue);
+        QString sPreviousLocalCommitId = m_pLocalBranchModel->setBranchHeadCommit(sKey, sValue);
+        refreshLabelsForCommitOnModels(sPreviousRemoteCommitId);
+        refreshLabelsForCommitOnModels(sPreviousLocalCommitId);
+        refreshLabelsForCommitOnModels(sValue);
         break;
     }
 
     case CEnums::eTagCommit:
     {
-        m_pTagModel->setBranchHeadCommit(sKey, sValue);
-        refreshCommitLabels();
+        QString sPreviousCommitId = m_pTagModel->setBranchHeadCommit(sKey, sValue);
+        refreshLabelsForCommitOnModels(sPreviousCommitId);
+        refreshLabelsForCommitOnModels(sValue);
         break;
     }
 

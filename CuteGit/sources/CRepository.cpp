@@ -1135,6 +1135,8 @@ void CRepository::onDiffCommitIdChanged()
 
     m_pBranchLogModel->commitChanged(sDiffFromCommitId);
     m_pBranchLogModel->commitChanged(sDiffToCommitId);
+    m_pFileLogModel->commitChanged(sDiffFromCommitId);
+    m_pFileLogModel->commitChanged(sDiffToCommitId);
     m_pGraphModel->commitChanged(sDiffFromCommitId);
     m_pGraphModel->commitChanged(sDiffToCommitId);
 }

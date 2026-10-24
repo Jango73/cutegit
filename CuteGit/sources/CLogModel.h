@@ -23,7 +23,7 @@ public:
 public:
 
     //-------------------------------------------------------------------------------------------------
-    // Constructor & destructor
+    // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
     //! Default constructor
@@ -36,7 +36,7 @@ public:
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
-    //! Sets some lines
+    //! Reconciles loaded rows with collection lines without flicker
     void setLines(CLogLineCollection tCollection);
 
     //-------------------------------------------------------------------------------------------------
@@ -50,7 +50,7 @@ signals:
 protected:
 
     //-------------------------------------------------------------------------------------------------
-    // CCommitLogModel hooks
+    // Overridden methods
     //-------------------------------------------------------------------------------------------------
 
     virtual bool isSameLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const override;

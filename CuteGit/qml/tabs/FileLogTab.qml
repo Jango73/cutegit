@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import "../pages"
 
-BaseTab {
+CommitLogTabBase {
     id: root
 
     FileLogPane {
@@ -9,10 +9,10 @@ BaseTab {
         anchors.fill: parent
         repository: root.repository
 
-        onRequestMenu: root.viewRoot.showLogMenu(commitId, message)
-        onRequestCommitDiffPrevious: root.viewRoot.requestCommitDiffPrevious(commitId)
-        onRequestCommitDiffFrom: root.viewRoot.requestCommitDiffFrom(commitId)
-        onRequestCommitDiffTo: root.viewRoot.requestCommitDiffTo(commitId)
+        onRequestMenu: root.showCommitMenu(commitId, message)
+        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
+        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
+        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
     }
 
     function focusTab() {
