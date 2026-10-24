@@ -73,9 +73,24 @@ ListView {
         modelChanged()
     }
 
+    /*! Cached model indexes dangle after a layout change or a reset: drop them, delegates repopulate on demand */
+    Connections {
+        target: root.model ? root.model : null
+        function onModelReset() {
+            root.modelIndices = ({})
+        }
+        function onLayoutChanged() {
+            root.modelIndices = ({})
+        }
+    }
+
     onCurrentIndexChanged: {
-        if (selection && currentIndex !== -1 && modelIndices[currentIndex])
-            selection.setCurrentIndex(modelIndices[currentIndex], ItemSelectionModel.Current)
+        if (selection && currentIndex !== -1) {
+            var freshCurrentIndex = modelIndexForRow(currentIndex)
+
+            if (freshCurrentIndex !== undefined)
+                selection.setCurrentIndex(freshCurrentIndex, ItemSelectionModel.Current)
+        }
 
         if (!itemsSelectable)
             positionViewAtIndex(currentIndex, ListView.Beginning)
@@ -167,14 +182,29 @@ ListView {
 
     /*! Returns \c true if the item at index is selected */
     function indexSelected(index) {
-        return selection
-                ? selection.hasSelection && selection.isSelected(modelIndices[index])
-                : false
+        if (!selection || !selection.hasSelection)
+            return false
+
+        var selectedIndex = modelIndexForRow(index)
+
+        return selectedIndex !== undefined ? selection.isSelected(selectedIndex) : false
     }
 
     /*! Sets a model index for the specified integer index */
     function updateModelIndex(index) {
         modelIndices[index] = model.index(index, Const.firstColumn)
+    }
+
+    /*! Returns the model index for the specified integer row, refreshing it when missing */
+    function modelIndexForRow(row) {
+        if (modelIndices[row] === undefined) {
+            if (!model || typeof model.index !== "function")
+                return undefined
+
+            updateModelIndex(row)
+        }
+
+        return modelIndices[row]
     }
 
     /*! Selects items based on keyboard movements */
@@ -228,43 +258,58 @@ ListView {
     }
 
     function selectTo(targetIndex) {
-        if (selection) {
-            selection.clear()
+        if (!selection)
+            return
 
-            if (previousIndex === -1) {
-                if (targetIndex === currentIndex) {
-                    selection.select(modelIndices[targetIndex], ItemSelectionModel.ToggleCurrent)
-                } else {
-                    selectRange(currentIndex, targetIndex)
-                }
+        selection.clear()
+
+        if (previousIndex === -1) {
+            if (targetIndex === currentIndex) {
+                selectSingle(targetIndex, ItemSelectionModel.ToggleCurrent)
             } else {
-                if (targetIndex === previousIndex) {
-                    selection.select(modelIndices[targetIndex], ItemSelectionModel.ToggleCurrent)
-                } else {
-                    selectRange(previousIndex, targetIndex)
-                }
+                selectRange(currentIndex, targetIndex)
+            }
+        } else {
+            if (targetIndex === previousIndex) {
+                selectSingle(targetIndex, ItemSelectionModel.ToggleCurrent)
+            } else {
+                selectRange(previousIndex, targetIndex)
             }
         }
     }
 
     function selectOnly(targetIndex) {
+        if (!selection)
+            return
+
         selection.clear()
-        selection.select(modelIndices[targetIndex], ItemSelectionModel.SelectCurrent)
+        selectSingle(targetIndex, ItemSelectionModel.SelectCurrent)
+    }
+
+    /*! Selects a single row, refreshing its model index when missing */
+    function selectSingle(targetIndex, selectionFlag) {
+        var targetModelIndex = modelIndexForRow(targetIndex)
+
+        if (targetModelIndex !== undefined)
+            selection.select(targetModelIndex, selectionFlag)
     }
 
     /*! Selects a range of items */
     function selectRange(from, to) {
         var selIndex
 
+        if (!selection)
+            return
+
         selection.clear()
 
         if (to >= from) {
             for (selIndex = from; selIndex <= to; selIndex++) {
-                selection.select(modelIndices[selIndex], ItemSelectionModel.Select)
+                selectSingle(selIndex, ItemSelectionModel.Select)
             }
         } else {
             for (selIndex = from; selIndex >= to; selIndex--) {
-                selection.select(modelIndices[selIndex], ItemSelectionModel.Select)
+                selectSingle(selIndex, ItemSelectionModel.Select)
             }
         }
     }

@@ -54,9 +54,7 @@ StandardListView {
         if (!selection)
             return
 
-        root.updateModelIndex(row)
-
-        var proxyIndex = modelIndices[row]
+        var proxyIndex = root.modelIndexForRow(row)
 
         if (proxyIndex === undefined)
             return
