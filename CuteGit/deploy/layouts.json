@@ -10,9 +10,9 @@
                     "Width": "40",
                     "Height": "100",
                     "Tab": [
+                        { "Id": "Graph" },
                         { "Id": "Files" },
                         { "Id": "BranchLog" },
-                        { "Id": "Graph" },
                         { "Id": "RefLog" }
                     ]
                 },
@@ -23,9 +23,9 @@
                     "Width": "45",
                     "Height": "100",
                     "Tab": [
-                        { "Id": "CommitDetails", "VisibleWhen": "BranchLog,Graph,RefLog" },
-                        { "Id": "FileDiff", "VisibleWhen": "Files" },
                         { "Id": "CommitDiff", "VisibleWhen": "BranchLog,Graph,RefLog" },
+                        { "Id": "FileDiff", "VisibleWhen": "Files" },
+                        { "Id": "CommitDetails", "VisibleWhen": "BranchLog,Graph,RefLog" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" },
                         { "Id": "Output" }
