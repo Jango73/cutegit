@@ -74,7 +74,8 @@ echo "[ci-local] Creating diff fixture repository..."
 
 echo "[ci-local] Building test sections (${BUILD_TYPE_LOWER})..."
 mkdir -p "${TESTS_BUILD_FOLDER}"
-( cd "${TESTS_BUILD_FOLDER}" && qmake6 "${TESTS_FOLDER}/diff.pro" "CONFIG+=${BUILD_TYPE_LOWER}" > /dev/null && make -j "$(nproc)" )
+cmake -S "${TESTS_FOLDER}" -B "${TESTS_BUILD_FOLDER}" -G Ninja "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}" > /dev/null
+cmake --build "${TESTS_BUILD_FOLDER}" -j "$(nproc)"
 
 if [[ -f "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" ]]; then
   cp "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" "${TESTS_BIN_FOLDER}/layouts.json"

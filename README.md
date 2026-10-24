@@ -10,7 +10,7 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 ## Dependencies
 
 * Qt 6 development packages (exact list in `scripts/linux/deps.sh`)
-* `qmake6` and `make`
+* `cmake` and `ninja`
 * `qt-plus` submodule (https://github.com/Jango73/qt-plus), initialized by `scripts/linux/deps.sh`
 * At runtime, the versioning executables driven by the UI (`git`, plus `hg` and `svn` for those repository types)
 
@@ -20,7 +20,7 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 ```
 ./scripts/linux/deps.sh
 ```
-* Build the library and the application:
+* Build the application (the needed `qt-plus` sources compile in, no separate library build):
 ```
 ./scripts/linux/build.sh [--debug|--release]
 ```

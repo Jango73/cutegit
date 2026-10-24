@@ -98,5 +98,4 @@ fi
 
 mkdir -p "$(dirname "${LOG_FILE}")"
 echo "[run] Logging to ${LOG_FILE}"
-LD_LIBRARY_PATH="${PROJECT_ROOT_FOLDER}/qt-plus/bin" \
-  exec "${BINARY}" "${FORWARD_ARGS[@]}" 2>&1 | tee "${LOG_FILE}"
+exec "${BINARY}" "${FORWARD_ARGS[@]}" 2>&1 | tee "${LOG_FILE}"

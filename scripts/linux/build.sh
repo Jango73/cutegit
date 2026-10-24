@@ -64,71 +64,46 @@ fi
 
 BUILD_DIR="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
-if [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/qt-plus.pro" ] \
-  || [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/functions.pri" ]; then
+if [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/source/cpp/CXMLNode.cpp" ] \
+  || [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/source/cpp/CFastList.h" ]; then
   echo "[build] Submodules missing, run ./scripts/linux/deps.sh first." >&2
   exit "${EXIT_FAILURE}"
 fi
 
-# Find qmake executable (prefer Qt6)
-QMAKE=""
-for candidate in qmake6 qmake-qt6 qmake; do
-  if command -v "${candidate}" >/dev/null 2>&1; then
-    QMAKE="${candidate}"
-    break
-  fi
-done
-
-if [[ -z "${QMAKE}" ]]; then
-  echo "[build] qmake not found, run ./scripts/linux/deps.sh first." >&2
+# Find CMake and Ninja
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "[build] cmake not found, run ./scripts/linux/deps.sh first." >&2
   exit "${EXIT_FAILURE}"
 fi
 
-echo "Using qmake: ${QMAKE}"
-
-# --- BEGIN cutegit-only extras (qt-plus sub-build, BuildInfo stamp, layouts.json) ---
-# Build qt-plus if it exists
-QT_PLUS_DIR="${PROJECT_ROOT_FOLDER}/qt-plus"
-QT_PLUS_BUILD="${QT_PLUS_DIR}/scripts/linux/build.sh"
-if [[ -d "${QT_PLUS_DIR}" && -f "${QT_PLUS_BUILD}" ]]; then
-  echo "Building qt-plus library..."
-  if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
-    "${QT_PLUS_BUILD}" -c "${BUILD_TYPE}" -v
-  else
-    "${QT_PLUS_BUILD}" -c "${BUILD_TYPE}"
-  fi
-  echo "qt-plus built successfully."
-else
-  echo "Warning: qt-plus not found or missing scripts/linux/build.sh" >&2
+if ! command -v ninja >/dev/null 2>&1; then
+  echo "[build] ninja not found, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
 fi
 
-# Build CuteGit
-mkdir -p "${BUILD_DIR}"
-cd "${BUILD_DIR}"
+echo "Using cmake: $(command -v cmake)"
+
+# --- BEGIN cutegit-only extras (BuildInfo stamp, layouts.json) ---
+# The qt-plus sources this project needs (CXMLNode.cpp, CFastList.h) are
+# compiled directly into the binary, so no qt-plus sub-build is required.
 
 # Build stamp: regenerated on every build so a running binary can always be identified
-# Written to the build folder (never to the source tree), consumed via INCLUDEPATH += $$OUT_PWD
+# Written to the build folder (never to the source tree), consumed via the binary dir include path
 # main.cpp is touched so the new stamp is always compiled in
 BUILD_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-mkdir -p "${BUILD_DIR}/CuteGit"
+mkdir -p "${BUILD_DIR}" "${BUILD_DIR}/CuteGit"
 printf '#pragma once\n#define BUILD_TIMESTAMP "%s"\n' "${BUILD_STAMP}" > "${BUILD_DIR}/CuteGit/BuildInfo.h"
 touch "${PROJECT_ROOT_FOLDER}/CuteGit/sources/main.cpp"
 echo "Build stamp: ${BUILD_STAMP}"
 # --- END cutegit-only extras ---
 
-if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-  CONFIG_ARG="CONFIG+=debug"
-else
-  CONFIG_ARG="CONFIG+=release"
-fi
-
-echo "Running qmake with ${CONFIG_ARG}..."
-"${QMAKE}" "${PROJECT_ROOT_FOLDER}/CuteGit.pro" "${CONFIG_ARG}"
+echo "Running cmake with build type ${BUILD_TYPE}..."
+cmake -S "${PROJECT_ROOT_FOLDER}" -B "${BUILD_DIR}" -G Ninja "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
 
 if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
-  make -j"$(nproc)" VERBOSE=1
+  cmake --build "${BUILD_DIR}" -v
 else
-  make -j"$(nproc)"
+  cmake --build "${BUILD_DIR}"
 fi
 
 # --- BEGIN cutegit-only extras (layouts.json copy) ---

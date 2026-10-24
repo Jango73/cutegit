@@ -4,7 +4,6 @@ set -euo pipefail
 SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 VERSION_FILE="${PROJECT_ROOT_FOLDER}/VERSION"
-PRO_FILE="${PROJECT_ROOT_FOLDER}/CuteGit/CuteGit.pro"
 
 usage() {
   cat <<'USAGE'
@@ -27,12 +26,7 @@ fi
 
 printf '%s\n' "${NEW_VERSION}" > "${VERSION_FILE}"
 
-# Update version in .pro file
-if [[ -f "${PRO_FILE}" ]]; then
-  sed -i "s|DEFINES += \"VERSION_STRING=\\\\\"\\\"[0-9.]\\+\\\\\"\\\"\"|DEFINES += \"VERSION_STRING=\\\\\"\\\"${NEW_VERSION}\\\\\"\\\"\"|" "${PRO_FILE}"
-  echo "Updated version in ${PRO_FILE}"
-else
-  echo "Warning: ${PRO_FILE} not found" >&2
-fi
+# CMakeLists.txt files read the VERSION file at configure time, so no other
+# file needs editing when the version changes.
 
 printf 'Version set to %s\n' "${NEW_VERSION}"

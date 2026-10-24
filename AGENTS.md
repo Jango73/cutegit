@@ -8,14 +8,13 @@
 - The default minimal-diff behavior does not apply here: the agent serves the global vision of the codebase, never a narrow correction perimeter, and refactors everything the change touches whenever structure, factorization, or generality requires it.
 
 ## Project Overview
-`CuteGit` is a graphical versioning client (C++/Qt/QML), built with qmake
-for Qt6 (see `README.md`). Layout:
+`CuteGit` is a graphical versioning client (C++/Qt/QML), built with
+CMake + Ninja for Qt6 (see `README.md`). Layout:
 - `qt-plus/` (git submodule): shared Qt utility library. Check
-  here first before adding helpers. Consumed as a compiled library
-  (`libqt-plus[d].so`, built in-source into `qt-plus/bin/` by
-  `qt-plus/build.sh`) plus headers (`INCLUDEPATH`), and via `functions.pri`.
-  `qt-plus-nolib-web.pri` exists for consumers that need a source subset.
-- `CuteGit/` (application): `CuteGit.pro` (subdirs) + `CuteGit.pri`, sources in
+  here first before adding helpers. Only `CXMLNode.cpp` (+ the header-only
+  `CFastList.h`) is compiled into the targets; the prebuilt `libqt-plus`
+  is not used, so the `qt-plus` sub-build is not required.
+- `CuteGit/` (application): `CMakeLists.txt` + sources in
   `CuteGit/sources/` (`CController`, `CRepository`, models, `commands/`),
   QML UI in `CuteGit/qml/`, `deploy/`.
 - `scripts/linux/`: `build.sh`, `ci-local.sh`, `clean.sh`, `deps.sh`, `run.sh`,
@@ -24,7 +23,7 @@ for Qt6 (see `README.md`). Layout:
 
 Fresh clones have an empty `qt-plus/` until submodules are initialized
 (`git submodule update --init --recursive`). The application targets Qt6
-(Qt 6.2.4 on this machine); the reference Linux build is qmake6 + make via
+(Qt 6.2.4 on this machine); the reference Linux build is CMake + Ninja via
 `scripts/linux/`.
 
 ## Release vs debug
@@ -158,9 +157,9 @@ Never leave a blank line in the commit message: lines follow each other directly
 - Dependencies: `./scripts/linux/deps.sh` (submodules + apt/dnf/pacman packages;
   needs `sudo`, which prompts for a password here)
 - Build (shadow): `./scripts/linux/build.sh [--debug|--release]`
-  (`qmake6 CuteGit.pro CONFIG+=<debug|release>` in `build-<debug|release>`,
-  then `make -j`). Builds `qt-plus` (`libqt-plus[d].so` in `qt-plus/bin/`),
-  then `CuteGit` (`CuteGitApp[d]` in `build-<debug|release>/CuteGit/bin/`).
+  (`cmake -S . -B build-<debug|release> -G Ninja` in `build-<debug|release>`,
+  then `cmake --build`). Builds `CuteGitApp[d]` in
+  `build-<debug|release>/CuteGit/bin/` plus the test binaries in `tests/bin/`.
 - Clean: `./scripts/linux/clean.sh [--debug|--release|--all]`
 - Local CI: `./scripts/linux/ci-local.sh [--debug|--release]`
   (local mirror of the GitHub CI: builds, then runs the unit tests
@@ -168,7 +167,7 @@ Never leave a blank line in the commit message: lines follow each other directly
   logs to `tmp/ci-local.log`). This is the only supported
   way to run the tests.
 - Run (interactive GUI, blocks): `./scripts/linux/run.sh [--debug|--release]`
-  (logs to `tmp/run.log`, sets `LD_LIBRARY_PATH` on `qt-plus/bin/`).
+  (logs to `tmp/run.log`).
 
 ## Tool Execution Policy
 - `tmp/` at the repo root is the folder for temporary/scratch files. It is
@@ -180,7 +179,7 @@ Never leave a blank line in the commit message: lines follow each other directly
   ask the user to run installs themselves or explicitly approve.
 - Run builds sequentially, not in parallel.
 - Shell tool timeout: 15 seconds maximum. Long builds go through the scripts
-  (which parallelize with `make -j`); never wait on a GUI process.
+  (which parallelize with `cmake --build`); never wait on a GUI process.
 
 ## Documentation
 - Build setup: `README.md`
