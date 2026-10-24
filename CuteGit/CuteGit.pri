@@ -3,6 +3,7 @@ HEADERS += \
     #../qt-plus/source/cpp/CXMLNode.h \
     sources/CBranch.h \
     sources/CBranchModel.h \
+    sources/CCommitLogModel.h \
     sources/CController.h \
     sources/CDiffLine.h \
     sources/CDiffConstants.h \
@@ -42,6 +43,7 @@ HEADERS += \
 SOURCES += \
     #../qt-plus/source/cpp/CXMLNode.cpp \
     sources/CBranchModel.cpp \
+    sources/CCommitLogModel.cpp \
     sources/CController.cpp \
     sources/CDiffModel.cpp \
     sources/CDiffConstants.cpp \

@@ -61,6 +61,7 @@
         <file>qml/tabs/BranchLogTab.qml</file>
         <file>qml/tabs/CommitDiffTab.qml</file>
         <file>qml/tabs/CommitDetailsTab.qml</file>
+        <file>qml/tabs/CommitLogTabBase.qml</file>
         <file>qml/tabs/FileDiffTab.qml</file>
         <file>qml/tabs/FileLogTab.qml</file>
         <file>qml/tabs/FilesTab.qml</file>

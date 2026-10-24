@@ -34,6 +34,7 @@ SOURCES += \
     $$CUTEGIT_SOURCES/CFlatFileModelProxy.cpp \
     $$CUTEGIT_SOURCES/CStagedFileModelProxy.cpp \
     $$CUTEGIT_SOURCES/CBranchModel.cpp \
+    $$CUTEGIT_SOURCES/CCommitLogModel.cpp \
     $$CUTEGIT_SOURCES/CLogModel.cpp \
     $$CUTEGIT_SOURCES/CLogModelProxy.cpp \
     $$CUTEGIT_SOURCES/CLogLineCollection.cpp \
@@ -66,6 +67,7 @@ HEADERS += \
     $$CUTEGIT_SOURCES/CStagedFileModelProxy.h \
     $$CUTEGIT_SOURCES/CBranch.h \
     $$CUTEGIT_SOURCES/CBranchModel.h \
+    $$CUTEGIT_SOURCES/CCommitLogModel.h \
     $$CUTEGIT_SOURCES/CLogModel.h \
     $$CUTEGIT_SOURCES/CLogModelProxy.h \
     $$CUTEGIT_SOURCES/CLogLine.h \

@@ -2,7 +2,7 @@ import QtQuick 2.12
 import "../components"
 import "../views"
 
-BaseTab {
+CommitLogTabBase {
     id: root
 
     StandardTextFilter {
@@ -35,14 +35,14 @@ BaseTab {
         anchors.right: parent.right
 
         model: root.repository ? root.repository.branchLogModelProxy : undefined
-        diffFromCommitId: root.repository ? root.repository.diffFromCommitId : ""
-        diffToCommitId: root.repository ? root.repository.diffToCommitId : ""
+        diffFromCommitId: root.diffFromCommitId
+        diffToCommitId: root.diffToCommitId
 
-        onItemClicked: root.viewRoot.showCommitDiffPrevious(commitId)
-        onItemRightClicked: root.viewRoot.showLogMenu(commitId, message)
-        onRequestCommitDiffPrevious: root.viewRoot.requestCommitDiffPrevious(commitId)
-        onRequestCommitDiffFrom: root.viewRoot.requestCommitDiffFrom(commitId)
-        onRequestCommitDiffTo: root.viewRoot.requestCommitDiffTo(commitId)
+        onItemClicked: root.showCommitDiff(commitId)
+        onItemRightClicked: root.showCommitMenu(commitId, message)
+        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
+        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
+        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
     }
 
     function focusTab() {

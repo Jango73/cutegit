@@ -5,19 +5,14 @@
 //-------------------------------------------------------------------------------------------------
 
 CGraphLineCollection::CGraphLineCollection(QObject* parent)
-    : QObject(parent)
-    , m_iPotentialCount(0)
-    , m_iStartIndex(0)
+    : CLogLineCollection(parent)
 {
 }
 
 //-------------------------------------------------------------------------------------------------
 
 CGraphLineCollection::CGraphLineCollection(const CGraphLineCollection& target)
-    : QObject()
-    , m_iPotentialCount(target.m_iPotentialCount)
-    , m_iStartIndex(target.m_iStartIndex)
-    , m_lLines(target.m_lLines)
+    : CLogLineCollection(target)
 {
 }
 
@@ -31,5 +26,5 @@ CGraphLineCollection::~CGraphLineCollection()
 
 void CGraphLineCollection::add(CGraphLine* pLine)
 {
-    m_lLines << pLine;
+    CLogLineCollection::add(pLine);
 }

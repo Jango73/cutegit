@@ -1,46 +1,22 @@
 
 #pragma once
 
-// Qt
-#include <QAbstractListModel>
-
-// qt-plus
+// Application
+#include "CCommitLogModel.h"
 #include "CLogLineCollection.h"
 
-// Application
-#include "CLabelModel.h"
-
-//-------------------------------------------------------------------------------------------------
-// Forward declarations
-
-class CRepository;
-
 //-------------------------------------------------------------------------------------------------
 
-class CLogModel : public QAbstractListModel
+class CLogModel : public CCommitLogModel
 {
     Q_OBJECT
 
 public:
 
-    enum ERoles
-    {
-        eCommitIdRole = Qt::UserRole + 1,
-        eDateRole,
-        eAuthorRole,
-        eMessageRole,
-        eFullMessageRole,
-        eLabelsRole,
-        eMessageIsCompleteRole,
-        eMarkedAsDiffFromRole,
-        eMarkedAsDiffToRole,
-    };
-
     //-------------------------------------------------------------------------------------------------
     // QML properties
     //-------------------------------------------------------------------------------------------------
 
-    Q_FAST_PROPERTY(int, i, potentialCount, PotentialCount)
     Q_FAST_PROPERTY(QString, s, fullSourceName, FullSourceName)
     Q_FAST_PROPERTY(QString, s, relativeSourceName, RelativeSourceName)
 
@@ -60,41 +36,8 @@ public:
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
-    //! Clear all lines
-    void clear();
-
     //! Sets some lines
     void setLines(CLogLineCollection tCollection);
-
-    //! Returns role names
-    virtual QHash<int, QByteArray> roleNames() const override;
-
-    //! Returns row count
-    virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-
-    //! Returns data
-    virtual QVariant data(const QModelIndex& index, int role) const override;
-
-    //!
-    virtual bool canFetchMore(const QModelIndex& parent) const override;
-
-    //!
-    virtual void fetchMore(const QModelIndex& parent) override;
-
-    //! Returns the line showing a commit, nullptr when not loaded
-    const CLogLine* findLine(const QString& sCommitId) const;
-
-    //!
-    void commitChanged(const QString& sCommitId);
-
-    //! Rebuilds branch/tag labels of every loaded commit from the repository
-    void refreshLabels();
-
-    //! Rebuilds branch/tag labels of a single commit from the repository
-    void refreshLabelsForCommit(const QString& sCommitId);
-
-    //!
-    void invalidate();
 
     //-------------------------------------------------------------------------------------------------
     // Signals
@@ -104,23 +47,13 @@ signals:
 
     void requestLogData(int iStartIndex, int iCount);
 
-private:
+protected:
 
-    //! Deletes the labels of a commit when no remaining line shows it
-    void pruneUnusedLabels(const QString& sCommitId);
+    //-------------------------------------------------------------------------------------------------
+    // CCommitLogModel hooks
+    //-------------------------------------------------------------------------------------------------
 
-    //! Returns true when both lines show the same commit
-    bool isSameLogLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const;
-
-    //! Rebuilds the label model of a commit, returns true when it changed
-    bool syncLabelsForCommit(const QString& sCommitId);
-
-    //! Owning repository (plain member: no Q_PROPERTY to avoid an inclusion cycle)
-    CRepository* m_pRepository;
-
-    //! Lines of the log
-    QList<CLogLine*> m_lLines;
-
-    //! Labels for commits
-    QMap<QString, CLabelModel*> m_mLabels;
+    virtual bool isSameLine(const CLogLine* pExistingLine, const CLogLine* pIncomingLine) const override;
+    virtual int defaultPageSize() const override;
+    virtual void requestLines(int iStartIndex, int iCount) override;
 };

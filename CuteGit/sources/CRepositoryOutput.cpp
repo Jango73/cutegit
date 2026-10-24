@@ -308,6 +308,15 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::refreshCommitLabels()
+{
+    m_pBranchLogModel->refreshLabels();
+    m_pFileLogModel->refreshLabels();
+    m_pGraphModel->refreshLabels();
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString sKey, QString sValue)
 {
     switch (eCommand)
@@ -317,18 +326,14 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
     {
         m_pRemoteBranchModel->setBranchHeadCommit(sKey, sValue);
         m_pLocalBranchModel->setBranchHeadCommit(sKey, sValue);
-        m_pBranchLogModel->refreshLabels();
-        m_pFileLogModel->refreshLabels();
-        m_pGraphModel->commitChanged(sValue);
+        refreshCommitLabels();
         break;
     }
 
     case CEnums::eTagCommit:
     {
         m_pTagModel->setBranchHeadCommit(sKey, sValue);
-        m_pBranchLogModel->refreshLabels();
-        m_pFileLogModel->refreshLabels();
-        m_pGraphModel->commitChanged(sValue);
+        refreshCommitLabels();
         break;
     }
 
@@ -381,8 +386,7 @@ void CRepository::onNewOutputListOfCBranch(CEnums::EProcessCommand eCommand, QLi
     {
         m_pRemoteBranchModel->setBranchList(lNewBranches, CEnums::RemoteBranchLabel);
         m_pLocalBranchModel->setBranchList(lNewBranches, CEnums::LocalBranchLabel);
-        m_pBranchLogModel->refreshLabels();
-        m_pFileLogModel->refreshLabels();
+        refreshCommitLabels();
         getBranchHeadCommits();
         getBranchesCommitCountAheadBehind();
         break;
@@ -391,8 +395,7 @@ void CRepository::onNewOutputListOfCBranch(CEnums::EProcessCommand eCommand, QLi
     case CEnums::eTags:
     {
         m_pTagModel->setBranchList(lNewBranches, CEnums::TagLabel);
-        m_pBranchLogModel->refreshLabels();
-        m_pFileLogModel->refreshLabels();
+        refreshCommitLabels();
         getTagCommits();
         break;
     }

@@ -518,4 +518,7 @@ protected slots:
 
     //! Indirectly called by models when they need more data for graph (lazy loading)
     void onRequestGraphData(int iStartIndex, int iCount);
+
+    //! Refreshes branch/tag labels of every commit model from the repository
+    void refreshCommitLabels();
 };
