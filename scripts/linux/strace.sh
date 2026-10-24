@@ -7,7 +7,8 @@
 set -euo pipefail
 
 SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
@@ -67,7 +68,7 @@ if ! command -v strace >/dev/null 2>&1; then
   exit "${EXIT_FAILURE}"
 fi
 
-BUILD_FOLDER="${ROOT_FOLDER}/build-${BUILD_TYPE,,}"
+BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
   EXECUTABLE_NAME="CuteGitApp-dbg"
@@ -89,7 +90,7 @@ if pgrep -f "[C]uteGitApp(-dbg)?" >/dev/null 2>&1; then
   exit "${EXIT_FAILURE}"
 fi
 
-LOG_FOLDER="${ROOT_FOLDER}/tmp"
+LOG_FOLDER="${PROJECT_ROOT_FOLDER}/tmp"
 mkdir -p "${LOG_FOLDER}"
 TRACE_LOG="${LOG_FOLDER}/strace.log"
 : > "${TRACE_LOG}"
@@ -98,5 +99,5 @@ echo "[strace] Binary: ${EXECUTABLE_PATH}"
 echo "[strace] Trace log: ${TRACE_LOG}"
 echo "[strace] Reproduce the hang, then quit or kill the application."
 
-export LD_LIBRARY_PATH="${ROOT_FOLDER}/qt-plus/bin"
+export LD_LIBRARY_PATH="${PROJECT_ROOT_FOLDER}/qt-plus/bin"
 exec strace -f -tt -T -e trace=process,chdir -o "${TRACE_LOG}" "${EXECUTABLE_PATH}"

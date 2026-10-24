@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
@@ -13,9 +14,9 @@ VERBOSE_BUILD="${VERBOSE_DISABLED}"
 
 usage() {
   cat <<'USAGE'
-Usage: ./build.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release]
-  --debug,   -d  Build type Debug (default)
-  --release, -r  Build type Release
+Usage: ./build.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release] [-h|--help]
+  --debug,   -d  Build type Debug
+  --release, -r  Build type Release (default)
   --verbose, -v  Verbose build output
   -c             Build type (Debug or Release)
 USAGE
@@ -61,6 +62,14 @@ if [[ "${BUILD_TYPE}" != "Debug" && "${BUILD_TYPE}" != "Release" ]]; then
   exit "${EXIT_FAILURE}"
 fi
 
+BUILD_DIR="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
+
+if [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/qt-plus.pro" ] \
+  || [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/functions.pri" ]; then
+  echo "[build] Submodules missing, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
+fi
+
 # Find qmake executable (prefer Qt6)
 QMAKE=""
 for candidate in qmake6 qmake-qt6 qmake; do
@@ -71,16 +80,15 @@ for candidate in qmake6 qmake-qt6 qmake; do
 done
 
 if [[ -z "${QMAKE}" ]]; then
-  echo "Error: qmake not found. Install Qt development tools." >&2
-  exit 1
+  echo "[build] qmake not found, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
 fi
 
 echo "Using qmake: ${QMAKE}"
 
-BUILD_DIR="${ROOT_DIR}/build-${BUILD_TYPE,,}"
-
+# --- BEGIN cutegit-only extras (qt-plus sub-build, BuildInfo stamp, layouts.json) ---
 # Build qt-plus if it exists
-QT_PLUS_DIR="${ROOT_DIR}/qt-plus"
+QT_PLUS_DIR="${PROJECT_ROOT_FOLDER}/qt-plus"
 QT_PLUS_BUILD="${QT_PLUS_DIR}/scripts/linux/build.sh"
 if [[ -d "${QT_PLUS_DIR}" && -f "${QT_PLUS_BUILD}" ]]; then
   echo "Building qt-plus library..."
@@ -104,8 +112,9 @@ cd "${BUILD_DIR}"
 BUILD_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 mkdir -p "${BUILD_DIR}/CuteGit"
 printf '#pragma once\n#define BUILD_TIMESTAMP "%s"\n' "${BUILD_STAMP}" > "${BUILD_DIR}/CuteGit/BuildInfo.h"
-touch "${ROOT_DIR}/CuteGit/sources/main.cpp"
+touch "${PROJECT_ROOT_FOLDER}/CuteGit/sources/main.cpp"
 echo "Build stamp: ${BUILD_STAMP}"
+# --- END cutegit-only extras ---
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
   CONFIG_ARG="CONFIG+=debug"
@@ -114,7 +123,7 @@ else
 fi
 
 echo "Running qmake with ${CONFIG_ARG}..."
-"${QMAKE}" "${ROOT_DIR}/CuteGit.pro" "${CONFIG_ARG}"
+"${QMAKE}" "${PROJECT_ROOT_FOLDER}/CuteGit.pro" "${CONFIG_ARG}"
 
 if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
   make -j"$(nproc)" VERBOSE=1
@@ -122,10 +131,12 @@ else
   make -j"$(nproc)"
 fi
 
+# --- BEGIN cutegit-only extras (layouts.json copy) ---
 # Descriptive UI layouts live next to the binary
-if [[ -f "${ROOT_DIR}/CuteGit/deploy/layouts.json" ]]; then
-  cp "${ROOT_DIR}/CuteGit/deploy/layouts.json" "${BUILD_DIR}/CuteGit/bin/layouts.json"
+if [[ -f "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" ]]; then
+  cp "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" "${BUILD_DIR}/CuteGit/bin/layouts.json"
   echo "Copied layouts.json next to the binary."
 fi
+# --- END cutegit-only extras ---
 
 printf '\nBuilt target in %s\n' "${BUILD_DIR}"

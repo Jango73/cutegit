@@ -5,7 +5,8 @@
 set -euo pipefail
 
 SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
@@ -72,7 +73,7 @@ if ! command -v gdb >/dev/null 2>&1; then
   exit "${EXIT_FAILURE}"
 fi
 
-BUILD_FOLDER="${ROOT_FOLDER}/build-${BUILD_TYPE,,}"
+BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
   EXECUTABLE_NAME="CuteGitApp-dbg"
@@ -94,7 +95,7 @@ if pgrep -f "[C]uteGitApp(-dbg)?" >/dev/null 2>&1; then
   exit "${EXIT_FAILURE}"
 fi
 
-LOG_FOLDER="${ROOT_FOLDER}/tmp"
+LOG_FOLDER="${PROJECT_ROOT_FOLDER}/tmp"
 mkdir -p "${LOG_FOLDER}"
 SESSION_LOG="${LOG_FOLDER}/debug.log"
 BT_LOG="${LOG_FOLDER}/debug-bt.log"
@@ -103,8 +104,8 @@ BT_LOG="${LOG_FOLDER}/debug-bt.log"
 
 echo "[debug] Binary: ${EXECUTABLE_PATH}"
 file "${EXECUTABLE_PATH}" | sed 's/^/[debug] /' || true
-if command -v git >/dev/null 2>&1 && git -C "${ROOT_FOLDER}" rev-parse --short HEAD >/dev/null 2>&1; then
-  echo "[debug] git HEAD: $(git -C "${ROOT_FOLDER}" rev-parse --short HEAD) $(git -C "${ROOT_FOLDER}" log -1 --format=%ad --date=short)"
+if command -v git >/dev/null 2>&1 && git -C "${PROJECT_ROOT_FOLDER}" rev-parse --short HEAD >/dev/null 2>&1; then
+  echo "[debug] git HEAD: $(git -C "${PROJECT_ROOT_FOLDER}" rev-parse --short HEAD) $(git -C "${PROJECT_ROOT_FOLDER}" log -1 --format=%ad --date=short)"
 fi
 echo "[debug] Session log: ${SESSION_LOG}"
 echo "[debug] Backtrace log: ${BT_LOG}"
@@ -113,7 +114,7 @@ echo "[debug] If the app hangs instead of crashing, run ./scripts/linux/hang.sh 
 
 ulimit -c unlimited || true
 
-export LD_LIBRARY_PATH="${ROOT_FOLDER}/qt-plus/bin"
+export LD_LIBRARY_PATH="${PROJECT_ROOT_FOLDER}/qt-plus/bin"
 export QT_MESSAGE_PATTERN="%{time process} %{type} %{category} %{function}:%{line} - %{message}"
 if [[ "${OFFSCREEN}" -eq 1 ]]; then
   export QT_QPA_PLATFORM=offscreen

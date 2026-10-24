@@ -49,6 +49,7 @@ CuteGit/bin
 
 # Scratch files (never commit test or run output)
 tmp/
+dist/
 
 # Test sections: binaries, generated fixtures and shadow builds
 tests/bin/

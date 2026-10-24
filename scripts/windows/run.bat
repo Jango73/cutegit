@@ -7,7 +7,7 @@ set "VERBOSE_ENABLED=1"
 set "VERBOSE_DISABLED=0"
 
 set "SCRIPT_FOLDER=%~dp0"
-for %%I in ("%SCRIPT_FOLDER%..\..") do set "ROOT_FOLDER=%%~fI\"
+for %%I in ("%SCRIPT_FOLDER%..\..") do set "PROJECT_ROOT_FOLDER=%%~fI\"
 set "BUILD_TYPE=Release"
 set "VERBOSE_BUILD=%VERBOSE_DISABLED%"
 
@@ -75,13 +75,13 @@ if /I not "%BUILD_TYPE%"=="Debug" if /I not "%BUILD_TYPE%"=="Release" (
 )
 
 if /I "%BUILD_TYPE%"=="Debug" (
-  set "BUILD_FOLDER=%ROOT_FOLDER%build-debug"
+  set "BUILD_FOLDER=%PROJECT_ROOT_FOLDER%build-debug"
   set "EXECUTABLE_NAME=CuteGit-dbg"
 ) else (
-  set "BUILD_FOLDER=%ROOT_FOLDER%build-release"
+  set "BUILD_FOLDER=%PROJECT_ROOT_FOLDER%build-release"
   set "EXECUTABLE_NAME=CuteGit"
 )
-set "LOG_FILE=%ROOT_FOLDER%tmp\run.log"
+set "LOG_FILE=%PROJECT_ROOT_FOLDER%tmp\run.log"
 
 if not exist "%BUILD_FOLDER%" (
   echo [run] %BUILD_FOLDER% not found, running build first...
@@ -98,8 +98,8 @@ if not exist "%EXECUTABLE_PATH%" (
   exit /b 1
 )
 
-if not exist "%ROOT_FOLDER%tmp" (
-  mkdir "%ROOT_FOLDER%tmp"
+if not exist "%PROJECT_ROOT_FOLDER%tmp" (
+  mkdir "%PROJECT_ROOT_FOLDER%tmp"
 )
 
 echo [run] Logging to %LOG_FILE%
@@ -107,9 +107,9 @@ powershell -NoProfile -Command "& { & '%EXECUTABLE_PATH%' 2>&1 | Tee-Object -Fil
 exit /b %EXIT_SUCCESS%
 
 :usage
-echo Usage: run.bat [--debug^|--release] [-d^|-r] [--verbose^|-v] [-c Debug^|Release]
-echo   --debug,   -d  Build type Debug (default)
-echo   --release, -r  Build type Release
+echo Usage: run.bat [--debug^|--release] [-d^|-r] [--verbose^|-v] [-c Debug^|Release] [-h^|--help]
+echo   --debug,   -d  Build type Debug
+echo   --release, -r  Build type Release (default)
 echo   --verbose, -v  Verbose build output
 echo   -c             Build type (Debug or Release)
 exit /b %EXIT_SUCCESS%

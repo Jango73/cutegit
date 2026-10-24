@@ -3,7 +3,8 @@
 # Default target is ./test, with merged branches, unmerged branches, tags and dirty states.
 set -euo pipefail
 
-ROOT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1

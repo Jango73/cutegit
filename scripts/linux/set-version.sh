@@ -1,9 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-VERSION_FILE="${ROOT_FOLDER}/VERSION"
-PRO_FILE="${ROOT_FOLDER}/CuteGit/CuteGit.pro"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
+VERSION_FILE="${PROJECT_ROOT_FOLDER}/VERSION"
+PRO_FILE="${PROJECT_ROOT_FOLDER}/CuteGit/CuteGit.pro"
 
 usage() {
   cat <<'USAGE'

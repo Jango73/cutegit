@@ -5,7 +5,8 @@
 set -uo pipefail
 
 SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 RUN_COUNT=100
 BUILD_TYPE="Release"
@@ -26,7 +27,7 @@ for arg in "$@"; do
   esac
 done
 
-BUILD_FOLDER="${ROOT_FOLDER}/build-${BUILD_TYPE,,}"
+BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
   BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGitApp-dbg"
@@ -46,7 +47,7 @@ echo "[crashloop] ${RUN_COUNT} runs x 5s, binary ${BINARY}"
 
 for i in $(seq 1 "${RUN_COUNT}"); do
   QT_QPA_PLATFORM=offscreen \
-    LD_LIBRARY_PATH="${ROOT_FOLDER}/qt-plus/bin" \
+    LD_LIBRARY_PATH="${PROJECT_ROOT_FOLDER}/qt-plus/bin" \
     timeout 5s "${BINARY}" > "${LOG_FOLDER}/crashloop-${i}.log" 2>&1
   code="$?"
   echo "run ${i} exit:${code}"

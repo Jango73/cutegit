@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-ROOT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
@@ -53,34 +54,33 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-BUILD_DEBUG_FOLDER="${ROOT_FOLDER}/build-debug"
-BUILD_RELEASE_FOLDER="${ROOT_FOLDER}/build-release"
-QT_PLUS_DEBUG_FOLDER="${ROOT_FOLDER}/qt-plus/build-debug"
-QT_PLUS_RELEASE_FOLDER="${ROOT_FOLDER}/qt-plus/build-release"
+BUILD_DEBUG_FOLDER="${PROJECT_ROOT_FOLDER}/build-debug"
+BUILD_RELEASE_FOLDER="${PROJECT_ROOT_FOLDER}/build-release"
 
 case "${CLEAN_TARGET}" in
   debug)
     remove_folder "${BUILD_DEBUG_FOLDER}"
-    if [[ -d "${ROOT_FOLDER}/qt-plus" ]]; then
-      remove_folder "${QT_PLUS_DEBUG_FOLDER}"
-    fi
     ;;
   release)
     remove_folder "${BUILD_RELEASE_FOLDER}"
-    if [[ -d "${ROOT_FOLDER}/qt-plus" ]]; then
-      remove_folder "${QT_PLUS_RELEASE_FOLDER}"
-    fi
     ;;
   all)
     remove_folder "${BUILD_DEBUG_FOLDER}"
     remove_folder "${BUILD_RELEASE_FOLDER}"
-    if [[ -d "${ROOT_FOLDER}/qt-plus" ]]; then
-      remove_folder "${QT_PLUS_DEBUG_FOLDER}"
-      remove_folder "${QT_PLUS_RELEASE_FOLDER}"
-    fi
     ;;
   *)
     echo "Invalid clean target: ${CLEAN_TARGET}" >&2
     exit "${EXIT_FAILURE}"
     ;;
 esac
+
+# --- BEGIN cutegit-only extras (clean bundled qt-plus build folders) ---
+if [[ -d "${PROJECT_ROOT_FOLDER}/qt-plus" ]]; then
+  if [[ "${CLEAN_TARGET}" == "debug" || "${CLEAN_TARGET}" == "all" ]]; then
+    remove_folder "${PROJECT_ROOT_FOLDER}/qt-plus/build-debug"
+  fi
+  if [[ "${CLEAN_TARGET}" == "release" || "${CLEAN_TARGET}" == "all" ]]; then
+    remove_folder "${PROJECT_ROOT_FOLDER}/qt-plus/build-release"
+  fi
+fi
+# --- END cutegit-only extras ---

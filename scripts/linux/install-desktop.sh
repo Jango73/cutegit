@@ -4,7 +4,8 @@
 set -euo pipefail
 
 SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
+SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT_FOLDER="$(cd "${SCRIPT_FOLDER}/../.." && pwd)"
 
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
@@ -110,13 +111,13 @@ fi
 if [[ "${NO_ICON}" == "1" ]]; then
   ICON_PATH=""
 elif [[ -z "${ICON_PATH}" ]]; then
-  DEFAULT_ICON="${ROOT_FOLDER}/Media/cutegit-icon.svg"
+  DEFAULT_ICON="${PROJECT_ROOT_FOLDER}/Media/cutegit-icon.svg"
   if [[ -f "${DEFAULT_ICON}" ]]; then
     ICON_PATH="${DEFAULT_ICON}"
   fi
 fi
 
-BUILD_FOLDER="${ROOT_FOLDER}/build-${BUILD_TYPE,,}"
+BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
   EXECUTABLE_NAME="CuteGitApp-dbg"
@@ -142,8 +143,8 @@ mkdir -p "$(dirname "${DESKTOP_FILE}")"
   echo "Version=1.0"
   echo "Name=${DISPLAY_NAME}"
   echo "Comment=Graphical Git client"
-  echo "Exec=/usr/bin/env LD_LIBRARY_PATH=${ROOT_FOLDER}/qt-plus/bin ${EXECUTABLE_PATH}"
-  echo "Path=${ROOT_FOLDER}"
+  echo "Exec=/usr/bin/env LD_LIBRARY_PATH=${PROJECT_ROOT_FOLDER}/qt-plus/bin ${EXECUTABLE_PATH}"
+  echo "Path=${PROJECT_ROOT_FOLDER}"
   if [[ -n "${ICON_PATH}" ]]; then
     echo "Icon=${ICON_PATH}"
   fi

@@ -12,7 +12,7 @@ EXIT_FAILURE=1
 
 usage() {
   cat <<'USAGE'
-Usage: ./ci-local.sh [--debug|--release] [-d|-r] [-c Debug|Release]
+Usage: ./ci-local.sh [--debug|--release] [-d|-r] [-c Debug|Release] [-h|--help]
   --debug,   -d  Build type Debug
   --release, -r  Build type Release (default, same as CI)
   -c             Build type (Debug or Release)
@@ -67,7 +67,7 @@ TESTS_BIN_FOLDER="${TESTS_FOLDER}/bin"
 FIXTURE_REPO="${TESTS_FOLDER}/fixtures/diff/repo"
 LOG_FILE="${PROJECT_ROOT_FOLDER}/tmp/ci-local.log"
 
-mkdir -p "${PROJECT_ROOT_FOLDER}/tmp"
+mkdir -p "$(dirname "${LOG_FILE}")"
 
 echo "[ci-local] Creating diff fixture repository..."
 "${TESTS_FOLDER}/create-diff-fixture.sh" > /dev/null
