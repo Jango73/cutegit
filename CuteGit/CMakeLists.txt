@@ -119,3 +119,20 @@ set_target_properties(CuteGitApp PROPERTIES
   DEBUG_POSTFIX "-dbg"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/CuteGit/bin"
 )
+
+include(GNUInstallDirs)
+
+# layouts.json is embedded as a :/deploy resource fallback; the installed copy
+# under share/cutegit documents the override the application picks up when
+# placed next to the binary.
+install(TARGETS CuteGitApp
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+)
+
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/deploy/layouts.json"
+  DESTINATION "${CMAKE_INSTALL_DATADIR}/cutegit"
+)
+
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE"
+  DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/cutegit"
+)

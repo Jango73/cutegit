@@ -1,4 +1,7 @@
 #!/bin/bash
+# Builds Release packages from an isolated build folder, then copies the
+# versioned artifacts into dist/.
+# Produces a .deb and a .tar.gz (CPack DEB;TGZ generators).
 set -euo pipefail
 
 SCRIPT_FOLDER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,66 +14,58 @@ VERSION="$(tr -d '[:space:]' < "${PROJECT_ROOT_FOLDER}/VERSION")"
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
 
-echo "Building CuteGit ${VERSION}..."
+usage() {
+  cat <<'USAGE'
+Usage: ./package.sh [-h|--help]
+  Build Release packages (.deb + .tar.gz) into dist/.
+USAGE
+}
 
-# Build the project (populates build-release via scripts/linux/build.sh)
-"${SCRIPT_FOLDER}/build.sh" -c "${BUILD_TYPE}"
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit "${EXIT_SUCCESS}"
+fi
 
-SOURCE_BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
-
-# Determine executable name
-EXECUTABLE_NAME="CuteGitApp"
-EXECUTABLE_PATH="${SOURCE_BUILD_FOLDER}/CuteGit/bin/${EXECUTABLE_NAME}"
-
-if [[ ! -f "${EXECUTABLE_PATH}" ]]; then
-  echo "Error: Executable not found at ${EXECUTABLE_PATH}" >&2
+if [[ $# -ne 0 ]]; then
+  usage >&2
   exit "${EXIT_FAILURE}"
 fi
 
-# Create distribution directory
-rm -rf "${BUILD_FOLDER}" "${OUTPUT_FOLDER}"
-mkdir -p "${BUILD_FOLDER}" "${OUTPUT_FOLDER}"
-
-# Create package directory structure (staged in isolated build folder)
-PKG_NAME="CuteGit-${VERSION}-linux-x64"
-PKG_DIR="${BUILD_FOLDER}/${PKG_NAME}"
-mkdir -p "${PKG_DIR}"
-
-# Copy executable
-cp "${EXECUTABLE_PATH}" "${PKG_DIR}/"
-
-# Copy descriptive UI layouts next to the binary
-if [[ -f "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" ]]; then
-  cp "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" "${PKG_DIR}/"
+if ! command -v cmake >/dev/null 2>&1; then
+  echo "[package] cmake not found, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
 fi
 
-# Copy deploy files if they exist
-if [[ -d "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/linux" ]]; then
-  cp -r "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/linux/"* "${PKG_DIR}/" 2>/dev/null || true
+if ! command -v ninja >/dev/null 2>&1; then
+  echo "[package] ninja not found, run ./scripts/linux/deps.sh first." >&2
+  exit "${EXIT_FAILURE}"
 fi
 
-# Create a simple run script
-cat > "${PKG_DIR}/run.sh" << 'EOF'
-#!/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export LD_LIBRARY_PATH="${SCRIPT_DIR}:${LD_LIBRARY_PATH}"
-cd "${SCRIPT_DIR}"
-exec ./CuteGitApp "$@"
-EOF
-chmod +x "${PKG_DIR}/run.sh"
+if ! command -v dpkg-deb >/dev/null 2>&1; then
+  echo "[package] dpkg-deb not found, install it first." >&2
+  exit "${EXIT_FAILURE}"
+fi
 
-# Copy LICENSE
-cp "${PROJECT_ROOT_FOLDER}/LICENSE" "${PKG_DIR}/"
+cmake -S "${PROJECT_ROOT_FOLDER}" \
+  -B "${BUILD_FOLDER}" \
+  -G Ninja \
+  -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
 
-# Create archive in dist/
-tar -czf "${OUTPUT_FOLDER}/${PKG_NAME}.tar.gz" -C "${BUILD_FOLDER}" "${PKG_NAME}"
+cmake --build "${BUILD_FOLDER}"
 
-# Clean up temporary staging directory
-rm -rf "${PKG_DIR}"
+mkdir -p "${OUTPUT_FOLDER}"
+rm -f "${BUILD_FOLDER}/cutegit_"*.deb "${BUILD_FOLDER}/cutegit-"*.tar.gz 2>/dev/null || true
+(
+  cd "${BUILD_FOLDER}"
+  cpack
+)
 
-echo ""
-echo "Package created: ${OUTPUT_FOLDER}/${PKG_NAME}.tar.gz"
-echo "To extract and run:"
-echo "  tar -xzf ${PKG_NAME}.tar.gz"
-echo "  cd ${PKG_NAME}"
-echo "  ./run.sh"
+rm -f "${OUTPUT_FOLDER}/cutegit_"*.deb "${OUTPUT_FOLDER}/cutegit-"*.tar.gz 2>/dev/null || true
+
+find "${BUILD_FOLDER}" -maxdepth 1 -type f \
+  \( -name "cutegit_${VERSION}_*.deb" -o -name "cutegit-${VERSION}-*.tar.gz" \) \
+  -exec cp -f {} "${OUTPUT_FOLDER}/" \;
+
+echo
+printf 'Packages generated in %s\n' "${OUTPUT_FOLDER}"
+find "${OUTPUT_FOLDER}" -maxdepth 1 -type f \( -name "*.deb" -o -name "*.tar.gz" \) -print | sort

@@ -32,6 +32,10 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 ```
 ./scripts/linux/run.sh [--debug|--release]
 ```
+* Build the Release packages (`.deb` + `.tar.gz`, copied to `dist/`):
+```
+./scripts/linux/package.sh
+```
 
 ## Things it does
 

@@ -37,3 +37,20 @@ find_package(Qt6 REQUIRED COMPONENTS
 
 add_subdirectory(CuteGit)
 add_subdirectory(tests)
+
+set(CPACK_PACKAGE_NAME "cutegit")
+set(CPACK_PACKAGE_VENDOR "CuteGit")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Graphical versioning client")
+set(CPACK_PACKAGE_VERSION "${CUTEGIT_VERSION}")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+
+if(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "DEB;TGZ")
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jango73 <guillaumed00@gmail.com>")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "vcs")
+    set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+endif()
+
+include(CPack)
