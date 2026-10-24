@@ -84,6 +84,10 @@ Item {
     readonly property int toolTipDelay: 1000
     readonly property int toolTipTimeout: 5000
 
+    // Scrolling without inertia
+    readonly property real flickDecelerationWithoutInertia: 200000.0
+    readonly property real maximumFlickVelocityWithoutInertia: 10000.0
+
     // Text
     readonly property string repositoryMenuText: qsTr("&Repository")
     readonly property string cloneMenuText: qsTr("&Clone / checkout")

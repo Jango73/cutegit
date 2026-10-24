@@ -81,12 +81,20 @@ Item {
             text: Const.messageText
         }
 
-        ScrollView {
+        Flickable {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickDeceleration: Const.flickDecelerationWithoutInertia
+            maximumFlickVelocity: Const.maximumFlickVelocityWithoutInertia
+            contentWidth: width
+            contentHeight: commitMessageText.height
+            ScrollBar.vertical: ScrollBar {
+            }
 
             StandardText {
+                id: commitMessageText
                 width: parent.width
                 text: root.commitMessage
             }

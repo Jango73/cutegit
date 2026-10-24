@@ -43,6 +43,9 @@ StandardPopup {
             Flickable {
                 id: helpView
                 contentHeight: generalText.height
+                boundsBehavior: Flickable.StopAtBounds
+                flickDeceleration: Const.flickDecelerationWithoutInertia
+                maximumFlickVelocity: Const.maximumFlickVelocityWithoutInertia
 
                 StandardText {
                     id: generalText

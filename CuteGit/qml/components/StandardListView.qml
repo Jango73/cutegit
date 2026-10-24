@@ -11,7 +11,9 @@ ListView {
     clip: true
     activeFocusOnTab: true
     contentWidth: width - scrollBarWidth
-    flickDeceleration: 5000
+    boundsBehavior: Flickable.StopAtBounds
+    flickDeceleration: Const.flickDecelerationWithoutInertia
+    maximumFlickVelocity: Const.maximumFlickVelocityWithoutInertia
 
     /*! If true, the items can be selected */
     property bool itemsSelectable: true
