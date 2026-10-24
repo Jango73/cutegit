@@ -24,7 +24,7 @@ public:
 public:
 
     //-------------------------------------------------------------------------------------------------
-    // Constructor & destructor
+    // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
     //! Default constructor
@@ -46,7 +46,7 @@ public:
     //! Returns data
     virtual QVariant data(const QModelIndex& qIndex, int iRole) const;
 
-    //!
+    //! Replaces the shown labels, taking ownership of the new list
     void setLabelList(QList<CLabel*> lNewList);
 
     //! Replaces the shown labels with owned fresh labels in place, returns true when changed

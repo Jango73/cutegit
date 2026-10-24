@@ -82,10 +82,16 @@ QVariant CGraphModel::data(const QModelIndex& index, int role) const
     if (pLine == nullptr)
         return QVariant();
 
-    // Only graph lines ever enter this model: the reconciler is protected and
-    // the typed setLines wrapper guards every incoming line
-    const CGraphLine* pGraphLine = static_cast<const CGraphLine*>(pLine);
-    Q_ASSERT(qobject_cast<const CGraphLine*>(pLine) != nullptr);
+    // Only graph lines ever enter this model: the typed setLines wrapper
+    // guards every incoming line, and this runtime check keeps release builds
+    // safe if that invariant is ever broken
+    const CGraphLine* pGraphLine = qobject_cast<const CGraphLine*>(pLine);
+
+    if (pGraphLine == nullptr)
+    {
+        qWarning() << "CGraphModel::data() : skipping a non-graph line";
+        return CCommitLogModel::data(index, role);
+    }
 
     switch (role)
     {
@@ -112,14 +118,28 @@ void CGraphModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>&
 
     for (CLogLine* pLine : lLoadedLines)
     {
-        Q_ASSERT(qobject_cast<CGraphLine*>(pLine) != nullptr);
-        lLoadedGraphLines << static_cast<CGraphLine*>(pLine);
+        CGraphLine* pGraphLine = qobject_cast<CGraphLine*>(pLine);
+
+        if (pGraphLine == nullptr)
+        {
+            qWarning() << "CGraphModel::prepareLines() : skipping a non-graph loaded line";
+            continue;
+        }
+
+        lLoadedGraphLines << pGraphLine;
     }
 
     for (CLogLine* pLine : lIncomingLines)
     {
-        Q_ASSERT(qobject_cast<CGraphLine*>(pLine) != nullptr);
-        lIncomingGraphLines << static_cast<CGraphLine*>(pLine);
+        CGraphLine* pGraphLine = qobject_cast<CGraphLine*>(pLine);
+
+        if (pGraphLine == nullptr)
+        {
+            qWarning() << "CGraphModel::prepareLines() : skipping a non-graph incoming line";
+            continue;
+        }
+
+        lIncomingGraphLines << pGraphLine;
     }
 
     layoutIncomingLines(lLoadedGraphLines, lIncomingGraphLines, iStartIndex);
@@ -135,8 +155,11 @@ bool CGraphModel::isSameLine(const CLogLine* pExistingLine, const CLogLine* pInc
     if (pExistingLine == nullptr || pIncomingLine == nullptr)
         return true;
 
-    const CGraphLine* pExistingGraphLine = static_cast<const CGraphLine*>(pExistingLine);
-    const CGraphLine* pIncomingGraphLine = static_cast<const CGraphLine*>(pIncomingLine);
+    const CGraphLine* pExistingGraphLine = qobject_cast<const CGraphLine*>(pExistingLine);
+    const CGraphLine* pIncomingGraphLine = qobject_cast<const CGraphLine*>(pIncomingLine);
+
+    if (pExistingGraphLine == nullptr || pIncomingGraphLine == nullptr)
+        return false;
 
     if (pExistingGraphLine->decorations() != pIncomingGraphLine->decorations())
         return false;

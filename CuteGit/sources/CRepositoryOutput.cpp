@@ -2,6 +2,7 @@
 // Qt
 #include <QFile>
 #include <QModelIndex>
+#include <QSet>
 #include <QStringList>
 #include <algorithm>
 
@@ -337,12 +338,18 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
     case CEnums::eBranchHeadCommit:
     {
         // A moved head changes two commits: the one it left and the one it
-        // reached, so both refresh their labels without a full resync
-        QString sPreviousRemoteCommitId = m_pRemoteBranchModel->setBranchHeadCommit(sKey, sValue);
-        QString sPreviousLocalCommitId = m_pLocalBranchModel->setBranchHeadCommit(sKey, sValue);
-        refreshLabelsForCommitOnModels(sPreviousRemoteCommitId);
-        refreshLabelsForCommitOnModels(sPreviousLocalCommitId);
-        refreshLabelsForCommitOnModels(sValue);
+        // reached, so both refresh their labels without a full resync.
+        // Each model scans its own list once: a miss returns an empty id,
+        // which the refresh below ignores, so no existence pre-check is needed.
+        QSet<QString> sRefreshCommitIds;
+
+        sRefreshCommitIds << m_pRemoteBranchModel->setBranchHeadCommit(sKey, sValue);
+        sRefreshCommitIds << m_pLocalBranchModel->setBranchHeadCommit(sKey, sValue);
+        sRefreshCommitIds << sValue;
+
+        for (const QString& sCommitId : sRefreshCommitIds)
+            refreshLabelsForCommitOnModels(sCommitId);
+
         break;
     }
 
@@ -350,7 +357,10 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
     {
         QString sPreviousCommitId = m_pTagModel->setBranchHeadCommit(sKey, sValue);
         refreshLabelsForCommitOnModels(sPreviousCommitId);
-        refreshLabelsForCommitOnModels(sValue);
+
+        if (sPreviousCommitId != sValue)
+            refreshLabelsForCommitOnModels(sValue);
+
         break;
     }
 

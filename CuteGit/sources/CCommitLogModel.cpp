@@ -253,8 +253,9 @@ void CCommitLogModel::fetchMore(const QModelIndex& parent)
 
 void CCommitLogModel::commitChanged(const QString& sCommitId)
 {
-    syncLabelsForCommit(sCommitId);
-    emitRowsForCommit(sCommitId);
+    // Diff markers are computed from the repository, not stored in lines:
+    // labels cannot have changed, so only the marker roles refresh
+    emitRowsForCommit(sCommitId, {eMarkedAsDiffFromRole, eMarkedAsDiffToRole});
 }
 
 /*************************************************************************/
@@ -302,26 +303,30 @@ void CCommitLogModel::refreshLabels()
     if (sChangedCommitIds.isEmpty())
         return;
 
-    // One notification covers every changed row: per-row emissions scale
-    // poorly on large graphs and this refresh runs on every branch/tag arrival
-    int iFirstRow = -1;
-    int iLastRow = -1;
+    // Changed rows emit per contiguous run: a single spanning range would
+    // also cover unchanged rows between sparse changes and scale poorly
+    // on large graphs, and this refresh runs on every branch/tag arrival
+    int iRunFirstRow = -1;
+    int iRunLastRow = -1;
 
-    for (int iLineIndex = 0; iLineIndex < m_lLines.count(); iLineIndex++)
+    for (int iLineIndex = 0; iLineIndex <= m_lLines.count(); iLineIndex++)
     {
-        CLogLine* pLine = m_lLines[iLineIndex];
+        CLogLine* pLine = iLineIndex < m_lLines.count() ? m_lLines[iLineIndex] : nullptr;
+        bool bIsChangedRow = pLine != nullptr && sChangedCommitIds.contains(pLine->commitId());
 
-        if (pLine != nullptr && sChangedCommitIds.contains(pLine->commitId()))
+        if (bIsChangedRow)
         {
-            if (iFirstRow < 0)
-                iFirstRow = iLineIndex;
+            if (iRunFirstRow < 0)
+                iRunFirstRow = iLineIndex;
 
-            iLastRow = iLineIndex;
+            iRunLastRow = iLineIndex;
+        }
+        else if (iRunFirstRow >= 0)
+        {
+            emit dataChanged(index(iRunFirstRow), index(iRunLastRow), {eLabelsRole});
+            iRunFirstRow = -1;
         }
     }
-
-    if (iFirstRow >= 0)
-        emit dataChanged(index(iFirstRow), index(iLastRow), {eLabelsRole});
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -334,7 +339,7 @@ void CCommitLogModel::refreshLabelsForCommit(const QString& sCommitId)
     if (not syncLabelsForCommit(sCommitId))
         return;
 
-    emitRowsForCommit(sCommitId);
+    emitRowsForCommit(sCommitId, {eLabelsRole});
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -361,15 +366,6 @@ QList<CLabel*> CCommitLogModel::labelsFromLine(const CLogLine* pLine) const
     Q_UNUSED(pLine)
 
     return QList<CLabel*>();
-}
-
-//-------------------------------------------------------------------------------------------------
-
-/*************************************************************************/
-// Returns the signature identifying a label: its type and name
-static QString labelSignature(const CLabel* pLabel)
-{
-    return QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -413,8 +409,8 @@ void CCommitLogModel::trimTailToCount(int iKeepCount)
 
 //-------------------------------------------------------------------------------------------------
 
-// Emits dataChanged on every row showing a commit
-void CCommitLogModel::emitRowsForCommit(const QString& sCommitId)
+// Emits dataChanged on every row showing a commit, for the given roles (all roles when empty)
+void CCommitLogModel::emitRowsForCommit(const QString& sCommitId, const QList<int>& lRoles)
 {
     if (sCommitId.isEmpty())
         return;
@@ -424,7 +420,14 @@ void CCommitLogModel::emitRowsForCommit(const QString& sCommitId)
         CLogLine* pLine = m_lLines[iLineIndex];
 
         if (pLine != nullptr && pLine->commitId() == sCommitId)
-            emit dataChanged(index(iLineIndex), index(iLineIndex));
+        {
+            QModelIndex qModelIndex = index(iLineIndex);
+
+            if (lRoles.isEmpty())
+                emit dataChanged(qModelIndex, qModelIndex);
+            else
+                emit dataChanged(qModelIndex, qModelIndex, lRoles);
+        }
     }
 }
 
@@ -483,7 +486,7 @@ bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
     for (const CLabel* pLabel : lFreshLabels)
     {
         if (pLabel != nullptr)
-            sKnownSignatures << labelSignature(pLabel);
+            sKnownSignatures << CLabel::signature(pLabel);
     }
 
     // Lines may carry labels the repository models do not know, such as a
@@ -498,11 +501,11 @@ bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
             if (pLabel == nullptr)
                 continue;
 
-            if (sKnownSignatures.contains(labelSignature(pLabel)))
+            if (sKnownSignatures.contains(CLabel::signature(pLabel)))
                 delete pLabel;
             else
             {
-                sKnownSignatures << labelSignature(pLabel);
+                sKnownSignatures << CLabel::signature(pLabel);
                 lFreshLabels << pLabel;
             }
         }
@@ -512,8 +515,14 @@ bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
 
     if (pModel == nullptr)
     {
-        if (lFreshLabels.isEmpty())
+        // No loaded row shows the commit: its labels stay invisible until
+        // its lines load, so no model is kept and the map never grows
+        // with entries pruneUnusedLabels cannot collect
+        if (lFreshLabels.isEmpty() || findLine(sCommitId) == nullptr)
+        {
+            qDeleteAll(lFreshLabels);
             return false;
+        }
 
         pModel = new CLabelModel(this);
         m_mLabels[sCommitId] = pModel;

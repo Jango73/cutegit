@@ -14,24 +14,22 @@ class CGraphLineCollection : public CLogLineCollection
 public:
 
     //-------------------------------------------------------------------------------------------------
-    // Constructor & destructor
+    // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
     //! Default constructor
     CGraphLineCollection(QObject *parent = nullptr);
 
-    //!
+    //! Copy constructor
     CGraphLineCollection(const CGraphLineCollection& target);
 
     //! Destructor
     virtual ~CGraphLineCollection() override;
 
     //-------------------------------------------------------------------------------------------------
-    // Control methods
+    // Overridden methods
     //-------------------------------------------------------------------------------------------------
 
-    using CLogLineCollection::add;
-
-    //! Appends a graph line, keeping the typed overload visible alongside the base one
-    void add(CGraphLine* pLine);
+    //! Appends a line, keeping only graph lines and deleting the rejected ones
+    virtual void add(CLogLine* pLine) Q_DECL_OVERRIDE;
 };

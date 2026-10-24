@@ -24,13 +24,13 @@ class CLogLineCollection : public QObject
 public:
 
     //-------------------------------------------------------------------------------------------------
-    // Constructor & destructor
+    // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
     //! Default constructor
     CLogLineCollection(QObject *parent = nullptr);
 
-    //!
+    //! Copy constructor
     CLogLineCollection(const CLogLineCollection& target);
 
     //! Destructor
@@ -40,6 +40,7 @@ public:
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
-    //! Appends a line, taking no ownership transfer beyond the collection copy
+    //! Appends a line without taking ownership: the collection holds the pointer in a shallow copy
+    //! and the model receiving the collection owns every line afterwards, deleting the lines it rejects
     virtual void add(CLogLine* pLine);
 };

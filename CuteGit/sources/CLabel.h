@@ -41,4 +41,14 @@ public:
         , m_eType(target.m_eType)
     {
     }
+
+    //-------------------------------------------------------------------------------------------------
+    // Control methods
+    //-------------------------------------------------------------------------------------------------
+
+    //! Returns the signature identifying a label: its type and name
+    static QString signature(const CLabel* pLabel)
+    {
+        return QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
+    }
 };

@@ -24,7 +24,7 @@ public:
 public:
 
     //-------------------------------------------------------------------------------------------------
-    // Constructor & destructor
+    // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
     //! Default constructor
@@ -37,10 +37,10 @@ public:
     // Getters
     //-------------------------------------------------------------------------------------------------
 
-    //!
+    //! Returns owned labels for the branches pointing at a commit
     QList<CLabel*> labelsForCommit(const QString& sCommitId) const;
 
-    //!
+    //! Returns the names of all branches
     QStringList branchNames() const;
 
     //-------------------------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ public:
     //! Returns data
     virtual QVariant data(const QModelIndex& qIndex, int iRole) const;
 
-    //!
+    //! Replaces the branch list, preserving known head commits of same-named branches
     void setBranchList(QList<CBranch*> lNewList, CEnums::ELabelType eType);
 
     //! Moves a branch head to a commit, returns the previous commit id

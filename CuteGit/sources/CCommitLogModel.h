@@ -131,8 +131,8 @@ protected:
     //! Drops loaded rows beyond a kept row count, deleting their lines and orphaned labels
     void trimTailToCount(int iKeepCount);
 
-    //! Emits dataChanged on every row showing a commit
-    void emitRowsForCommit(const QString& sCommitId);
+    //! Emits dataChanged on every row showing a commit, for the given roles (all roles when empty)
+    void emitRowsForCommit(const QString& sCommitId, const QList<int>& lRoles = QList<int>());
 
     //! Deletes the labels of a commit when no remaining line shows it
     void pruneUnusedLabels(const QString& sCommitId);

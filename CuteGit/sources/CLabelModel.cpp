@@ -102,7 +102,7 @@ bool CLabelModel::isEqualTo(const QList<CLabel*>& lFreshLabels) const
     for (const CLabel* pLabel : m_lLabels)
     {
         if (pLabel != nullptr)
-            sExistingSignatures << QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
+            sExistingSignatures << CLabel::signature(pLabel);
     }
 
     QSet<QString> sFreshSignatures;
@@ -110,7 +110,7 @@ bool CLabelModel::isEqualTo(const QList<CLabel*>& lFreshLabels) const
     for (const CLabel* pLabel : lFreshLabels)
     {
         if (pLabel != nullptr)
-            sFreshSignatures << QString("%1:%2").arg(int(pLabel->type())).arg(pLabel->name());
+            sFreshSignatures << CLabel::signature(pLabel);
     }
 
     return sExistingSignatures == sFreshSignatures;
