@@ -64,8 +64,7 @@ fi
 
 BUILD_DIR="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
-if [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/source/cpp/CXMLNode.cpp" ] \
-  || [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/source/cpp/CFastList.h" ]; then
+if [ ! -f "${PROJECT_ROOT_FOLDER}/qt-plus/source/cpp/CXMLNode.h" ]; then
   echo "[build] Submodules missing, run ./scripts/linux/deps.sh first." >&2
   exit "${EXIT_FAILURE}"
 fi
@@ -83,10 +82,8 @@ fi
 
 echo "Using cmake: $(command -v cmake)"
 
-# --- BEGIN cutegit-only extras (BuildInfo stamp, layouts.json) ---
-# The qt-plus sources this project needs (CXMLNode.cpp, CFastList.h) are
-# compiled directly into the binary, so no qt-plus sub-build is required.
-
+# The qt-plus sources this project needs are compiled directly into the binary,
+# so no qt-plus sub-build is required.
 # Build stamp: regenerated on every build so a running binary can always be identified
 # Written to the build folder (never to the source tree), consumed via the binary dir include path
 # main.cpp is touched so the new stamp is always compiled in
@@ -95,23 +92,20 @@ mkdir -p "${BUILD_DIR}" "${BUILD_DIR}/CuteGit"
 printf '#pragma once\n#define BUILD_TIMESTAMP "%s"\n' "${BUILD_STAMP}" > "${BUILD_DIR}/CuteGit/BuildInfo.h"
 touch "${PROJECT_ROOT_FOLDER}/CuteGit/sources/main.cpp"
 echo "Build stamp: ${BUILD_STAMP}"
-# --- END cutegit-only extras ---
 
 echo "Running cmake with build type ${BUILD_TYPE}..."
-cmake -S "${PROJECT_ROOT_FOLDER}" -B "${BUILD_DIR}" -G Ninja "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+cmake -S "${PROJECT_ROOT_FOLDER}" -B "${BUILD_DIR}" -G Ninja -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
 
 if [ "${VERBOSE_BUILD}" -eq "${VERBOSE_ENABLED}" ]; then
-  cmake --build "${BUILD_DIR}" -v
+  cmake --build "${BUILD_DIR}" --verbose
 else
   cmake --build "${BUILD_DIR}"
 fi
 
-# --- BEGIN cutegit-only extras (layouts.json copy) ---
 # Descriptive UI layouts live next to the binary
 if [[ -f "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" ]]; then
   cp "${PROJECT_ROOT_FOLDER}/CuteGit/deploy/layouts.json" "${BUILD_DIR}/CuteGit/bin/layouts.json"
   echo "Copied layouts.json next to the binary."
 fi
-# --- END cutegit-only extras ---
 
 printf '\nBuilt target in %s\n' "${BUILD_DIR}"

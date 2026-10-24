@@ -73,14 +73,3 @@ case "${CLEAN_TARGET}" in
     exit "${EXIT_FAILURE}"
     ;;
 esac
-
-# --- BEGIN cutegit-only extras (clean bundled qt-plus build folders) ---
-if [[ -d "${PROJECT_ROOT_FOLDER}/qt-plus" ]]; then
-  if [[ "${CLEAN_TARGET}" == "debug" || "${CLEAN_TARGET}" == "all" ]]; then
-    remove_folder "${PROJECT_ROOT_FOLDER}/qt-plus/build-debug"
-  fi
-  if [[ "${CLEAN_TARGET}" == "release" || "${CLEAN_TARGET}" == "all" ]]; then
-    remove_folder "${PROJECT_ROOT_FOLDER}/qt-plus/build-release"
-  fi
-fi
-# --- END cutegit-only extras ---
