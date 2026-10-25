@@ -66,7 +66,7 @@ CuteGit::CuteGit(bool bMasterMode, const QString& sStubFileName, const QString& 
         qmlRegisterUncreatableType<CEnums>("CuteGit", 1, 0, "CEnums", "Cannot create a CEnums instance.");
 
         // Create controller and QML engine
-        m_pController = new CController(sStubFileName, this);
+        m_pController = new CController(sFinalStubFileName, this);
         m_pEngine = new QQmlApplicationEngine(this);
 
         // Set context properties

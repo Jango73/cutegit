@@ -69,7 +69,7 @@ StandardPopup {
                     if (root.showFileList) {
                         root.repository.commit(message.text, root.amend)
                     } else {
-                        root.repository.changeCommitMessage(commitId, message.text)
+                        root.repository.changeCommitMessage(root.commitId, message.text)
                     }
                 }
             }

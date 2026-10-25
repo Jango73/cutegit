@@ -783,7 +783,15 @@ void CGitCommands::editSequenceFile(const QString& sFileName)
                         QString sCommitID = match.captured(2).trimmed();
                         QString sMessage = match.captured(3).trimmed();
 
-                        if (sCommitID == m_sCommitId)
+                        // The commit id from the log view is abbreviated (%h) while the
+                        // todo file holds its own abbreviation: match on prefix so a
+                        // short id still finds its row instead of silently doing nothing
+                        bool bIsTargetCommit = not m_sCommitId.isEmpty()
+                            && (sCommitID == m_sCommitId
+                                || sCommitID.startsWith(m_sCommitId)
+                                || m_sCommitId.startsWith(sCommitID));
+
+                        if (bIsTargetCommit)
                         {
                             switch (m_eRebaseType)
                             {
