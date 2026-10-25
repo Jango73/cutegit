@@ -94,6 +94,7 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_iCommitCountAhead(0)
     , m_iCommitCountBehind(0)
     , m_bHasModifiedFiles(false)
+    , m_bHasTrackedModifiedFiles(false)
     , m_bHasCommitableFiles(false)
     , m_bHasPushableCommits(false)
     , m_bHasPullableCommits(false)
@@ -487,6 +488,7 @@ void CRepository::unload()
     setCommitCountAhead(0);
     setCommitCountBehind(0);
     setHasModifiedFiles(false);
+    setHasTrackedModifiedFiles(false);
     setHasCommitableFiles(false);
     setHasPushableCommits(false);
     setHasPullableCommits(false);

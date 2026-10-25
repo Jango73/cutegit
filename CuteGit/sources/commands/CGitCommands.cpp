@@ -1374,6 +1374,21 @@ static QStringList splitRecordFields(const QString& sRecord, const QString& sSpl
     return sFields;
 }
 
+/*************************************************************************/
+
+/*!
+    \fn static QString messageFromLogField(const QString& sValue)
+    Strips the single format-induced leading space after the &&& splitter,
+    keeping intentional indentation and body newlines intact.
+*/
+static QString messageFromLogField(const QString& sValue)
+{
+    if (not sValue.isEmpty() && sValue[0] == ' ')
+        return sValue.mid(1);
+
+    return sValue;
+}
+
 //-------------------------------------------------------------------------------------------------
 
 void CGitCommands::handleLogOutput(const CProcessResult& tResult)
@@ -1399,7 +1414,7 @@ void CGitCommands::handleLogOutput(const CProcessResult& tResult)
             CLogLine* pLine = new CLogLine();
 
             pLine->setCommitId(sValues[0].trimmed());
-            pLine->setMessage(sValues[4]);
+            pLine->setMessage(messageFromLogField(sValues[4]));
             pLine->setMessageIsComplete(true);
             pLine->setAuthor(sValues[2].trimmed());
             pLine->setDate(QDateTime::fromString(sValues[3].trimmed(), Qt::ISODate));
@@ -1526,7 +1541,7 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
             pLine->setCommitId(sCommitId);
             pLine->setParents(splitParentIds(sValues[2]));
             pLine->setDecorations(splitDecorations(sValues[3]));
-            pLine->setMessage(sValues[7]);
+            pLine->setMessage(messageFromLogField(sValues[7]));
             pLine->setMessageIsComplete(true);
             pLine->setAuthor(sValues[5].trimmed());
             pLine->setDate(QDateTime::fromString(sValues[6].trimmed(), Qt::ISODate));

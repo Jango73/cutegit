@@ -123,6 +123,7 @@ public:
 
     // Values that drive visibility of actions
     Q_FAST_PROPERTY(bool, b, hasModifiedFiles, HasModifiedFiles)
+    Q_FAST_PROPERTY(bool, b, hasTrackedModifiedFiles, HasTrackedModifiedFiles)
     Q_FAST_PROPERTY(bool, b, hasCommitableFiles, HasCommitableFiles)
     Q_FAST_PROPERTY(bool, b, hasPushableCommits, HasPushableCommits)
     Q_FAST_PROPERTY(bool, b, hasPullableCommits, HasPullableCommits)

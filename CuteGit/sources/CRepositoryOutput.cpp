@@ -481,6 +481,7 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
     case CEnums::eIgnoredFileStatus:
     {
         bool bHasModifiedFiles = false;
+        bool bHasTrackedModifiedFiles = false;
         bool bHasCommitableFiles = false;
 
         // The clean inventory only discovers files: it carries no status
@@ -527,6 +528,12 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
             if (pNewFile->status() != CEnums::eIgnored && pNewFile->status() != CEnums::eClean)
             {
                 bHasModifiedFiles = true;
+
+                // Untracked files never block an interactive rebase, only
+                // tracked changes do: keep a dedicated flag for the
+                // rebase-based actions (rebase, squash, message change)
+                if (pNewFile->status() != CEnums::eUntracked)
+                    bHasTrackedModifiedFiles = true;
 
                 if (pNewFile->staged())
                     bHasCommitableFiles = true;
@@ -604,6 +611,7 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
         if (not bInventoryOnly && not bIgnoredOnly)
         {
             setHasModifiedFiles(bHasModifiedFiles);
+            setHasTrackedModifiedFiles(bHasTrackedModifiedFiles);
             setHasCommitableFiles(bHasCommitableFiles);
         }
 
