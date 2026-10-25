@@ -69,7 +69,7 @@ const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
 const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
 const QString CGitCommands::sCommandPollFingerprint      = "git status --porcelain=v1 -b --ignored=no --untracked-files=normal";
 const QString CGitCommands::sCommandPollRefs              = "git for-each-ref --format=\"%(objectname:short) %(refname:short)\"";
-const QString CGitCommands::sCommandPull                = "git pull";
+const QString CGitCommands::sCommandPull                = "git pull --no-rebase";
 const QString CGitCommands::sCommandPush                = "git push %1 %2";
 const QString CGitCommands::sCommandPushForce           = "git push --force-with-lease %1 %2";
 const QString CGitCommands::sCommandRebaseOnBranch      = "git rebase \"%1\"";
