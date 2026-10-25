@@ -77,6 +77,8 @@ const QString sParameterShowDeleted = "ShowDeleted";
 const QString sParameterShowMissing = "ShowMissing";
 const QString sParameterShowUntracked = "ShowUntracked";
 const QString sParameterShowIgnored = "ShowIgnored";
+const QString sParameterSettings = "Settings";
+const QString sParameterMaxLoadedRepositories = "MaxLoadedRepositories";
 const QString sThemeMaterialDark = "MaterialDark";
 const QString sThemeMaterialLight = "MaterialLight";
 
@@ -99,6 +101,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_iCurrentLayoutIndex(0)
     , m_lCurrentLayoutPanels()
     , m_iCurrentRepositoryIndex(-1)
+    , m_iMaxLoadedRepositories(DEFAULT_MAX_LOADED_REPOSITORIES)
     , m_bShowClean(false)
     , m_bShowAdded(true)
     , m_bShowModified(true)
@@ -172,6 +175,7 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_iCurrentLayoutIndex(0)
     , m_lCurrentLayoutPanels()
     , m_iCurrentRepositoryIndex(-1)
+    , m_iMaxLoadedRepositories(DEFAULT_MAX_LOADED_REPOSITORIES)
     , m_bShowClean(false)
     , m_bShowAdded(true)
     , m_bShowModified(true)
@@ -276,6 +280,82 @@ void CController::setCurrentRepositoryIndex(int iValue)
         {
             setCurrentRepository(nullptr);
         }
+
+        if (m_pCurrentRepository != nullptr)
+            touchRecentRepositoryPath(m_pCurrentRepository->repositoryPath());
+
+        enforceLoadedRepositoryLimit();
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*************************************************************************/
+//!
+//! \fn void CController::setMaxLoadedRepositories(int iValue)
+//! Clamps the loaded repository limit to its minimum and unloads the
+//! repositories that exceed it, oldest visit first.
+void CController::setMaxLoadedRepositories(int iValue)
+{
+    int iClampedValue = iValue < MAX_LOADED_REPOSITORIES_MINIMUM ? MAX_LOADED_REPOSITORIES_MINIMUM : iValue;
+
+    if (m_iMaxLoadedRepositories != iClampedValue)
+    {
+        m_iMaxLoadedRepositories = iClampedValue;
+        emit maxLoadedRepositoriesChanged();
+
+        enforceLoadedRepositoryLimit();
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*************************************************************************/
+//!
+//! \fn void CController::enforceLoadedRepositoryLimit()
+//! Keeps at most maxLoadedRepositories repositories loaded: the current
+//! one first, then the most recently visited ones. Every other loaded
+//! repository is unloaded back to its startup state. Repositories with
+//! commands in flight are skipped, the poll tick retries them once idle.
+void CController::enforceLoadedRepositoryLimit()
+{
+    if (m_pOpenRepositoryModel == nullptr)
+        return;
+
+    QList<CRepository*> lRepositories = m_pOpenRepositoryModel->repositories();
+
+    int iLimit = m_iMaxLoadedRepositories < MAX_LOADED_REPOSITORIES_MINIMUM
+        ? MAX_LOADED_REPOSITORIES_MINIMUM
+        : m_iMaxLoadedRepositories;
+
+    if (lRepositories.count() <= iLimit)
+        return;
+
+    // Order the open repositories by visit recency: the current one first,
+    // then the visit history, then any open repository never visited
+    QStringList lOrderedPaths;
+
+    if (m_pCurrentRepository != nullptr)
+        lOrderedPaths << m_pCurrentRepository->repositoryPath();
+
+    for (const QString& sRecentPath : m_lRecentRepositoryPaths)
+    {
+        if (not lOrderedPaths.contains(sRecentPath) && m_pOpenRepositoryModel->hasRepository(sRecentPath))
+            lOrderedPaths << sRecentPath;
+    }
+
+    for (CRepository* pRepository : lRepositories)
+    {
+        if (pRepository != nullptr && not lOrderedPaths.contains(pRepository->repositoryPath()))
+            lOrderedPaths << pRepository->repositoryPath();
+    }
+
+    QStringList lKeptPaths = lOrderedPaths.mid(0, iLimit);
+
+    for (CRepository* pRepository : lRepositories)
+    {
+        if (pRepository != nullptr && not lKeptPaths.contains(pRepository->repositoryPath()))
+            pRepository->unload();
     }
 }
 
@@ -648,6 +728,11 @@ void CController::saveConfiguration()
     xViewFilters.attributes()[sParameterShowIgnored] = QString::number(m_bShowIgnored ? 1 : 0);
     xConfig << xViewFilters;
 
+    // Save settings
+    CXMLNode xSettings(sParameterSettings);
+    xSettings.attributes()[sParameterMaxLoadedRepositories] = QString::number(m_iMaxLoadedRepositories);
+    xConfig << xSettings;
+
     xConfig.saveXMLToFile(configFileName());
 }
 
@@ -686,6 +771,32 @@ CRepository* CController::addOpenRepository(const QString& sRepositoryPath)
     m_pKnownRepositoryModel->setStringList(lRepositoryPaths);
 
     return pRepository;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*************************************************************************/
+//!
+//! \fn void CController::touchRecentRepositoryPath(const QString& sRepositoryPath)
+//! Moves a visited repository path to the front of the visit history.
+void CController::touchRecentRepositoryPath(const QString& sRepositoryPath)
+{
+    if (sRepositoryPath.isEmpty())
+        return;
+
+    m_lRecentRepositoryPaths.removeAll(sRepositoryPath);
+    m_lRecentRepositoryPaths.prepend(sRepositoryPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*************************************************************************/
+//!
+//! \fn void CController::removeRecentRepositoryPath(const QString& sRepositoryPath)
+//! Drops a closed repository path from the visit history.
+void CController::removeRecentRepositoryPath(const QString& sRepositoryPath)
+{
+    m_lRecentRepositoryPaths.removeAll(sRepositoryPath);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -752,6 +863,13 @@ void CController::loadConfiguration()
     m_bShowMissing = readBoolAttribute(mViewAttributes, sParameterShowMissing, m_bShowMissing);
     m_bShowUntracked = readBoolAttribute(mViewAttributes, sParameterShowUntracked, m_bShowUntracked);
     m_bShowIgnored = readBoolAttribute(mViewAttributes, sParameterShowIgnored, m_bShowIgnored);
+
+    // Load settings, the default applies when the node or an attribute is missing
+    CXMLNode xSettings = xConfig.getNodeByTagName(sParameterSettings);
+    bool bSettingsConversionSucceeded = false;
+    int iMaxLoadedRepositories = xSettings.attributes()[sParameterMaxLoadedRepositories].toInt(&bSettingsConversionSucceeded);
+    if (bSettingsConversionSucceeded && iMaxLoadedRepositories >= MAX_LOADED_REPOSITORIES_MINIMUM)
+        m_iMaxLoadedRepositories = iMaxLoadedRepositories;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -847,8 +965,11 @@ void CController::removeRepository(int iRepositoryIndex)
 {
     if (iRepositoryIndex < m_pOpenRepositoryModel->repositories().count())
     {
-        QString sName = m_pOpenRepositoryModel->repositories()[iRepositoryIndex]->repositoryName();
+        CRepository* pRepository = m_pOpenRepositoryModel->repositories()[iRepositoryIndex];
+        QString sName = pRepository->repositoryName();
         setStatusText(QString(Strings::s_sSomeObjectNameClosed).arg(sName));
+
+        removeRecentRepositoryPath(pRepository->repositoryPath());
 
         m_pOpenRepositoryModel->removeRepository(iRepositoryIndex);
     }
@@ -942,6 +1063,10 @@ void CController::onPollTimerTick()
 
     if (lRepositories.isEmpty())
         return;
+
+    // Deferred evictions run here too: repositories skipped while busy
+    // unload once their commands drained
+    enforceLoadedRepositoryLimit();
 
     // The current repository is polled on every tick, other repositories round-robin
     // so that any number of open repositories costs at most two cheap commands per tick

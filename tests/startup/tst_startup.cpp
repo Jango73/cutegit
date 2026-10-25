@@ -133,6 +133,91 @@ private slots:
         QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
     }
 
+    void repositoryLimit_unloadsOldestTabs()
+    {
+        QTemporaryDir tParentDir;
+        QVERIFY2(tParentDir.isValid(), "Could not create temporary folder");
+
+        QString sPathA = tParentDir.path() + "/repoA";
+        QString sPathB = tParentDir.path() + "/repoB";
+        QString sPathC = tParentDir.path() + "/repoC";
+        QVERIFY2(initGitRepo(sPathA), "Could not init repoA");
+        QVERIFY2(initGitRepo(sPathB), "Could not init repoB");
+        QVERIFY2(initGitRepo(sPathC), "Could not init repoC");
+
+        {
+            CController tController("");
+            QCOMPARE(tController.maxLoadedRepositories(), 3);
+
+            tController.setMaxLoadedRepositories(2);
+            QCOMPARE(tController.maxLoadedRepositories(), 2);
+
+            tController.openRepository(sPathA);
+            tController.openRepository(sPathB);
+            tController.openRepository(sPathC);
+
+            CRepositoryModel* pModel = openRepositoryModel(tController);
+            QVERIFY2(pModel != nullptr, "Controller has no openRepositoryModel");
+            QCOMPARE(pModel->rowCount(), 3);
+
+            // Drain the scans issued by the interactive opens
+            QTRY_VERIFY_WITH_TIMEOUT(!isBusy(pModel), s_iAsyncTimeoutMs);
+
+            // Visit every tab: only the two most recent visits stay loaded
+            tController.setCurrentRepositoryIndex(0);
+            tController.setCurrentRepositoryIndex(1);
+            tController.setCurrentRepositoryIndex(2);
+
+            QTRY_VERIFY_WITH_TIMEOUT(!pModel->repositories().value(0)->isLoaded(), s_iAsyncTimeoutMs);
+            QVERIFY(pModel->repositories().value(1)->isLoaded());
+            QVERIFY(pModel->repositories().value(2)->isLoaded());
+
+            // Revisiting the unloaded tab reloads it and unloads the oldest visit
+            tController.setCurrentRepositoryIndex(0);
+
+            QTRY_VERIFY_WITH_TIMEOUT(pModel->repositories().value(0)->isLoaded(), s_iAsyncTimeoutMs);
+            QTRY_VERIFY_WITH_TIMEOUT(!pModel->repositories().value(1)->isLoaded(), s_iAsyncTimeoutMs);
+            QVERIFY(pModel->repositories().value(2)->isLoaded());
+
+            tController.saveConfiguration();
+
+            // The limit persisted through the configuration file, unloaded
+            // repositories reload lazily like at application startup
+            {
+                CController tReloaded("");
+                QCOMPARE(tReloaded.maxLoadedRepositories(), 2);
+
+                CRepositoryModel* pReloadedModel = openRepositoryModel(tReloaded);
+                QVERIFY2(pReloadedModel != nullptr, "Reloaded controller has no openRepositoryModel");
+                QCOMPARE(pReloadedModel->rowCount(), 3);
+
+                for (CRepository* pRepository : pReloadedModel->repositories())
+                    QVERIFY(!pRepository->isLoaded());
+            }
+
+            // Lowering the limit unloads down to the current repository
+            tController.setMaxLoadedRepositories(1);
+            QTRY_VERIFY_WITH_TIMEOUT(!pModel->repositories().value(2)->isLoaded(), s_iAsyncTimeoutMs);
+            QVERIFY(pModel->repositories().value(0)->isLoaded());
+            QVERIFY(!pModel->repositories().value(1)->isLoaded());
+
+            // Cleanup for the other test functions: no open repository left behind
+            tController.setMaxLoadedRepositories(3);
+            tController.removeRepository(2);
+            tController.removeRepository(1);
+            tController.removeRepository(0);
+        }
+
+        {
+            // The cleanup persisted: a fresh controller starts empty again
+            CController tClean("");
+            QCOMPARE(tClean.maxLoadedRepositories(), 3);
+            CRepositoryModel* pCleanModel = openRepositoryModel(tClean);
+            QVERIFY2(pCleanModel != nullptr, "Clean controller has no openRepositoryModel");
+            QCOMPARE(pCleanModel->rowCount(), 0);
+        }
+    }
+
     void cleanupTestCase()
     {
     }
@@ -181,6 +266,29 @@ private:
         tGit.start("git", QStringList() << "clone" << "--quiet" << m_sFixtureRepo << sClonePath);
         tGit.waitForFinished(s_iAsyncTimeoutMs);
         return tGit.exitCode();
+    }
+
+    bool initGitRepo(const QString& sPath)
+    {
+        QProcess tGit;
+        tGit.start("git", QStringList() << "init" << "--quiet" << sPath);
+        return tGit.waitForFinished(s_iAsyncTimeoutMs) && tGit.exitCode() == 0;
+    }
+
+    CRepositoryModel* openRepositoryModel(CController& tController)
+    {
+        return qobject_cast<CRepositoryModel*>(tController.property("openRepositoryModel").value<QObject*>());
+    }
+
+    bool isBusy(CRepositoryModel* pModel)
+    {
+        for (CRepository* pRepository : pModel->repositories())
+        {
+            if (pRepository != nullptr && pRepository->commands() != nullptr && pRepository->commands()->isBusy())
+                return true;
+        }
+
+        return false;
     }
 };
 

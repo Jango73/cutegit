@@ -141,6 +141,9 @@ Item {
     readonly property string showIgnoredMenuText: qsTr("Show &ignored")
 
     readonly property string optionsMenuText: qsTr("&Options")
+    readonly property string settingsMenuText: qsTr("&Settings")
+    readonly property string settingsTitleText: qsTr("Settings")
+    readonly property string maxLoadedRepositoriesText: qsTr("Maximum loaded repositories")
     readonly property string helpMenuText: qsTr("&Help")
     readonly property string themeMenuText: qsTr("&Theme")
     readonly property string darkThemeMenuText: qsTr("Dark")

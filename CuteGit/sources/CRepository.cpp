@@ -412,6 +412,100 @@ void CRepository::refresh()
 
 //-------------------------------------------------------------------------------------------------
 
+/*************************************************************************/
+//!
+//! \fn void CRepository::unload()
+//! Resets the repository to its construction state: every model is cleared,
+//! every status flag is reset and the next visit refreshes on demand.
+//! A repository with commands in flight keeps its content, the controller
+//! retries the eviction once the commands drained.
+void CRepository::unload()
+{
+    if (not m_bFileInventoryDone)
+        return;
+
+    if (m_pCommands != nullptr && m_pCommands->isBusy())
+        return;
+
+    // Files: drop the inventory, the model reconciles down to zero rows.
+    // deleteAll clears the lookup hash too: clear() alone would leave
+    // dangling pointers behind and the next status batch would emit
+    // through them (see onNewOutputListOfCRepoFile).
+    m_lRepoFiles.deleteAll();
+    m_pFlatFileModel->handleRepoFilesChanged();
+    m_pFlatFileModelProxy->filterChanged();
+
+    // Branches and tags: an empty list clears the models
+    m_pRemoteBranchModel->setBranchList(QList<CBranch*>(), CEnums::RemoteBranchLabel);
+    m_pLocalBranchModel->setBranchList(QList<CBranch*>(), CEnums::LocalBranchLabel);
+    m_pTagModel->setBranchList(QList<CBranch*>(), CEnums::TagLabel);
+
+    // Logs: clear the lines like the file selection reset does, then reset
+    // the models so the views reload their rows
+    m_pBranchLogModel->clear();
+    m_pBranchLogModel->invalidate();
+    m_pFileLogModel->clear();
+    m_pFileLogModel->setFullSourceName("");
+    m_pFileLogModel->setRelativeSourceName("");
+    m_pFileLogModel->invalidate();
+    m_pGraphModel->clear();
+    m_pGraphModel->invalidate();
+    m_pRefLogModel->clear();
+    m_pRefLogModel->invalidate();
+
+    // Diffs: drop the lines and forget their sources and texts
+    m_pFileDiffModel->setFullSourceName("");
+    m_pFileDiffModel->setRelativeSourceName("");
+    m_pFileDiffModel->setLines(QList<CDiffLine*>());
+    m_pStagedFileDiffModel->setFullSourceName("");
+    m_pStagedFileDiffModel->setRelativeSourceName("");
+    m_pStagedFileDiffModel->setLines(QList<CDiffLine*>());
+    m_pUnstagedFileDiffModel->setFullSourceName("");
+    m_pUnstagedFileDiffModel->setRelativeSourceName("");
+    m_pUnstagedFileDiffModel->setLines(QList<CDiffLine*>());
+    m_pFileBlameModel->setFullSourceName("");
+    m_pFileBlameModel->setRelativeSourceName("");
+    m_pFileBlameModel->setLines(QList<CDiffLine*>());
+    setFileDiffString("");
+    setStagedFileDiffString("");
+    setUnstagedFileDiffString("");
+    setDiffFromCommitId("");
+    setDiffToCommitId("");
+
+    // Commit details: nothing is loaded anymore
+    setCommitDetailsId("");
+    setCommitDetailsAuthor("");
+    setCommitDetailsDate(QDateTime());
+    setCommitDetailsMessage("");
+    setCommitDetailsAddedCount(0);
+    setCommitDetailsRemovedCount(0);
+
+    // Status: back to the construction values, the next refresh redetects them
+    setRepositoryStatus(CEnums::NoMerge);
+    m_sCurrentBranch = "";
+    emit currentBranchChanged();
+    setCommitCountAhead(0);
+    setCommitCountBehind(0);
+    setHasModifiedFiles(false);
+    setHasCommitableFiles(false);
+    setHasPushableCommits(false);
+    setHasPullableCommits(false);
+    setHasStashableFiles(false);
+    setHasStaleSubmodules(false);
+    m_pCommandOutputModel->setStringList(QStringList());
+
+    // Loading state: the poll fingerprint and the stale domains belong to
+    // the dropped content, the repository needs a refresh on its next visit
+    setPollFingerprint("");
+    m_sStaleLogDomains.clear();
+    m_bShowIgnored = false;
+    m_bPollPending = false;
+    setNeedsRefresh(true);
+    m_bFileInventoryDone = false;
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::pollExternalChanges()
 {
     // Never loaded repositories already need a refresh, polling them would

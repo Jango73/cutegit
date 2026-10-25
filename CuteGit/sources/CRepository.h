@@ -197,6 +197,10 @@ public:
     //! Drops the ignored rows, the proxy hides them but the models own them
     Q_INVOKABLE void purgeIgnoredFiles();
 
+    //! Unloads the repository back to its startup state: clears every model
+    //! and marks it for refresh, so the next visit reloads it on demand
+    Q_INVOKABLE void unload();
+
     //! Shows ignored files, fetching them first when switched on
     void setShowIgnored(bool bValue);
 

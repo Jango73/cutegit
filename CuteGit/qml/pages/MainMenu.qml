@@ -62,6 +62,7 @@ MenuBar {
     signal requestDarkTheme()
     signal requestLightTheme()
     signal requestHelp()
+    signal requestSettings()
     signal requestLanguage(var language)
 
     Menu {
@@ -427,6 +428,13 @@ MenuBar {
 
     Menu {
         title: Const.optionsMenuText
+
+        Action {
+            text: Const.settingsMenuText
+            onTriggered: root.requestSettings()
+        }
+
+        MenuSeparator { }
 
         Action {
             text: Const.helpMenuText

@@ -71,6 +71,7 @@ ApplicationWindow {
         onRequestDarkTheme: root.setTheme(Material.Dark)
         onRequestLightTheme: root.setTheme(Material.Light)
         onRequestHelp: helpDialog.open()
+        onRequestSettings: settingsDialog.open()
         onRequestLanguage: root.setLanguage(language)
     }
 
@@ -330,6 +331,12 @@ ApplicationWindow {
 
     HelpPopup {
         id: helpDialog
+        anchors.centerIn: parent
+        controller: root.ctrl
+    }
+
+    SettingsPopup {
+        id: settingsDialog
         anchors.centerIn: parent
         controller: root.ctrl
     }

@@ -84,6 +84,7 @@
         <file>qml/popups/CommitPopup.qml</file>
         <file>qml/popups/ConfirmPopup.qml</file>
         <file>qml/popups/HelpPopup.qml</file>
+        <file>qml/popups/SettingsPopup.qml</file>
         <file>qml/popups/TagOnPopup.qml</file>
 
         <file>deploy/layouts.json</file>

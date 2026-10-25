@@ -24,6 +24,8 @@
 #define SHARED_MEMORY_TEXT_MAX      60000
 #define SHARED_MEMORY_FILE_NAME_MAX 2000
 #define REPOSITORY_POLL_INTERVAL_MS 3000
+#define DEFAULT_MAX_LOADED_REPOSITORIES 3
+#define MAX_LOADED_REPOSITORIES_MINIMUM 1
 
 //-------------------------------------------------------------------------------------------------
 
@@ -61,6 +63,7 @@ class CController : public QObject
     Q_FAST_PROPERTY(QVariantList, l, currentLayoutPanels, CurrentLayoutPanels)
 
     Q_FAST_PROPERTY_NO_SET_IMPL(int, i, currentRepositoryIndex, CurrentRepositoryIndex)
+    Q_FAST_PROPERTY_NO_SET_IMPL(int, i, maxLoadedRepositories, MaxLoadedRepositories)
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showClean, ShowClean)
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showAdded, ShowAdded)
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showModified, ShowModified)
@@ -141,6 +144,9 @@ public:
     //! Clears the shared memory data
     void clearSharedMemory();
 
+    //! Unloads every repository beyond the loaded limit, oldest visit first
+    void enforceLoadedRepositoryLimit();
+
     //-------------------------------------------------------------------------------------------------
     // Invokables
     //-------------------------------------------------------------------------------------------------
@@ -191,6 +197,12 @@ protected slots:
     //! Creates a repository item without scanning it, returns null when invalid
     CRepository* addOpenRepository(const QString& sRepositoryPath);
 
+    //! Moves a repository path to the front of the visit history
+    void touchRecentRepositoryPath(const QString& sRepositoryPath);
+
+    //! Drops a repository path from the visit history
+    void removeRecentRepositoryPath(const QString& sRepositoryPath);
+
     //-------------------------------------------------------------------------------------------------
     // Properties
     //-------------------------------------------------------------------------------------------------
@@ -207,6 +219,8 @@ protected:
     QTranslator*            m_pTranslator;
 
     QString                 m_sCurrentRepositoryPath;       // This is temporary, used for tab index
+
+    QStringList             m_lRecentRepositoryPaths;       // Most recently visited first
 
     QVector<SLayoutDefinition> m_vLayouts;
 
