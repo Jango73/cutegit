@@ -96,6 +96,8 @@ const QString CGitCommands::sCommandUnstageAll          = "git reset .";
 // hold only selected changes plus kept context.
 const QString CGitCommands::sCommandUnstagedDiff        = "git diff --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandUnstagedDiffUntracked = "git diff --no-color -U3 --no-index -- \"/dev/null\" \"%1\"";
+const QString CGitCommands::sCommandUpdateSubmodules      = "git submodule update --init --recursive";
+const QString CGitCommands::sCommandSubmoduleStatus        = "git submodule status --recursive";
 const QString CGitCommands::sCommandIsTracked            = "git ls-files --error-unmatch -- \"%1\"";
 const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
@@ -725,6 +727,24 @@ void CGitCommands::cleanUp(const QString& sPath)
     emit newOutputString(CEnums::eNotification, tr("Cleaning up..."));
     QString sCommand = QString(sCommandFetchAndPrune);
     exec(new CProcessCommand(CEnums::eCleanUp, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::updateSubmodules(const QString& sPath)
+{
+    emit newOutputString(CEnums::eNotification, tr("Updating submodules..."));
+    QString sCommand = QString(sCommandUpdateSubmodules);
+    exec(new CProcessCommand(CEnums::eUpdateSubmodules, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::submoduleStatus(const QString& sPath)
+{
+    // Silent sentinel like the poll fingerprint: parsed in CRepository,
+    // never shown in the output pane
+    exec(new CProcessCommand(CEnums::eSubmoduleStatus, sPath, sCommandSubmoduleStatus, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1566,6 +1586,8 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::ePatchApply:
     case CEnums::eApplyPatch:
     case CEnums::eCleanUp:
+    case CEnums::eUpdateSubmodules:
+    case CEnums::eSubmoduleStatus:
     {
         // Throw the returned string of the process
         emit newOutputString(tResult.m_eCommand, tResult.m_sValue, QString(), tResult.m_iExitCode);

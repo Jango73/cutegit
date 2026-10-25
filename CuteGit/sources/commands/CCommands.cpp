@@ -492,6 +492,20 @@ void CCommands::cleanUp(const QString& sPath)
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::updateSubmodules(const QString& sPath)
+{
+    Q_UNUSED(sPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CCommands::submoduleStatus(const QString& sPath)
+{
+    Q_UNUSED(sPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::editSequenceFile(const QString& sFileName)
 {
     Q_UNUSED(sFileName);

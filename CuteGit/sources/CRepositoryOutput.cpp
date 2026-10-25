@@ -101,6 +101,31 @@ static QString failureSummary(const QString& sOutput)
 
 /************************************************************************/
 /*!
+    \fn bool submoduleStatusIsStale(const QString& sOutput)
+    Returns true when git submodule status reports a checkout that differs
+    from the recorded commit (+), an uninitialized submodule (-) or a merge
+    conflict (U). A leading space means the submodule is in sync.
+*/
+static bool submoduleStatusIsStale(const QString& sOutput)
+{
+    for (QString sLine : sOutput.split(NEW_LINE))
+    {
+        if (sLine.isEmpty())
+            continue;
+
+        QChar cPrefix = sLine[0];
+
+        if (cPrefix == '+' || cPrefix == '-' || cPrefix == 'U')
+            return true;
+    }
+
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/************************************************************************/
+/*!
     \fn void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iExitCode, const QString& sOutput)
     Shows the finished or failed status text of a commit, amend, push, pull or fetch operation.
     A zero exit code means success, anything else means failure.
@@ -258,10 +283,19 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     case CEnums::eContinueRebase:
     case CEnums::eAbortRebase:
     case CEnums::eCleanUp:
+    case CEnums::eUpdateSubmodules:
     {
         onNewOutput(sOutput, false);
 
         refresh();
+        break;
+    }
+
+    case CEnums::eSubmoduleStatus:
+    {
+        // Silent sentinel: no output pane spam, only the stale flag drives
+        // the menu entry and the magic button
+        setHasStaleSubmodules(iExitCode == 0 && submoduleStatusIsStale(sOutput));
         break;
     }
 

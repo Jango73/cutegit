@@ -51,6 +51,7 @@ ApplicationWindow {
         onRequestPushAsWIP: root.currentRepositoryView.requestPushAsWIP()
 
         onRequestCleanUp: root.currentRepositoryView.requestCleanUp()
+        onRequestUpdateSubmodules: root.currentRepositoryView.requestUpdateSubmodules()
         onRequestStageAll: root.currentRepositoryView.requestStageAll()
         onRequestUnstageAll: root.currentRepositoryView.requestUnstageAll()
         onRequestStageSelection: root.currentRepositoryView.requestStageSelection()
@@ -248,6 +249,10 @@ ApplicationWindow {
                                    ? root.ctrl.currentRepository.can(CEnums.Push) && root.ctrl.currentRepository.hasPushableCommits
                                    : false
 
+            property bool mayUpdateSubmodules: root.ctrl.currentRepository
+                                               ? root.ctrl.currentRepository.can(CEnums.UpdateSubmodules) && root.ctrl.currentRepository.hasStaleSubmodules
+                                               : false
+
             property bool mayPull: root.ctrl.currentRepository
                                    ? root.ctrl.currentRepository.can(CEnums.Pull) && root.ctrl.currentRepository.hasPullableCommits
                                    : false
@@ -268,6 +273,7 @@ ApplicationWindow {
             onMayCommitChanged: checkMagicAction()
             onMayPushChanged: checkMagicAction()
             onMayPullChanged: checkMagicAction()
+            onMayUpdateSubmodulesChanged: checkMagicAction()
             onMayFetchChanged: checkMagicAction()
 
             function checkMagicAction() {
@@ -275,6 +281,7 @@ ApplicationWindow {
                     { isAllowed: mayCommit, buttonText: Const.commitText, buttonIcon: Const.commitIcon, buttonAction: menu.commitAction },
                     { isAllowed: mayPull, buttonText: Const.pullText, buttonIcon: Const.pullIcon, buttonAction: menu.pullAction },
                     { isAllowed: mayPush, buttonText: Const.pushText, buttonIcon: Const.pushIcon, buttonAction: menu.pushAction },
+                    { isAllowed: mayUpdateSubmodules, buttonText: Const.updateSubmodulesText, buttonIcon: "", buttonAction: menu.updateSubmodulesAction },
                     { isAllowed: mayFetch, buttonText: Const.fetchText, buttonIcon: Const.fetchIcon, buttonAction: menu.fetchAction }
                 ];
 

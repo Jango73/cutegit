@@ -106,6 +106,7 @@ Item {
     readonly property string pushAsWIPMenuText: qsTr("Push as &WIP")
 
     readonly property string cleanUpMenuText: qsTr("Clea&n up")
+    readonly property string updateSubmodulesMenuText: qsTr("Update s&ubmodules")
     readonly property string localMenuText: qsTr("&Local")
     readonly property string stageAllMenuText: qsTr("Stage a&ll")
     readonly property string unstageAllMenuText: qsTr("Unsta&ge all")
@@ -205,6 +206,7 @@ Item {
     readonly property string pushText: qsTr("Push")
     readonly property string forcePushText: qsTr("Force push")
     readonly property string pullText: qsTr("Pull")
+    readonly property string updateSubmodulesText: qsTr("Update submodules")
     readonly property string closeText: qsTr("Close")
     readonly property string clearText: qsTr("Clear")
     readonly property string filesText: qsTr("Files")

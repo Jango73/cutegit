@@ -24,6 +24,7 @@ MenuBar {
     property alias pullAction: pull
     property alias pushAction: push
     property alias forcePushAction: forcePush
+    property alias updateSubmodulesAction: updateSubmodules
     property alias stageSelectionAction: stageSelection
     property alias revertSelectionAction: revertSelection
     property alias commitAction: commit
@@ -41,6 +42,7 @@ MenuBar {
     signal requestPushAsWIP()
 
     signal requestCleanUp()
+    signal requestUpdateSubmodules()
     signal requestStageAll()
     signal requestUnstageAll()
     signal requestStageSelection()
@@ -179,6 +181,15 @@ MenuBar {
                      ? root.repository.can(CEnums.CleanUp)
                      : false
             onTriggered: root.requestCleanUp()
+        }
+
+        Action {
+            id: updateSubmodules
+            text: Const.updateSubmodulesMenuText
+            enabled: root.repository
+                     ? root.repository.can(CEnums.UpdateSubmodules)
+                     : false
+            onTriggered: root.requestUpdateSubmodules()
         }
 
         MenuSeparator { }

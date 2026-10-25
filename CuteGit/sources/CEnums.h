@@ -63,6 +63,7 @@ public:
         ApplyPatch,
         Blame,
         CleanUp,
+        UpdateSubmodules,
         Stage,
         Unstage,
         SwitchBranch,
@@ -187,6 +188,8 @@ public:
         ePatchApply,
         eBlame,
         eCleanUp,
+        eUpdateSubmodules,
+        eSubmoduleStatus,
         ePollFingerprint
     };
 

@@ -97,6 +97,7 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_bHasPushableCommits(false)
     , m_bHasPullableCommits(false)
     , m_bHasStashableFiles(false)
+    , m_bHasStaleSubmodules(false)
     , m_sPollFingerprint("")
     , m_bNeedsRefresh(true)
     , m_bFileInventoryDone(false)
@@ -357,6 +358,16 @@ void CRepository::checkFileStatus(const QString& sFileFullName)
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::checkSubmoduleStatus(QString sPath)
+{
+    if (sPath.isEmpty())
+        sPath = m_sRepositoryPath;
+
+    m_pCommands->submoduleStatus(sPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::refresh()
 {
     // The tracked seed runs on every refresh: one VCS process listing
@@ -371,6 +382,7 @@ void CRepository::refresh()
 
     checkRepositoryStatus();
     checkChangedFileStatus();
+    checkSubmoduleStatus();
 
     // The ignored rows belong to their on-demand batch: re-run it so the
     // set stays coherent while shown, skip it otherwise
@@ -708,6 +720,13 @@ void CRepository::blame(QString sFileFullName)
 void CRepository::cleanUp()
 {
     m_pCommands->cleanUp(m_sRepositoryPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CRepository::updateSubmodules()
+{
+    m_pCommands->updateSubmodules(m_sRepositoryPath);
 }
 
 //-------------------------------------------------------------------------------------------------

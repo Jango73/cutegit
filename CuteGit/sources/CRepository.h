@@ -127,6 +127,7 @@ public:
     Q_FAST_PROPERTY(bool, b, hasPushableCommits, HasPushableCommits)
     Q_FAST_PROPERTY(bool, b, hasPullableCommits, HasPullableCommits)
     Q_FAST_PROPERTY(bool, b, hasStashableFiles, HasStashableFiles)
+    Q_FAST_PROPERTY(bool, b, hasStaleSubmodules, HasStaleSubmodules)
 
     // External change detection (driven by the controller polling)
     Q_FAST_PROPERTY(QString, s, pollFingerprint, PollFingerprint)
@@ -313,6 +314,9 @@ public:
     //! Cleans up local stuff
     Q_INVOKABLE void cleanUp();
 
+    //! Updates all submodules to the commits recorded in the index
+    Q_INVOKABLE void updateSubmodules();
+
     //! Sets the file filter
     Q_INVOKABLE void setFileFilter(const QString& sText);
 
@@ -386,6 +390,9 @@ protected:
 
     //!
     void getBranches(QString sPath = "");
+
+    //! Checks whether submodule checkouts match the recorded commits
+    void checkSubmoduleStatus(QString sPath = "");
 
     //!
     void getBranchHeadCommits(QString sPath = "");

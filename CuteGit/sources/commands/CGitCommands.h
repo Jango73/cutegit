@@ -205,6 +205,12 @@ public:
     virtual void cleanUp(const QString& sPath) override;
 
     //!
+    virtual void updateSubmodules(const QString& sPath) override;
+
+    //!
+    virtual void submoduleStatus(const QString& sPath) override;
+
+    //!
     virtual void editSequenceFile(const QString& sFileName) override;
 
     //-------------------------------------------------------------------------------------------------
@@ -330,6 +336,8 @@ protected:
     static const QString sCommandUnstageAll;
     static const QString sCommandUnstagedDiff;
     static const QString sCommandUnstagedDiffUntracked;
+    static const QString sCommandUpdateSubmodules;
+    static const QString sCommandSubmoduleStatus;
     static const QString sCommandIsTracked;
     static const QString sCommandStagedDiff;
     static const QString sCommandApplyPatchCached;

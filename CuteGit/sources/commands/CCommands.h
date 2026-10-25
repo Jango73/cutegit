@@ -198,6 +198,12 @@ public:
     virtual void cleanUp(const QString& sPath);
 
     //!
+    virtual void updateSubmodules(const QString& sPath);
+
+    //! Checks whether submodule checkouts match the recorded commits
+    virtual void submoduleStatus(const QString& sPath);
+
+    //!
     virtual void editSequenceFile(const QString& sFileName);
 
     //-------------------------------------------------------------------------------------------------

@@ -417,6 +417,10 @@ Pane {
         root.repository.cleanUp()
     }
 
+    function requestUpdateSubmodules() {
+        root.repository.updateSubmodules()
+    }
+
     function requestStageAll() {
         root.repository.stageAll()
     }
