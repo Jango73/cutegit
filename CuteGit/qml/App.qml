@@ -408,14 +408,6 @@ ApplicationWindow {
     }
 
     Shortcut {
-        sequence: "Alt+Shift+L"
-        onActivated: {
-            if (currentRepositoryView)
-                currentRepositoryView.activateBranchLogView()
-        }
-    }
-
-    Shortcut {
         sequence: "Alt+Shift+D"
         onActivated: {
             if (currentRepositoryView)

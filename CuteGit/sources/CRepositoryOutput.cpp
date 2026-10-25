@@ -345,7 +345,6 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
 
 void CRepository::refreshCommitLabels()
 {
-    m_pBranchLogModel->refreshLabels();
     m_pFileLogModel->refreshLabels();
     m_pGraphModel->refreshLabels();
 }
@@ -357,7 +356,6 @@ void CRepository::refreshLabelsForCommitOnModels(const QString& sCommitId)
     if (sCommitId.isEmpty())
         return;
 
-    m_pBranchLogModel->refreshLabelsForCommit(sCommitId);
     m_pFileLogModel->refreshLabelsForCommit(sCommitId);
     m_pGraphModel->refreshLabelsForCommit(sCommitId);
 }
@@ -674,12 +672,6 @@ void CRepository::onNewOutputCLogLineCollection(CEnums::EProcessCommand eCommand
 {
     switch (eCommand)
     {
-
-    case CEnums::eBranchLog:
-    {
-        m_pBranchLogModel->setLines(lNewLines);
-        break;
-    }
 
     case CEnums::eFileLog:
     {

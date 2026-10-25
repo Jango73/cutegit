@@ -36,7 +36,7 @@ static int iLogFormatValueCount = 4;
 static const char* sCommandAdd                = "hg add \"%1\"";
 static const char* sCommandAmend              = "hg commit --amend --date now";
 static const char* sCommandBranches           = "hg branches --template \"{branch} &&& {node}\\n\"";
-static const char* sCommandBranchLog          = "hg log -f --template \"{node} &&& {desc} &&& {author} &&& {date}\\n\"";
+static const char* sCommandGraph              = "hg log --template \"{node} &&& {desc} &&& {author} &&& {date}\\n\"";
 static const char* sCommandCommit             = "hg commit -m \"%1\"";
 static const char* sCommandCreateBranch       = "hg branch \"%1\"";
 static const char* sCommandCurrentBranch      = "hg identify -b";
@@ -97,7 +97,6 @@ bool CHgCommands::can(CEnums::ECapability eWhat) const
     {
     case CEnums::Clone:
     case CEnums::ShowGlobalGraph:
-    case CEnums::ShowBranchLog:
     case CEnums::ShowFileLog:
     case CEnums::Commit:
     case CEnums::Amend:
@@ -154,13 +153,13 @@ void CHgCommands::branchHeadCommits(const QString& sPath, QStringList lBranches)
 
 //-------------------------------------------------------------------------------------------------
 
-void CHgCommands::branchLog(const QString& sPath, int iFrom, int iCount)
+void CHgCommands::graph(const QString& sPath, int iFrom, int iCount)
 {
     Q_UNUSED(iCount);
     int iPotentialCount = 0;
-    QString sCommand = QString(sCommandBranchLog);
+    QString sCommand = QString(sCommandGraph);
     QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
-    exec(new CProcessCommand(CEnums::eBranchLog, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
+    exec(new CProcessCommand(CEnums::eGraph, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -431,6 +430,48 @@ void CHgCommands::handleLogOutput(const CProcessResult& tResult)
 
 //-------------------------------------------------------------------------------------------------
 
+void CHgCommands::handleGraphOutput(const CProcessResult& tResult)
+{
+    // Mercurial history feeds the graph model: parents stay empty, the
+    // layout then shows every commit on a single lane
+    CGraphLineCollection lReturnValue;
+    QStringList lStrings = tResult.m_sValue.split(NEW_LINE);
+
+    for (QString sLine : lStrings)
+    {
+        QStringList sValues = sLine.split(sLogFormatSplitter);
+
+        if (sValues.count() == iLogFormatValueCount)
+        {
+            CGraphLine* pLine = new CGraphLine();
+
+            qint64 iData = qint64(sValues[3].trimmed().toDouble());
+
+            pLine->setCommitId(sValues[0].trimmed());
+            pLine->setMessage(sValues[1].trimmed());
+            pLine->setAuthor(sValues[2].trimmed());
+            pLine->setDate(QDateTime::fromSecsSinceEpoch(iData));
+            pLine->setMessageIsComplete(true);
+
+            lReturnValue.add(pLine);
+        }
+    }
+
+    QStringList lUserValues = tResult.m_sUserData.split(",");
+    int iPotentialCount = lUserValues[0].toInt();
+    int iStartIndex = lUserValues[1].toInt();
+
+    if (iPotentialCount == 0)
+        iPotentialCount = lReturnValue.lines().count();
+
+    lReturnValue.setPotentialCount(iPotentialCount);
+    lReturnValue.setStartIndex(iStartIndex);
+
+    emit newOutputCGraphLineCollection(tResult.m_eCommand, lReturnValue);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CHgCommands::onExecFinished(const CProcessResult& tResult)
 {
     switch (tResult.m_eCommand)
@@ -485,9 +526,14 @@ void CHgCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     case CEnums::eFileLog:
-    case CEnums::eBranchLog:
     {
         handleLogOutput(tResult);
+        break;
+    }
+
+    case CEnums::eGraph:
+    {
+        handleGraphOutput(tResult);
         break;
     }
 

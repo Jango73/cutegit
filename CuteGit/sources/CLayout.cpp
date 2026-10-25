@@ -292,7 +292,7 @@ QVariantList CLayout::toVariantPanels(const SLayoutDefinition& tLayoutDefinition
 const QStringList& CLayout::knownTabIds()
 {
     static const QStringList lTabIdentifiers = QStringList()
-        << "Files" << "Branches" << "Tags" << "BranchLog" << "Graph" << "RefLog"
+        << "Files" << "Branches" << "Tags" << "Graph" << "RefLog"
         << "CommitDetails" << "FileDiff" << "CommitDiff" << "FileLog" << "Blame" << "Output";
     return lTabIdentifiers;
 }

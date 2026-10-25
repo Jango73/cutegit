@@ -245,7 +245,6 @@ Item {
     readonly property string rebaseOnText: qsTr("Rebase on")
     readonly property string amendingText: qsTr("Amending. The changes will be appended to the last commit...")
     readonly property string shortcutsText: qsTr("Shortcuts")
-    readonly property string branchLogText: qsTr("Branch log")
     readonly property string helpTitleText: qsTr("Help")
     readonly property string listEmptyText: qsTr("List empty")
     readonly property string emptyPanelText: qsTr("Empty panel")
@@ -375,7 +374,6 @@ Item {
     readonly property string filesTabId: "Files"
     readonly property string branchesTabId: "Branches"
     readonly property string tagsTabId: "Tags"
-    readonly property string branchLogTabId: "BranchLog"
     readonly property string graphTabId: "Graph"
     readonly property string refLogTabId: "RefLog"
     readonly property string diffTabId: "FileDiff"
@@ -385,14 +383,13 @@ Item {
     readonly property string blameTabId: "Blame"
     readonly property string outputTabId: "Output"
     readonly property var knownTabIds: [
-        filesTabId, branchesTabId, tagsTabId, branchLogTabId, graphTabId, refLogTabId,
+        filesTabId, branchesTabId, tagsTabId, graphTabId, refLogTabId,
         commitDetailsTabId, diffTabId, commitDiffTabId, fileLogTabId, blameTabId, outputTabId
     ]
     readonly property var tabSources: ({
         "Files": "../tabs/FilesTab.qml",
         "Branches": "../tabs/BranchesTab.qml",
         "Tags": "../tabs/TagsTab.qml",
-        "BranchLog": "../tabs/BranchLogTab.qml",
         "Graph": "../tabs/GraphTab.qml",
         "RefLog": "../tabs/RefLogTab.qml",
         "FileDiff": "../tabs/FileDiffTab.qml",
@@ -406,7 +403,6 @@ Item {
         "Files": filesText,
         "Branches": branchesText,
         "Tags": tagsText,
-        "BranchLog": branchLogText,
         "Graph": graphText,
         "RefLog": refLogText,
         "FileDiff": diffText,
@@ -469,7 +465,6 @@ Item {
         ListElement { name: ""; sequence: "" }
         ListElement { name: qsTr("Activate file view"); sequence: "Alt Shift F" }
         ListElement { name: qsTr("Activate graph view"); sequence: "Alt Shift G" }
-        ListElement { name: qsTr("Activate branch log view"); sequence: "Alt Shift L" }
         ListElement { name: qsTr("Activate diff view"); sequence: "Alt Shift D" }
         ListElement { name: qsTr("Activate blame view"); sequence: "Alt Shift B" }
         ListElement { name: ""; sequence: "" }

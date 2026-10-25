@@ -58,7 +58,6 @@
         <file>qml/tabs/BaseTab.qml</file>
         <file>qml/tabs/BlameTab.qml</file>
         <file>qml/tabs/BranchesTab.qml</file>
-        <file>qml/tabs/BranchLogTab.qml</file>
         <file>qml/tabs/CommitDiffTab.qml</file>
         <file>qml/tabs/CommitDetailsTab.qml</file>
         <file>qml/tabs/CommitLogTabBase.qml</file>

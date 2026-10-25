@@ -666,10 +666,6 @@ Pane {
         root.activateTab(Const.filesTabId)
     }
 
-    function activateBranchLogView() {
-        root.activateTab(Const.branchLogTabId)
-    }
-
     function activateGraphView() {
         root.activateTab(Const.graphTabId)
     }

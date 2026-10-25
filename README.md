@@ -47,7 +47,7 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 * Show repository status (clean, merge, rebase, ...) with ahead/behind counts
 * Show repository files as a flat list or a tree, colored according to status, with filter and sorting
 * Show the branches and tags
-* Show the branch log and the graphical commit graph
+* Show the graphical commit graph with filter
 * Show the reflog
 * Show the selected file's log
 * Show staged and unstaged diffs, stage/unstage whole files, hunks or single lines
@@ -71,7 +71,7 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 
 * Show the branches
 * Show repository files as a flat list or a tree, colored according to status
-* Show the branch log and the global graph
+* Show the global graph with filter
 * Show the selected file's log
 * Mark files as staged / unstaged
 * Commit, amend, branch from a commit
@@ -81,7 +81,7 @@ It is not meant to compete with paywares, just provide minimal versioning functi
 
 * Show repository files as a flat list or a tree, colored according to status
 * Show the branches (trunk + branches folder)
-* Show the branch log and the global graph
+* Show the global graph with filter
 * Show the selected file's log
 * Show the unstaged diffs in the selected item (folder or file)
 * Schedule new files (add) and unschedule them

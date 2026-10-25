@@ -31,7 +31,6 @@
 const QString CSvnCommands::sCommandAdd                = "svn add \"%1\"";
 const QString CSvnCommands::sCommandAddForce           = "svn add --force \"%1\"";
 const QString CSvnCommands::sCommandBlame              = "svn blame \"%1\"";
-const QString CSvnCommands::sCommandBranchLog          = "svn log --limit %1 --xml";
 const QString CSvnCommands::sCommandCheckout           = "svn checkout \"%1\"";
 const QString CSvnCommands::sCommandCommit             = "svn commit -m \"%1\"";
 const QString CSvnCommands::sCommandCopyBranch         = "svn copy -r %1 \"^/trunk\" \"^/branches/%2\" -m \"%3\"";
@@ -169,7 +168,6 @@ bool CSvnCommands::can(CEnums::ECapability eWhat) const
     {
     case CEnums::Clone:
     case CEnums::ShowGlobalGraph:
-    case CEnums::ShowBranchLog:
     case CEnums::ShowFileLog:
     case CEnums::Commit:
     case CEnums::Pull:
@@ -268,16 +266,6 @@ void CSvnCommands::graph(const QString& sPath, int iFrom, int iCount)
     QString sCommand = QString(sCommandGraphLog).arg(iFrom + iCount);
     QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
     exec(new CProcessCommand(CEnums::eGraph, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CSvnCommands::branchLog(const QString& sPath, int iFrom, int iCount)
-{
-    int iPotentialCount = 0;
-    QString sCommand = QString(sCommandBranchLog).arg(iFrom + iCount);
-    QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
-    exec(new CProcessCommand(CEnums::eBranchLog, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -928,7 +916,6 @@ void CSvnCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     case CEnums::eFileLog:
-    case CEnums::eBranchLog:
     {
         handleLogOutput(tResult);
         break;

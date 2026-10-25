@@ -10,6 +10,7 @@
 // Application
 #include "CRepository.h"
 #include "CLogModel.h"
+#include "CGraphModel.h"
 #include "CLabelModel.h"
 #include "CPatchBuilder.h"
 #include "CDiffModel.h"
@@ -204,20 +205,14 @@ private slots:
     {
         QTest::qWait(3000);
 
-        QCOMPARE(m_pRepository->branchLogModel()->rowCount(), 0);
-        QCOMPARE(m_pRepository->graphModel()->rowCount(), 0);
-        QCOMPARE(m_pRepository->refLogModel()->rowCount(), 0);
-
-        m_pRepository->refreshBranchLog();
-
-        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->branchLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
-
         QCOMPARE(m_pRepository->graphModel()->rowCount(), 0);
         QCOMPARE(m_pRepository->refLogModel()->rowCount(), 0);
 
         m_pRepository->refreshGraph();
 
         QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+
+        QCOMPARE(m_pRepository->refLogModel()->rowCount(), 0);
 
         m_pRepository->refreshRefLog();
 
@@ -226,9 +221,26 @@ private slots:
         // A refresh marks every domain stale without rereading, the next
         // named refresh reloads the domain
         m_pRepository->refresh();
-        m_pRepository->refreshBranchLog();
+        m_pRepository->refreshGraph();
 
-        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->branchLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+    }
+
+    // Graph filter hides every row on a nonsense string and restores them
+    // once cleared, through the proxy like the tab view does
+    void graphFilter_filtersRows()
+    {
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+
+        m_pRepository->setGraphFilter("zzz-no-such-commit-zzz");
+
+        QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->graphModelProxy()->rowCount(), 0, s_iAsyncTimeoutMs);
+
+        m_pRepository->setGraphFilter("");
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModelProxy()->rowCount() > 0, s_iAsyncTimeoutMs);
     }
 
     // Ignored files stay out of the default refresh: the status batch
@@ -289,7 +301,7 @@ private slots:
     // Labels survive on-demand loading whatever the arrival order: branch
     // data lands at refresh while lines load when the tab shows, each side
     // syncs the other so loaded rows end up labeled
-    void branchLogLabels_syncOnLoad()
+    void graphLabels_syncOnLoad()
     {
         // Settle: capture the current fingerprint and let a full poll tick
         // pass, so no pending refresh relabels rows behind this test
@@ -301,12 +313,12 @@ private slots:
         // Load the log on demand like the tab view does. The wait below
         // stays under one poll interval: without a sync on load, no later
         // refresh can bring the labels in time
-        m_pRepository->refreshBranchLog();
+        m_pRepository->refreshGraph();
 
-        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->branchLogModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
         QTest::qWait(500);
 
-        QVERIFY2(branchLogHasLabeledRow(), "branch log rows arrived without labels");
+        QVERIFY2(graphHasLabeledRow(), "graph rows arrived without labels");
     }
 
     // Batched branch reads fill every model with one process per domain:
@@ -348,14 +360,14 @@ private slots:
 
  private:
 
-    // True when any loaded branch log row carries at least one label
-    bool branchLogHasLabeledRow() const
+    // True when any loaded graph row carries at least one label
+    bool graphHasLabeledRow() const
     {
-        CLogModel* pModel = m_pRepository->branchLogModel();
+        CGraphModel* pModel = m_pRepository->graphModel();
 
         for (int iRow = 0; iRow < pModel->rowCount(); iRow++)
         {
-            QVariant vLabels = pModel->data(pModel->index(iRow), CLogModel::eLabelsRole);
+            QVariant vLabels = pModel->data(pModel->index(iRow), CGraphModel::eLabelsRole);
             CLabelModel* pLabels = vLabels.value<CLabelModel*>();
 
             if (pLabels != nullptr && pLabels->rowCount() > 0)

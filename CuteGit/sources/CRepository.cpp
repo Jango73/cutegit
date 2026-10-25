@@ -35,7 +35,6 @@
 //-------------------------------------------------------------------------------------------------
 
 // Internal log domain names, never cross the QML boundary
-static const QString s_sBranchLogDomain("branchLog");
 static const QString s_sGraphDomain("graph");
 static const QString s_sRefLogDomain("refLog");
 
@@ -76,10 +75,9 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_pRemoteBranchModel(new CBranchModel(this))
     , m_pLocalBranchModel(new CBranchModel(this))
     , m_pTagModel(new CBranchModel(this))
-    , m_pBranchLogModel(new CLogModel(this, this))
-    , m_pBranchLogModelProxy(new CLogModelProxy(this, this))
     , m_pFileLogModel(new CLogModel(this, this))
     , m_pGraphModel(new CGraphModel(this, this))
+    , m_pGraphModelProxy(new CLogModelProxy(this, this))
     , m_pRefLogModel(new CLogModel(this, this))
     , m_pFileDiffModel(new CDiffModel(this))
     , m_pFileDiffModelProxy(new CDiffModelProxy(this, this))
@@ -131,7 +129,6 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     connect(m_pCommands, &CCommands::newOutputCGraphLineCollection, this, &CRepository::onNewOutputCGraphLineCollection);
 
     // Connect model signals
-    connect(m_pBranchLogModel, &CLogModel::requestLogData, this, &CRepository::onRequestBranchLogData);
     connect(m_pFileLogModel, &CLogModel::requestLogData, this, &CRepository::onRequestFileLogData);
     connect(m_pGraphModel, &CGraphModel::requestGraphData, this, &CRepository::onRequestGraphData);
     connect(m_pFlatFileModel, &CFlatFileModel::currentFileFullName, this, &CRepository::onCurrentFileFullName);
@@ -139,7 +136,7 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     // Connect proxies with their models
     m_pFlatFileModelProxy->setSourceModel(m_pFlatFileModel);
     m_pStagedFileModelProxy->setSourceModel(m_pFlatFileModel);
-    m_pBranchLogModelProxy->setSourceModel(m_pBranchLogModel);
+    m_pGraphModelProxy->setSourceModel(m_pGraphModel);
     m_pFileDiffModelProxy->setSourceModel(m_pFileDiffModel);
     m_pStagedFileDiffModelProxy->setSourceModel(m_pStagedFileDiffModel);
     m_pUnstagedFileDiffModelProxy->setSourceModel(m_pUnstagedFileDiffModel);
@@ -405,7 +402,6 @@ void CRepository::refresh()
 
     // Log readers only run for shown views: mark their domains stale and let
     // the views reload on the logDataStaled signal or when they get shown
-    m_sStaleLogDomains.insert(s_sBranchLogDomain);
     m_sStaleLogDomains.insert(s_sGraphDomain);
     m_sStaleLogDomains.insert(s_sRefLogDomain);
     emit logDataStaled();
@@ -443,8 +439,6 @@ void CRepository::unload()
 
     // Logs: clear the lines like the file selection reset does, then reset
     // the models so the views reload their rows
-    m_pBranchLogModel->clear();
-    m_pBranchLogModel->invalidate();
     m_pFileLogModel->clear();
     m_pFileLogModel->setFullSourceName("");
     m_pFileLogModel->setRelativeSourceName("");
@@ -887,10 +881,10 @@ void CRepository::setFileBlameFilter(const QString& sText)
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::setBranchLogFilter(const QString& sText)
+void CRepository::setGraphFilter(const QString& sText)
 {
-    m_pBranchLogModelProxy->setTextFilter(sText);
-    m_pBranchLogModelProxy->filterChanged();
+    m_pGraphModelProxy->setTextFilter(sText);
+    m_pGraphModelProxy->filterChanged();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1051,18 +1045,6 @@ void CRepository::getGraph(QString sPath)
 
 //-------------------------------------------------------------------------------------------------
 
-void CRepository::getBranchLog(QString sPath)
-{
-    if (sPath.isEmpty())
-        sPath = m_sRepositoryPath;
-
-    // Loaded rows stay visible while the new log loads: CLogModel::setLines()
-    // reconciles the content without rebuilding when nothing changed
-    m_pCommands->branchLog(sPath);
-}
-
-//-------------------------------------------------------------------------------------------------
-
 void CRepository::getRefLog(QString sPath)
 {
     if (sPath.isEmpty())
@@ -1077,9 +1059,6 @@ void CRepository::getRefLog(QString sPath)
 
 int CRepository::logDomainRowCount(const QString& sDomain) const
 {
-    if (sDomain == s_sBranchLogDomain && m_pBranchLogModel != nullptr)
-        return m_pBranchLogModel->rowCount();
-
     if (sDomain == s_sGraphDomain && m_pGraphModel != nullptr)
         return m_pGraphModel->rowCount();
 
@@ -1100,19 +1079,10 @@ void CRepository::refreshLogDomain(const QString& sDomain)
 
     m_sStaleLogDomains.remove(sDomain);
 
-    if (sDomain == s_sBranchLogDomain)
-        getBranchLog();
-    else if (sDomain == s_sGraphDomain)
+    if (sDomain == s_sGraphDomain)
         getGraph();
     else if (sDomain == s_sRefLogDomain)
         getRefLog();
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CRepository::refreshBranchLog()
-{
-    refreshLogDomain(s_sBranchLogDomain);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1141,7 +1111,7 @@ QString CRepository::relativeFileName(const QString& sFullName)
 /*!
     \fn const CLogLine* CRepository::findCommitLine(const QString& sCommitId) const
     Returns the loaded log line showing a commit, nullptr when not loaded.
-    Branch log wins over graph, then file and ref logs.
+    Graph wins over file and ref logs.
 */
 const CLogLine* CRepository::findCommitLine(const QString& sCommitId) const
 {
@@ -1150,10 +1120,7 @@ const CLogLine* CRepository::findCommitLine(const QString& sCommitId) const
 
     const CLogLine* pLine = nullptr;
 
-    if (m_pBranchLogModel != nullptr)
-        pLine = m_pBranchLogModel->findLine(sCommitId);
-
-    if (pLine == nullptr && m_pGraphModel != nullptr)
+    if (m_pGraphModel != nullptr)
         pLine = m_pGraphModel->findLine(sCommitId);
 
     if (pLine == nullptr && m_pFileLogModel != nullptr)
@@ -1271,8 +1238,6 @@ void CRepository::onDiffCommitIdChanged()
         setDiffToCommitId("");
     }
 
-    m_pBranchLogModel->commitChanged(sDiffFromCommitId);
-    m_pBranchLogModel->commitChanged(sDiffToCommitId);
     m_pFileLogModel->commitChanged(sDiffFromCommitId);
     m_pFileLogModel->commitChanged(sDiffToCommitId);
     m_pGraphModel->commitChanged(sDiffFromCommitId);
@@ -1285,13 +1250,6 @@ void CRepository::onShouldRefreshFileStatus()
 {
     checkRepositoryStatus();
     checkChangedFileStatus();
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CRepository::onRequestBranchLogData(int iStartIndex, int iCount)
-{
-    m_pCommands->branchLog(m_sRepositoryPath, iStartIndex, iCount);
 }
 
 //-------------------------------------------------------------------------------------------------

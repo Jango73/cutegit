@@ -4,7 +4,7 @@
 
 // Application
 #include "CLogModelProxy.h"
-#include "CLogModel.h"
+#include "CCommitLogModel.h"
 #include "CRepository.h"
 
 //-------------------------------------------------------------------------------------------------
@@ -24,21 +24,21 @@ bool CLogModelProxy::filterAcceptsRow(int sourceRow, const QModelIndex &sourcePa
 
     QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
 
-    CLogModel* pModel = dynamic_cast<CLogModel*>(sourceModel());
+    CCommitLogModel* pModel = dynamic_cast<CCommitLogModel*>(sourceModel());
 
     if (pModel != nullptr)
     {
         QString sText;
 
-        sText = pModel->data(index, CLogModel::eCommitIdRole).toString();
+        sText = pModel->data(index, CCommitLogModel::eCommitIdRole).toString();
         if (sText.contains(m_sTextFilter, Qt::CaseInsensitive))
             return true;
 
-        sText = pModel->data(index, CLogModel::eFullMessageRole).toString();
+        sText = pModel->data(index, CCommitLogModel::eFullMessageRole).toString();
         if (sText.contains(m_sTextFilter, Qt::CaseInsensitive))
             return true;
 
-        sText = pModel->data(index, CLogModel::eAuthorRole).toString();
+        sText = pModel->data(index, CCommitLogModel::eAuthorRole).toString();
         if (sText.contains(m_sTextFilter, Qt::CaseInsensitive))
             return true;
     }

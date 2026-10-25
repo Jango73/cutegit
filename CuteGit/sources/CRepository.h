@@ -76,10 +76,9 @@ public:
     Q_FAST_PROPERTY(CBranchModel*, p, tagModel, TagModel)
 
     // Models for various logs
-    Q_FAST_PROPERTY(CLogModel*, p, branchLogModel, BranchLogModel)
-    Q_FAST_PROPERTY(CLogModelProxy*, p, branchLogModelProxy, BranchLogModelProxy)
     Q_FAST_PROPERTY(CLogModel*, p, fileLogModel, FileLogModel)
     Q_FAST_PROPERTY(CGraphModel*, p, graphModel, GraphModel)
+    Q_FAST_PROPERTY(CLogModelProxy*, p, graphModelProxy, GraphModelProxy)
     Q_FAST_PROPERTY(CLogModel*, p, refLogModel, RefLogModel)
 
     // Model for the diff view
@@ -210,9 +209,6 @@ public:
 
     //!
     Q_INVOKABLE void refresh();
-
-    //! Loads the branch log, unless it is already fresh (called by shown views)
-    Q_INVOKABLE void refreshBranchLog();
 
     //! Loads the graph, unless it is already fresh (called by shown views)
     Q_INVOKABLE void refreshGraph();
@@ -355,8 +351,8 @@ public:
     //! Sets the blame filter
     Q_INVOKABLE void setFileBlameFilter(const QString& sText);
 
-    //! Sets the branch log filter
-    Q_INVOKABLE void setBranchLogFilter(const QString& sText);
+    //! Sets the graph filter
+    Q_INVOKABLE void setGraphFilter(const QString& sText);
 
     //-------------------------------------------------------------------------------------------------
     // Static control methods
@@ -416,9 +412,6 @@ protected:
 
     //!
     void getGraph(QString sPath = "");
-
-    //!
-    void getBranchLog(QString sPath = "");
 
     //!
     void getRefLog(QString sPath = "");
@@ -530,9 +523,6 @@ protected slots:
 
     //!
     void onShouldRefreshFileStatus();
-
-    //! Indirectly called by models when they need more data for branch log (lazy loading)
-    void onRequestBranchLogData(int iStartIndex, int iCount);
 
     //! Indirectly called by models when they need more data for file log (lazy loading)
     void onRequestFileLogData(int iStartIndex, int iCount);

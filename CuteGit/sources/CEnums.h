@@ -39,7 +39,6 @@ public:
     {
         Clone,
         ShowGlobalGraph,
-        ShowBranchLog,
         ShowFileLog,
         Stash,
         Commit,
@@ -150,7 +149,6 @@ public:
         eTagCommit,
         eCurrentBranch,
         eGraph,
-        eBranchLog,
         eFileLog,
         eRefLog,
         eDeleteFile,

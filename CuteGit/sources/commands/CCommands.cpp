@@ -176,15 +176,6 @@ void CCommands::graph(const QString& sPath, int iFrom, int iCount)
 
 //-------------------------------------------------------------------------------------------------
 
-void CCommands::branchLog(const QString& sPath, int iFrom, int iCount)
-{
-    Q_UNUSED(sPath);
-    Q_UNUSED(iFrom);
-    Q_UNUSED(iCount);
-}
-
-//-------------------------------------------------------------------------------------------------
-
 void CCommands::fileLog(const QString& sPath, const QString& sFullName, int iFrom, int iCount)
 {
     Q_UNUSED(sPath);

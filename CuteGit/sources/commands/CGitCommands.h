@@ -94,9 +94,6 @@ public:
     virtual void graph(const QString& sPath, int iFrom = 0, int iCount = GRAPH_COUNT_DEFAULT) override;
 
     //!
-    virtual void branchLog(const QString& sPath, int iFrom = 0, int iCount = LOG_COUNT_DEFAULT) override;
-
-    //!
     virtual void fileLog(const QString& sPath, const QString& sFullName, int iFrom = 0, int iCount = LOG_COUNT_DEFAULT) override;
 
     //!
@@ -287,8 +284,6 @@ protected:
     static const QString sCommandBranchAheadBehind;
     static const QString sCommandBranches;
     static const QString sCommandBranchFromCommit;
-    static const QString sCommandBranchLog;
-    static const QString sCommandBranchLogCount;
     static const QString sCommandClone;
     static const QString sCommandCommit;
     static const QString sCommandCommitDiffPrevious;

@@ -43,8 +43,6 @@ const QString CGitCommands::sCommandBlame               = "git annotate \"%1\"";
 const QString CGitCommands::sCommandBranchAheadBehind = "git for-each-ref --format=\"%(refname:short) %(upstream:track)\" refs/heads";
 const QString CGitCommands::sCommandBranches            = "git branch -a";
 const QString CGitCommands::sCommandBranchFromCommit    = "git checkout -b \"%1\" \"%2\"";
-const QString CGitCommands::sCommandBranchLog           = "git log --pretty=format:\"%x1e%h &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2";
-const QString CGitCommands::sCommandBranchLogCount      = "git rev-list --count HEAD";
 const QString CGitCommands::sCommandClone               = "git clone --progress \"%1\"";
 const QString CGitCommands::sCommandCommit              = "git commit -m \"%1\"";
 const QString CGitCommands::sCommandCommitDiffPrevious  = "git diff %1~1 %1";
@@ -302,16 +300,6 @@ void CGitCommands::graph(const QString& sPath, int iFrom, int iCount)
     QString sCommand = QString(sCommandGraph).arg(iFrom).arg(iCount);
     QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
     exec(new CProcessCommand(CEnums::eGraph, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
-}
-
-//-------------------------------------------------------------------------------------------------
-
-void CGitCommands::branchLog(const QString& sPath, int iFrom, int iCount)
-{
-    int iPotentialCount = execNow(sPath, sCommandBranchLogCount).trimmed().toInt();
-    QString sCommand = QString(sCommandBranchLog).arg(iFrom).arg(iCount);
-    QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
-    exec(new CProcessCommand(CEnums::eBranchLog, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1695,7 +1683,6 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     }
 
     case CEnums::eFileLog:
-    case CEnums::eBranchLog:
     {
         handleLogOutput(tResult);
         break;

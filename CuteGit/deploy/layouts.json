@@ -12,7 +12,6 @@
                     "Tab": [
                         { "Id": "Graph" },
                         { "Id": "Files" },
-                        { "Id": "BranchLog" },
                         { "Id": "RefLog" }
                     ]
                 },
@@ -23,9 +22,9 @@
                     "Width": "45",
                     "Height": "100",
                     "Tab": [
-                        { "Id": "CommitDiff", "VisibleWhen": "BranchLog,Graph,RefLog" },
+                        { "Id": "CommitDiff", "VisibleWhen": "Graph,RefLog" },
                         { "Id": "FileDiff", "VisibleWhen": "Files" },
-                        { "Id": "CommitDetails", "VisibleWhen": "BranchLog,Graph,RefLog" },
+                        { "Id": "CommitDetails", "VisibleWhen": "Graph,RefLog" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" },
                         { "Id": "Output" }
@@ -64,9 +63,9 @@
                     "Width": "40",
                     "Height": "60",
                     "Tab": [
-                        { "Id": "CommitDetails", "VisibleWhen": "BranchLog,Graph,RefLog" },
+                        { "Id": "CommitDetails", "VisibleWhen": "Graph,RefLog" },
                         { "Id": "FileDiff", "VisibleWhen": "Files" },
-                        { "Id": "CommitDiff", "VisibleWhen": "BranchLog,Graph,RefLog" },
+                        { "Id": "CommitDiff", "VisibleWhen": "Graph,RefLog" },
                         { "Id": "FileLog" },
                         { "Id": "Blame" }
                     ]
@@ -89,7 +88,6 @@
                     "Width": "60",
                     "Height": "40",
                     "Tab": [
-                        { "Id": "BranchLog" },
                         { "Id": "Graph" },
                         { "Id": "RefLog" }
                     ]

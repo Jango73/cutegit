@@ -55,7 +55,7 @@ public:
     virtual void branchHeadCommits(const QString& sPath, QStringList lBranches) override;
 
     //!
-    virtual void branchLog(const QString& sPath, int iFrom = 0, int iCount = LOG_COUNT_DEFAULT) override;
+    virtual void graph(const QString& sPath, int iFrom = 0, int iCount = GRAPH_COUNT_DEFAULT) override;
 
     //!
     virtual void fileLog(const QString& sPath, const QString& sFullName, int iFrom = 0, int iCount = LOG_COUNT_DEFAULT) override;
@@ -107,6 +107,9 @@ protected:
 
     //!
     void handleLogOutput(const CProcessResult& tResult);
+
+    //!
+    void handleGraphOutput(const CProcessResult& tResult);
 
     //-------------------------------------------------------------------------------------------------
     // Protected slots
