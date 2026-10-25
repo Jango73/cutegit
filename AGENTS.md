@@ -169,6 +169,40 @@ Never leave a blank line in the commit message: lines follow each other directly
 - Run (interactive GUI, blocks): `./scripts/linux/run.sh [--debug|--release]`
   (logs to `tmp/run.log`).
 
+## Release Procedure
+- Releases must follow Semantic Versioning (`major.minor.patch`).
+- Before creating a release, inspect the commits since the last tag:
+  ```bash
+  git describe --tags --abbrev=0
+  git log --oneline <last-tag>..HEAD
+  ```
+- Determine the next version number from the actual changes:
+  - increment `major` for breaking changes
+  - increment `minor` for backward-compatible new features
+  - increment `patch` for backward-compatible fixes only
+- Update `CHANGELOG.md` first. Add a new section for the new version at the top, with the release date, and make sure the content matches the commits since the last tag.
+- Update the project version only with the dedicated script:
+  ```bash
+  ./scripts/linux/set-version.sh x.y.z
+  ```
+- Commit the release changes before tagging them.
+- Create an annotated Git tag, not a lightweight tag:
+  ```bash
+  git tag -a "vx.y.z" -m "Version x.y.z"
+  ```
+- Build the package with:
+  ```bash
+  ./scripts/linux/package.sh
+  ```
+- `scripts/linux/package.sh` reads the version from `VERSION`, builds the package, and creates `dist/` automatically if it does not exist.
+- After packaging, verify that the expected artifacts for the current version are present in `dist/`.
+- Create the GitHub release with:
+  - name: `Version x.y.z`
+  - tag: `vx.y.z`
+  - description: the content of the latest `CHANGELOG.md` entry only
+  - binary asset: the package generated in `dist/`
+- If `gh` is available, it can be used to create the GitHub release. If not, create the release manually in the GitHub web interface.
+
 ## Tool Execution Policy
 - `tmp/` at the repo root is the folder for temporary/scratch files. It is
   gitignored; scripts must create it (`mkdir -p`) if missing. There is no
