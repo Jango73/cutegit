@@ -18,7 +18,13 @@ Item {
                ? Const.labelLocalColor
                : root.type === CEnums.RemoteBranchLabel
                  ? Const.labelRemoteColor
-                 : Const.labelTagColor
+                 : root.type === CEnums.UpToDateLabel
+                   ? Const.labelUpToDateColor
+                   : root.type === CEnums.UnsyncedLabel
+                     ? Const.labelUnsyncedColor
+                     : root.type === CEnums.DivergedLabel
+                       ? Const.labelDivergedColor
+                       : Const.labelTagColor
         show: true
     }
 

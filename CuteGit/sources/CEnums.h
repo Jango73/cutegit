@@ -95,7 +95,10 @@ public:
         UnknownLabel,
         LocalBranchLabel,
         RemoteBranchLabel,
-        TagLabel
+        TagLabel,
+        UpToDateLabel,
+        UnsyncedLabel,
+        DivergedLabel
     };
 
     // Diff operations

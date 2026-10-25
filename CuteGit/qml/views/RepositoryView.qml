@@ -47,32 +47,67 @@ Pane {
             }
 
             StandardText {
-                anchors.fill: parent
+                id: repositoryTypeText
+                anchors.left: parent.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
                 verticalAlignment: Text.AlignVCenter
 
                 color: root.repository
                        ? root.repository.repositoryStatus === CEnums.NoMerge
                          ? Material.foreground
                          : Material.background
-                : "black"
+                       : "black"
 
-                property string infoText: if (root.repository) {
-                                              "%1 : ( %2 %3 / %4 %5 ) : "
-                                              .arg(root.repository.repositoryTypeString)
-                                              .arg(Const.aheadText)
-                                              .arg(root.repository.commitCountAhead)
-                                              .arg(Const.behindText)
-                                              .arg(root.repository.commitCountBehind)
-                                          } else ""
+                text: root.repository ? root.repository.repositoryTypeString + " :" : ""
+            }
+
+            LogLabel {
+                id: trackingStateLabel
+                anchors.left: repositoryTypeText.right
+                anchors.leftMargin: Const.mainPadding
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                visible: root.repository !== null
+
+                text: root.repository
+                      ? "%1 %2 / %3 %4"
+                        .arg(Const.aheadText)
+                        .arg(root.repository.commitCountAhead)
+                        .arg(Const.behindText)
+                        .arg(root.repository.commitCountBehind)
+                      : ""
+
+                type: root.repository
+                      ? root.repository.commitCountAhead === 0 && root.repository.commitCountBehind === 0
+                        ? CEnums.UpToDateLabel
+                        : root.repository.commitCountAhead > 0 && root.repository.commitCountBehind > 0
+                          ? CEnums.DivergedLabel
+                          : CEnums.UnsyncedLabel
+                      : CEnums.UnknownLabel
+            }
+
+            StandardText {
+                anchors.left: trackingStateLabel.right
+                anchors.leftMargin: Const.mainPadding
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                verticalAlignment: Text.AlignVCenter
+
+                color: root.repository
+                       ? root.repository.repositoryStatus === CEnums.NoMerge
+                         ? Material.foreground
+                         : Material.background
+                       : "black"
 
                 text: if (root.repository) {
                           if (root.repository.repositoryStatus === CEnums.InteractiveRebase)
-                              infoText + Const.interactiveRebaseProgressText
+                              ": " + Const.interactiveRebaseProgressText
                           else if (root.repository.repositoryStatus === CEnums.Rebase)
-                              infoText + Const.rebaseProgressText
+                              ": " + Const.rebaseProgressText
                           else if (root.repository.repositoryStatus === CEnums.Merge)
-                              infoText + Const.mergeProgressText
-                          else infoText
+                              ": " + Const.mergeProgressText
+                          else ":"
                       } else ""
             }
         }

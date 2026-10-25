@@ -27,20 +27,22 @@ Item {
     readonly property color fileDeletedColor: "#80804000"
     readonly property color hunkHeaderColor: "#80404040"
 
-    readonly property color labelLocalColor: "aquamarine"
-    readonly property color labelRemoteColor: "lightsalmon"
-    readonly property color labelTagColor: "deepskyblue"
-
     readonly property var graphLaneColors: [
         "#e67e22",
         "#3498db",
         "#2ecc71",
         "#9b59b6",
-        "#e74c3c",
+        "#e73c3c",
         "#1abc9c",
         "#f1c40f",
         "#fd79a8"
     ]
+    readonly property color labelLocalColor: "aquamarine"
+    readonly property color labelRemoteColor: "lightsalmon"
+    readonly property color labelTagColor: "deepskyblue"
+    readonly property color labelUpToDateColor: graphLaneColors[2]
+    readonly property color labelUnsyncedColor: graphLaneColors[0]
+    readonly property color labelDivergedColor: graphLaneColors[4]
     readonly property int graphLaneWidth: 12
     readonly property int graphLaneMaximumCount: 8
     readonly property int graphCornerRadius: 6
