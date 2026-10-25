@@ -278,9 +278,11 @@ Pane {
     FileMenu {
         id: fileMenu
         objectName: "fileMenu"
+        repository: root.repository
 
         onRequestDelete: root.requestDeleteFiles(fileNames)
         onRequestBlame: root.requestBlameFiles(fileNames)
+        onRequestOpenSubmodule: root.requestOpenSubmodule(fileNames)
     }
 
     //--------------------------------------------------------------------------------
@@ -386,6 +388,12 @@ Pane {
         if (fileNames.length > 0) {
             root.repository.blame(fileNames[0])
             root.activateFileBlameView()
+        }
+    }
+
+    function requestOpenSubmodule(fileNames) {
+        if (fileNames.length > 0) {
+            root.controller.openRepository(fileNames[0])
         }
     }
 

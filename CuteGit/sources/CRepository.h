@@ -176,6 +176,9 @@ public:
     //! Opens a file for edit
     Q_INVOKABLE void openFiles(QStringList lFullNames);
 
+    //! Returns true when the path holds a repository checkout (submodule or nested repository)
+    Q_INVOKABLE bool isSubmodule(QString sFullName) const;
+
     //!
     Q_INVOKABLE bool can(CEnums::ECapability eWhat);
 

@@ -6,6 +6,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QUrl>
 
 // Application
@@ -261,6 +262,15 @@ void CRepository::openFiles(QStringList lFullNames)
 {
     for (QString sFullName : lFullNames)
         QDesktopServices::openUrl(QUrl(sFullName));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool CRepository::isSubmodule(QString sFullName) const
+{
+    // Submodule checkouts carry a .git file pointing at the superproject
+    // modules store, plain checkouts a .git folder: QFileInfo covers both
+    return QFileInfo(QString("%1/.git").arg(sFullName)).exists();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -791,11 +801,24 @@ void CRepository::setBranchLogFilter(const QString& sText)
 
 CEnums::ERepositoryType CRepository::getRepositoryTypeFromFolder(const QString& sPath)
 {
-    // Check for Git and Gerrit repository
-    if (QDir(QString("%1/.git").arg(sPath)).exists())
+    // Check for Git and Gerrit repository: .git is a folder for plain
+    // checkouts, a file pointing at the real dir for submodule checkouts
+    QFileInfo tGit(QString("%1/.git").arg(sPath));
+
+    if (tGit.exists())
     {
-        QString sCommitMsgFile = QString("%1/.git/hooks/commit-msg").arg(sPath);
-        QString sCommitMsgContents = CUtils::getTextFileContents(sCommitMsgFile);
+        QString sGitDir = tGit.filePath();
+
+        if (tGit.isFile())
+        {
+            const QString sGitDirPrefix = "gitdir: ";
+            QString sTarget = CUtils::getTextFileContents(sGitDir).trimmed();
+
+            if (sTarget.startsWith(sGitDirPrefix))
+                sGitDir = QDir(sPath).absoluteFilePath(sTarget.mid(sGitDirPrefix.length()));
+        }
+
+        QString sCommitMsgContents = CUtils::getTextFileContents(QString("%1/hooks/commit-msg").arg(sGitDir));
 
         if (sCommitMsgContents.contains("Gerrit") && sCommitMsgContents.contains("add_ChangeId()"))
             return CEnums::Gerrit;

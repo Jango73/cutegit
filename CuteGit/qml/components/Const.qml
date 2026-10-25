@@ -149,6 +149,7 @@ Item {
 
     readonly property string fileDeleteMenuText: qsTr("&Delete")
     readonly property string fileBlameMenuText: qsTr("&Blame")
+    readonly property string openSubmoduleMenuText: qsTr("Open su&bmodule")
 
     readonly property string logCopyCommitIdMenuText: qsTr("&Copy commit ID")
     readonly property string logCopyCommitMessageMenuText: qsTr("Copy commit m&essage")
