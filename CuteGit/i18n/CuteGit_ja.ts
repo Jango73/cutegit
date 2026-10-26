@@ -95,6 +95,22 @@
         <source>Undeleting...</source>
         <translation>削除解除...</translation>
     </message>
+    <message>
+        <source>Force pushing...</source>
+        <translation>強制プッシュ...</translation>
+    </message>
+    <message>
+        <source>Rebasing on branch %1...</source>
+        <translation>ブランチ%1にリベースしています...</translation>
+    </message>
+    <message>
+        <source>Cleaning up...</source>
+        <translation>クリーンアップ...</translation>
+    </message>
+    <message>
+        <source>Updating submodules...</source>
+        <translation>サブモジュールを更新しています...</translation>
+    </message>
 </context>
 <context>
     <name>CHgCommands</name>
@@ -117,6 +133,72 @@
     <message>
         <source>Creating branch %1...</source>
         <translation>ブランチ%1の作成...</translation>
+    </message>
+    <message>
+        <source>Force pushing...</source>
+        <translation>強制プッシュ...</translation>
+    </message>
+</context>
+<context>
+    <name>CRepository</name>
+    <message>
+        <source>No staged change in selection</source>
+        <translation>選択範囲にステージされた変更がありません</translation>
+    </message>
+    <message>
+        <source>No unstaged change in selection</source>
+        <translation>選択範囲にステージされていない変更がありません</translation>
+    </message>
+    <message>
+        <source>Unable to create patch file</source>
+        <translation>パッチファイルを作成できません</translation>
+    </message>
+</context>
+<context>
+    <name>CSvnCommands</name>
+    <message>
+        <source>Scheduling all new files...</source>
+        <translation>すべての新しいファイルをスケジュールしています...</translation>
+    </message>
+    <message>
+        <source>Subversion has no staging area, nothing to unschedule</source>
+        <translation>Subversionにはステージングエリアがありません、スケジュール解除するものはありません</translation>
+    </message>
+    <message>
+        <source>Reverting...</source>
+        <translation>変更を元に戻す...</translation>
+    </message>
+    <message>
+        <source>Undeleting...</source>
+        <translation>削除解除...</translation>
+    </message>
+    <message>
+        <source>Commiting...</source>
+        <translation>変更のコミット...</translation>
+    </message>
+    <message>
+        <source>Updating...</source>
+        <translation>更新しています...</translation>
+    </message>
+    <message>
+        <source>Switching to %1...</source>
+        <translation>%1に切り替える...</translation>
+    </message>
+    <message>
+        <source>Creating branch %1...</source>
+        <translation>ブランチ%1の作成...</translation>
+    </message>
+    <message>
+        <source>Create branch %1</source>
+        <translation>ブランチ%1を作成</translation>
+    </message>
+    <message>
+        <source>Creating tag %1...</source>
+        <translation>タグ%1を作成しています...</translation>
+    </message>
+    <message>
+        <source>Create tag %1</source>
+        <translation>タグ%1を作成</translation>
     </message>
 </context>
 <context>
@@ -840,6 +922,230 @@ The first line of an item contains the action done, the second line contains the
         <source>Show only lines matching this text. When text is empty, all lines are shown.</source>
         <translation>このテキストに一致する行のみを表示します。 テキストが空の場合、すべての行が表示されます。</translation>
     </message>
+    <message>
+        <source>Layout</source>
+        <translation>レイアウト</translation>
+    </message>
+    <message>
+        <source>Classic</source>
+        <translation>クラシック</translation>
+    </message>
+    <message>
+        <source>BranchesLeft</source>
+        <translation>左側ブランチ</translation>
+    </message>
+    <message>
+        <source>Fallback</source>
+        <translation>フォールバック</translation>
+    </message>
+    <message>
+        <source>Reload layouts</source>
+        <translation>レイアウトを再読み込み</translation>
+    </message>
+    <message>
+        <source>Rebase on</source>
+        <translation>リベース先</translation>
+    </message>
+    <message>
+        <source>Empty panel</source>
+        <translation>空のパネル</translation>
+    </message>
+    <message>
+        <source>Tab '%1' not found in current layout</source>
+        <translation>タブ「%1」が現在のレイアウトに見つかりません</translation>
+    </message>
+    <message>
+        <source>Save as patch</source>
+        <translation>パッチとして保存</translation>
+    </message>
+    <message>
+        <source>Open a repository...</source>
+        <translation>リポジトリを開く...</translation>
+    </message>
+    <message>
+        <source>Rebase on branch</source>
+        <translation>ブランチにリベース</translation>
+    </message>
+    <message>
+        <source>Select repository folder</source>
+        <translation>リポジトリのフォルダを選択</translation>
+    </message>
+    <message>
+        <source>Select file for patch</source>
+        <translation>パッチ用のファイルを選択</translation>
+    </message>
+    <message>
+        <source>You are about to rebase on %1.
+
+Are you sure you want to do this?</source>
+        <translation>%1にリベースしようとしています。
+
+実行してもよろしいですか？</translation>
+    </message>
+    <message>
+        <source>The language selection (%1) could not be set.</source>
+        <translation>言語の選択（%1）を設定できませんでした。</translation>
+    </message>
+    <message>
+        <source>Clone a repository</source>
+        <translation>リポジトリをクローン</translation>
+    </message>
+    <message>
+        <source>Show all</source>
+        <translation>すべて表示</translation>
+    </message>
+    <message>
+        <source>Show clean</source>
+        <translation>クリーンを表示</translation>
+    </message>
+    <message>
+        <source>Show added</source>
+        <translation>追加を表示</translation>
+    </message>
+    <message>
+        <source>Show modified</source>
+        <translation>変更を表示</translation>
+    </message>
+    <message>
+        <source>Show renamed</source>
+        <translation>名前変更を表示</translation>
+    </message>
+    <message>
+        <source>Show deleted</source>
+        <translation>削除を表示</translation>
+    </message>
+    <message>
+        <source>Show missing</source>
+        <translation>不足を表示</translation>
+    </message>
+    <message>
+        <source>Show untracked</source>
+        <translation>未追跡を表示</translation>
+    </message>
+    <message>
+        <source>Show ignored</source>
+        <translation>無視を表示</translation>
+    </message>
+    <message>
+        <source>Fo&amp;rce push</source>
+        <translation>&amp;強制プッシュ</translation>
+    </message>
+    <message>
+        <source>Clea&amp;n up</source>
+        <translation>&amp;クリーンアップ</translation>
+    </message>
+    <message>
+        <source>Update s&amp;ubmodules</source>
+        <translation>&amp;サブモジュールを更新</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>&amp;設定</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>設定</translation>
+    </message>
+    <message>
+        <source>Maximum loaded repositories</source>
+        <translation>読み込むリポジトリの最大数</translation>
+    </message>
+    <message>
+        <source>Open su&amp;bmodule</source>
+        <translation>&amp;サブモジュールを開く</translation>
+    </message>
+    <message>
+        <source>Staged</source>
+        <translation>ステージ済み</translation>
+    </message>
+    <message>
+        <source>Unstaged</source>
+        <translation>未ステージ</translation>
+    </message>
+    <message>
+        <source>Commit diff</source>
+        <translation>コミットの差分</translation>
+    </message>
+    <message>
+        <source>Commit details</source>
+        <translation>コミットの詳細</translation>
+    </message>
+    <message>
+        <source>Commit ID</source>
+        <translation>コミットID</translation>
+    </message>
+    <message>
+        <source>Author</source>
+        <translation>作成者</translation>
+    </message>
+    <message>
+        <source>Date</source>
+        <translation>日付</translation>
+    </message>
+    <message>
+        <source>Added lines</source>
+        <translation>追加された行</translation>
+    </message>
+    <message>
+        <source>Removed lines</source>
+        <translation>削除された行</translation>
+    </message>
+    <message>
+        <source>No staged changes</source>
+        <translation>ステージされた変更はありません</translation>
+    </message>
+    <message>
+        <source>No unstaged changes</source>
+        <translation>ステージされていない変更はありません</translation>
+    </message>
+    <message>
+        <source>Stage selected &amp;lines</source>
+        <translation>選択した&amp;行をステージする</translation>
+    </message>
+    <message>
+        <source>Unstage selected &amp;lines</source>
+        <translation>選択した&amp;行のステージを解除する</translation>
+    </message>
+    <message>
+        <source>Stage &amp;hunk</source>
+        <translation>&amp;ハンクをステージする</translation>
+    </message>
+    <message>
+        <source>Unstage &amp;hunk</source>
+        <translation>&amp;ハンクのステージを解除する</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>File log</source>
+        <translation>ファイルのログ</translation>
+    </message>
+    <message>
+        <source>File diff</source>
+        <translation>ファイルの差分</translation>
+    </message>
+    <message>
+        <source>Force push</source>
+        <translation>強制プッシュ</translation>
+    </message>
+    <message>
+        <source>Update submodules</source>
+        <translation>サブモジュールを更新</translation>
+    </message>
+    <message>
+        <source>Save stash</source>
+        <translation>隠し場所を保存する</translation>
+    </message>
+    <message>
+        <source>Pop stash</source>
+        <translation>隠し場所を復元する</translation>
+    </message>
+    <message>
+        <source>Apply patch</source>
+        <translation>パッチを適用する</translation>
+    </message>
 </context>
 <context>
     <name>FilePane</name>
@@ -856,29 +1162,89 @@ The first line of an item contains the action done, the second line contains the
     <name>Strings</name>
     <message>
         <source>%1 opened.</source>
-        <translation>%1 ouvert.</translation>
+        <translation>%1を開きました。</translation>
     </message>
     <message>
         <source>%1 is not a repository.
 Please select a folder containing a repository.</source>
-        <translation>%1 n&apos;est pas un dépôt.
-Veuillez sélectionner un dossier contenant un dépôt.</translation>
+        <translation>%1はリポジトリではありません。
+リポジトリを含むフォルダを選択してください。</translation>
     </message>
     <message>
         <source>%1 does not exist. Ignoring.</source>
-        <translation>%1 n&apos;existe pas.</translation>
+        <translation>%1は存在しません。無視します。</translation>
     </message>
     <message>
         <source>Pushing to gerrit...</source>
-        <translation>Synchro sortante vers gerrit...</translation>
+        <translation>gerritにプッシュしています...</translation>
     </message>
     <message>
         <source>Unable to get current branch name...</source>
-        <translation>Impossible de récupérer le nom de la branche courante...</translation>
+        <translation>現在のブランチ名を取得できません...</translation>
     </message>
     <message>
         <source>%1 closed.</source>
-        <translation>%1 fermé.</translation>
+        <translation>%1を閉じました。</translation>
+    </message>
+    <message>
+        <source>Commit started...</source>
+        <translation>コミットを開始しました...</translation>
+    </message>
+    <message>
+        <source>Commit finished.</source>
+        <translation>コミットが完了しました。</translation>
+    </message>
+    <message>
+        <source>Commit failed.</source>
+        <translation>コミットに失敗しました。</translation>
+    </message>
+    <message>
+        <source>Amend started...</source>
+        <translation>修正を開始しました...</translation>
+    </message>
+    <message>
+        <source>Amend finished.</source>
+        <translation>修正が完了しました。</translation>
+    </message>
+    <message>
+        <source>Amend failed.</source>
+        <translation>修正に失敗しました。</translation>
+    </message>
+    <message>
+        <source>Push started...</source>
+        <translation>プッシュを開始しました...</translation>
+    </message>
+    <message>
+        <source>Push finished.</source>
+        <translation>プッシュが完了しました。</translation>
+    </message>
+    <message>
+        <source>Push failed.</source>
+        <translation>プッシュに失敗しました。</translation>
+    </message>
+    <message>
+        <source>Pull started...</source>
+        <translation>プルを開始しました...</translation>
+    </message>
+    <message>
+        <source>Pull finished.</source>
+        <translation>プルが完了しました。</translation>
+    </message>
+    <message>
+        <source>Pull failed.</source>
+        <translation>プルに失敗しました。</translation>
+    </message>
+    <message>
+        <source>Fetch started...</source>
+        <translation>フェッチを開始しました...</translation>
+    </message>
+    <message>
+        <source>Fetch finished.</source>
+        <translation>フェッチが完了しました。</translation>
+    </message>
+    <message>
+        <source>Fetch failed.</source>
+        <translation>フェッチに失敗しました。</translation>
     </message>
 </context>
 </TS>
