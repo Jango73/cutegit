@@ -200,7 +200,7 @@ Item {
     }
 
     readonly property string okText: qsTr("OK")
-    readonly property string logText: qsTr("Log")
+    readonly property string fileLogText: qsTr("File log")
     readonly property string tagText: qsTr("Tag")
     readonly property string sortText: qsTr("Sort")
     readonly property string nameText: qsTr("Name")
@@ -408,7 +408,7 @@ Item {
         "FileDiff": diffText,
         "CommitDetails": commitDetailsText,
         "CommitDiff": commitDiffText,
-        "FileLog": logText,
+        "FileLog": fileLogText,
         "Blame": blameText,
         "Output": outputText
     })

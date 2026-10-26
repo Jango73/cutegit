@@ -29,7 +29,7 @@ ExtendablePane {
 
             StandardTabButton {
                 width: implicitWidth
-                text: Const.logText
+                text: Const.fileLogText
             }
 
             StandardTabButton {
