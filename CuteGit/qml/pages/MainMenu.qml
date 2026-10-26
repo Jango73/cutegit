@@ -12,7 +12,6 @@ MenuBar {
 
     property variant controller: null
     property variant repository: null
-    property variant materialTheme: 0
     property bool rebaseInProgress: repository
                                     ? repository.repositoryStatus === CEnums.Rebase
                                       || repository.repositoryStatus === CEnums.InteractiveRebase
@@ -59,11 +58,8 @@ MenuBar {
 
     signal requestRefresh()
 
-    signal requestDarkTheme()
-    signal requestLightTheme()
     signal requestHelp()
     signal requestSettings()
-    signal requestLanguage(var language)
 
     Menu {
         id: repositoryMenu
@@ -456,91 +452,15 @@ MenuBar {
         delegate: ShortcutMenuItem {}
 
         Action {
-            text: Const.settingsMenuText
-            shortcut: "Ctrl+,"
-            onTriggered: root.requestSettings()
-        }
-
-        MenuSeparator { }
-
-        Action {
             text: Const.helpMenuText
             shortcut: "F1"
             onTriggered: root.requestHelp()
         }
 
-        Menu {
-            title: Const.themeMenuText
-
-            MenuItem {
-                text: Const.darkThemeMenuText
-                checkable: true
-                checked: root.materialTheme === Material.Dark
-                onClicked: root.requestDarkTheme()
-            }
-
-            MenuItem {
-                text: Const.lightThemeMenuText
-                checkable: true
-                checked: root.materialTheme === Material.Light
-                onClicked: root.requestLightTheme()
-            }
+        Action {
+            text: Const.settingsMenuText
+            shortcut: "Ctrl+,"
+            onTriggered: root.requestSettings()
         }
-
-        Menu {
-            id: language
-            title: Const.languageMenuText
-
-            Instantiator {
-                model: root.controller.langModel
-
-                MenuItem {
-                    text: model.display
-                    checkable: true
-                    checked: root.controller.language === model.display.split(" ")[0]
-                    onClicked: root.requestLanguage(model.display.split(" ")[0])
-                }
-
-                onObjectAdded: function(index, object) { language.insertItem(index, object) }
-                onObjectRemoved: language.removeItem(object)
-            }
-        }
-
-        Menu {
-            id: layout
-            title: Const.layoutText
-
-            Instantiator {
-                model: root.controller.layoutNames
-
-                MenuItem {
-                    text: root.layoutDisplayName(modelData)
-                    checkable: true
-                    checked: root.controller.currentLayoutIndex === index
-                    onClicked: root.controller.currentLayoutIndex = index
-                }
-
-                onObjectAdded: function(index, object) { layout.insertItem(index, object) }
-                onObjectRemoved: layout.removeItem(object)
-            }
-
-            MenuSeparator { }
-
-            Action {
-                text: Const.reloadLayoutsMenuText
-                shortcut: "Ctrl+Shift+L"
-                onTriggered: root.controller.reloadLayouts()
-            }
-        }
-    }
-
-    function layoutDisplayName(layoutName) {
-        if (layoutName === "Classic")
-            return Const.classicLayoutText
-        if (layoutName === "BranchesLeft")
-            return Const.branchesLeftLayoutText
-        if (layoutName === "Fallback")
-            return Const.fallbackLayoutText
-        return layoutName
     }
 }

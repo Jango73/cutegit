@@ -71,6 +71,7 @@ Item {
 
     readonly property real popupWidthSmall: 0.25
     readonly property real popupHeightSmall: 0.25
+    readonly property real settingsControlsWidthFraction: 0.75
 
     // Named factors replacing magic numbers (sizes are exempt from hexadecimal rule)
     readonly property real halfFraction: 0.5
@@ -143,7 +144,9 @@ Item {
     readonly property string optionsMenuText: qsTr("&Options")
     readonly property string settingsMenuText: qsTr("&Settings")
     readonly property string settingsTitleText: qsTr("Settings")
-    readonly property string maxLoadedRepositoriesText: qsTr("Maximum loaded repositories")
+    readonly property string maxLoadedRepositoriesText: qsTr("Maximum repositories in memory")
+    readonly property string themeText: qsTr("Theme")
+    readonly property string languageText: qsTr("Language")
     readonly property string helpMenuText: qsTr("&Help")
     readonly property string themeMenuText: qsTr("&Theme")
     readonly property string darkThemeMenuText: qsTr("Dark")

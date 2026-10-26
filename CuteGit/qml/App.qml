@@ -39,7 +39,6 @@ ApplicationWindow {
 
         controller: root.ctrl
         repository: root.ctrl.currentRepository
-        materialTheme: root.materialTheme
 
         onRequestCloneRepository: cloneDialog.open()
         onRequestOpenRepository: root.requestOpenRepository()
@@ -68,11 +67,8 @@ ApplicationWindow {
 
         onRequestRefresh: root.currentRepositoryView.requestRefresh()
 
-        onRequestDarkTheme: root.setTheme(Material.Dark)
-        onRequestLightTheme: root.setTheme(Material.Light)
         onRequestHelp: helpDialog.open()
         onRequestSettings: settingsDialog.open()
-        onRequestLanguage: root.setLanguage(language)
     }
 
     //--------------------------------------------------------------------------------
@@ -339,6 +335,11 @@ ApplicationWindow {
         id: settingsDialog
         anchors.centerIn: parent
         controller: root.ctrl
+        materialTheme: root.materialTheme
+
+        onRequestDarkTheme: root.setTheme(Material.Dark)
+        onRequestLightTheme: root.setTheme(Material.Light)
+        onRequestLanguage: root.setLanguage(language)
     }
 
     StandardPopup {
