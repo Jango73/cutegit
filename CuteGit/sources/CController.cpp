@@ -239,13 +239,16 @@ void CController::setLanguage(QString sLang)
 
     if (sCode == "en")
     {
+        QCoreApplication::removeTranslator(m_pTranslator);
         m_sLanguage = sCode;
         emit languageChanged();
     }
     else
     {
+        QCoreApplication::removeTranslator(m_pTranslator);
         if (m_pTranslator->load(QString(":/i18n/CuteGit_%1").arg(sCode)))
         {
+            QCoreApplication::installTranslator(m_pTranslator);
             m_sLanguage = sCode;
             emit languageChanged();
         }
