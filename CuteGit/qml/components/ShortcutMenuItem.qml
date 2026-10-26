@@ -8,46 +8,39 @@ MenuItem {
 
     // The shortcut is read from the assigned action. The Material style does
     // not display action shortcuts by itself, hence this custom content item.
-    // The mnemonic underline is also drawn manually: Qt draws it glued to the
-    // glyphs with no offset setting, so it is shifted two pixels below the
-    // baseline here.
-    function strippedEntryText(source) {
+    // The mnemonic is underlined with styled text so Qt uses the underline
+    // metrics of the font really used for the glyph (including the fallback
+    // font for CJK glyphs) instead of a fixed offset below the Latin baseline.
+    function escapeEntryHtml(value) {
+        if (value === "&") {
+            return "&amp;"
+        }
+        if (value === "<") {
+            return "&lt;"
+        }
+        if (value === ">") {
+            return "&gt;"
+        }
+        return value
+    }
+
+    function richEntryText(source) {
         var result = ""
-        for (var i = 0; i < source.length; i++) {
-            if (source[i] === "&" && i + 1 < source.length) {
-                i++
-                result += source[i]
+        var index = 0
+        while (index < source.length) {
+            if (source[index] === "&" && index + 1 < source.length) {
+                index++
+                if (source[index] === "&") {
+                    result += "&amp;"
+                } else {
+                    result += "<u>" + escapeEntryHtml(source[index]) + "</u>"
+                }
             } else {
-                result += source[i]
+                result += escapeEntryHtml(source[index])
             }
+            index++
         }
         return result
-    }
-
-    function mnemonicPrefix(source) {
-        for (var i = 0; i + 1 < source.length; i++) {
-            if (source[i] === "&") {
-                if (source[i + 1] === "&") {
-                    i++
-                } else {
-                    return strippedEntryText(source.substring(0, i))
-                }
-            }
-        }
-        return ""
-    }
-
-    function mnemonicCharacter(source) {
-        for (var i = 0; i + 1 < source.length; i++) {
-            if (source[i] === "&") {
-                if (source[i + 1] === "&") {
-                    i++
-                } else {
-                    return source[i + 1]
-                }
-            }
-        }
-        return ""
     }
 
     contentItem: RowLayout {
@@ -68,24 +61,11 @@ MenuItem {
                 id: entryText
                 anchors.fill: parent
                 verticalAlignment: Text.AlignTop
-                text: root.strippedEntryText(root.text)
+                textFormat: Text.StyledText
+                text: root.richEntryText(root.text)
                 font: root.font
                 color: root.enabled ? Material.foreground : Material.hintTextColor
                 elide: Text.ElideRight
-            }
-
-            FontMetrics {
-                id: entryMetrics
-                font: entryText.font
-            }
-
-            Rectangle {
-                visible: root.mnemonicCharacter(root.text) !== "" && !entryText.truncated
-                x: entryMetrics.advanceWidth(root.mnemonicPrefix(root.text))
-                y: entryMetrics.ascent + 2
-                width: entryMetrics.advanceWidth(root.mnemonicCharacter(root.text))
-                height: 1
-                color: entryText.color
             }
         }
 
