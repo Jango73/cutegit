@@ -120,6 +120,7 @@ qt_add_lrelease(CuteGitApp
     i18n/CuteGit_de.ts
     i18n/CuteGit_es.ts
     i18n/CuteGit_fr.ts
+    i18n/CuteGit_it.ts
     i18n/CuteGit_ja.ts
     i18n/CuteGit_zh.ts
   QM_FILES_OUTPUT_VARIABLE QM_FILES

@@ -126,6 +126,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     lLang << "fr (Français)";
     lLang << "de (Deutsch)";
     lLang << "es (Español)";
+    lLang << "it (Italiano)";
     lLang << "ja (日本語)";
     lLang << "zh (中文)";
     m_pLangModel->setStringList(lLang);
