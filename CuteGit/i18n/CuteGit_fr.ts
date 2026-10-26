@@ -120,6 +120,13 @@
     </message>
 </context>
 <context>
+    <name>CController</name>
+    <message>
+        <source>Layouts loaded from %1</source>
+        <translation>Dispositions chargées depuis %1</translation>
+    </message>
+</context>
+<context>
     <name>Calendar</name>
     <message>
         <source>Cancel</source>
@@ -789,10 +796,6 @@ La première ligne contient l&apos;action faite, la seconde contient l&apos;inde
     <message>
         <source>Information</source>
         <translation>Information</translation>
-    </message>
-    <message>
-        <source>The language selection (%1) will be applied when the application is restarted.</source>
-        <translation>La langue sélectionnée (%1) sera prise en compte au prochain démarrage de l&apos;application.</translation>
     </message>
     <message>
         <source>Ahead</source>

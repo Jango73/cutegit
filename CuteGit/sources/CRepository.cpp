@@ -637,7 +637,7 @@ void CRepository::revertSelection(QStringList lFullNames)
 
 void CRepository::commit(const QString& sMessage, bool bAmend)
 {
-    setStatusText(bAmend ? Strings::s_sAmendStarted : Strings::s_sCommitStarted);
+    setStatusText(bAmend ? Strings::amendStarted() : Strings::commitStarted());
 
     if (not bAmend)
     {
@@ -667,7 +667,7 @@ void CRepository::abortRebase()
 
 void CRepository::push()
 {
-    setStatusText(Strings::s_sPushStarted);
+    setStatusText(Strings::pushStarted());
 
     m_pCommands->push(m_sRepositoryPath);
 }
@@ -676,7 +676,7 @@ void CRepository::push()
 
 void CRepository::forcePush()
 {
-    setStatusText(Strings::s_sPushStarted);
+    setStatusText(Strings::pushStarted());
 
     m_pCommands->forcePush(m_sRepositoryPath);
 }
@@ -685,7 +685,7 @@ void CRepository::forcePush()
 
 void CRepository::pushAsWIP()
 {
-    setStatusText(Strings::s_sPushStarted);
+    setStatusText(Strings::pushStarted());
 
     m_pCommands->pushAsWIP(m_sRepositoryPath);
 }
@@ -694,7 +694,7 @@ void CRepository::pushAsWIP()
 
 void CRepository::pull()
 {
-    setStatusText(Strings::s_sPullStarted);
+    setStatusText(Strings::pullStarted());
 
     m_pCommands->pull(m_sRepositoryPath);
 }
@@ -703,7 +703,7 @@ void CRepository::pull()
 
 void CRepository::fetch()
 {
-    setStatusText(Strings::s_sFetchStarted);
+    setStatusText(Strings::fetchStarted());
 
     m_pCommands->fetch(m_sRepositoryPath);
 }

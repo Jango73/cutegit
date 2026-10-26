@@ -301,10 +301,6 @@ Item {
                                            "%1"
                                            )
 
-    readonly property string setLanguageText: qsTr(
-                                         "The language selection (%1) will be applied when the application is restarted."
-                                         )
-
     readonly property string cannotSetLanguageText: qsTr(
                                          "The language selection (%1) could not be set."
                                          )

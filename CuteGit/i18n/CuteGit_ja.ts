@@ -120,6 +120,13 @@
     </message>
 </context>
 <context>
+    <name>CController</name>
+    <message>
+        <source>Layouts loaded from %1</source>
+        <translation>レイアウトを %1 から読み込みました</translation>
+    </message>
+</context>
+<context>
     <name>Calendar</name>
     <message>
         <source>Cancel</source>
@@ -788,10 +795,6 @@ The first line of an item contains the action done, the second line contains the
     <message>
         <source>Information</source>
         <translation>情報</translation>
-    </message>
-    <message>
-        <source>The language selection (%1) will be applied when the application is restarted.</source>
-        <translation>言語選択（%1）は、アプリケーションの再起動時に適用されます。</translation>
     </message>
     <message>
         <source>Ahead</source>

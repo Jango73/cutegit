@@ -120,6 +120,13 @@
     </message>
 </context>
 <context>
+    <name>CController</name>
+    <message>
+        <source>Layouts loaded from %1</source>
+        <translation>布局已从 %1 加载</translation>
+    </message>
+</context>
+<context>
     <name>Calendar</name>
     <message>
         <source>Cancel</source>
@@ -788,10 +795,6 @@ The first line of an item contains the action done, the second line contains the
     <message>
         <source>Information</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The language selection (%1) will be applied when the application is restarted.</source>
-        <translation>重新启动应用程序时将应用语言选择（%1）。</translation>
     </message>
     <message>
         <source>Ahead</source>

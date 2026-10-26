@@ -47,7 +47,7 @@ bool CGerritCommands::can(CEnums::ECapability eWhat) const
 
 void CGerritCommands::push(const QString& sPath)
 {
-    emit newOutputString(CEnums::eNotification, Strings::s_sPushingToGerrit);
+    emit newOutputString(CEnums::eNotification, Strings::pushingToGerrit());
     QString sCurrentBranch = execNow(sPath, sCommandCurrentBranch).trimmed();
     if (not sCurrentBranch.isEmpty())
     {
@@ -56,7 +56,7 @@ void CGerritCommands::push(const QString& sPath)
     }
     else
     {
-        emit newOutputString(CEnums::eNotification, Strings::s_sUnableToGetBranch);
+        emit newOutputString(CEnums::eNotification, Strings::unableToGetBranch());
     }
 }
 
@@ -64,7 +64,7 @@ void CGerritCommands::push(const QString& sPath)
 
 void CGerritCommands::pushAsWIP(const QString& sPath)
 {
-    emit newOutputString(CEnums::eNotification, Strings::s_sPushingToGerrit);
+    emit newOutputString(CEnums::eNotification, Strings::pushingToGerrit());
     QString sCurrentBranch = execNow(sPath, sCommandCurrentBranch).trimmed();
     if (not sCurrentBranch.isEmpty())
     {
@@ -73,6 +73,6 @@ void CGerritCommands::pushAsWIP(const QString& sPath)
     }
     else
     {
-        emit newOutputString(CEnums::eNotification, Strings::s_sUnableToGetBranch);
+        emit newOutputString(CEnums::eNotification, Strings::unableToGetBranch());
     }
 }

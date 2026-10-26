@@ -225,24 +225,33 @@ CController::~CController()
 
 void CController::setLanguage(QString sLang)
 {
-    if (not sLang.isEmpty() && m_sLanguage != sLang)
+    QString sCode = sLang.trimmed();
+
+    // Accept display forms from the language menu such as "fr (Français)"
+    if (sCode.contains(' '))
+        sCode = sCode.section(' ', 0, 0);
+
+    // Accept locale forms such as fr_FR or fr-FR
+    sCode = sCode.section('_', 0, 0).section('-', 0, 0).toLower();
+
+    if (sCode.isEmpty() || m_sLanguage == sCode)
+        return;
+
+    if (sCode == "en")
     {
-        if (sLang == "en")
+        m_sLanguage = sCode;
+        emit languageChanged();
+    }
+    else
+    {
+        if (m_pTranslator->load(QString(":/i18n/CuteGit_%1").arg(sCode)))
         {
-            m_sLanguage = sLang;
+            m_sLanguage = sCode;
             emit languageChanged();
         }
         else
         {
-            if (m_pTranslator->load(QString(":/i18n/CuteGit_%1").arg(sLang)))
-            {
-                m_sLanguage = sLang;
-                emit languageChanged();
-            }
-            else
-            {
-                qWarning() << QString("Could not set language to [%1]").arg(sLang);
-            }
+            qWarning() << QString("Could not set language to [%1]").arg(sCode);
         }
     }
 }
@@ -422,8 +431,6 @@ void CController::setCurrentLayoutIndex(int iValue)
 
 void CController::reloadLayouts()
 {
-    static const QString sLayoutsLoadedMessage = "Layouts loaded from %1";
-
     QStringList lCandidates;
     lCandidates << QString("%1/%2").arg(QCoreApplication::applicationDirPath()).arg(CLayout::sFileName);
     lCandidates << QString(CLayout::sResourceFileName);
@@ -455,7 +462,7 @@ void CController::reloadLayouts()
     }
     else if (sUsedFile.isEmpty() == false)
     {
-        setStatusText(sLayoutsLoadedMessage.arg(sUsedFile));
+        setStatusText(tr("Layouts loaded from %1").arg(sUsedFile));
     }
 
     QStringList lLayoutNames;
@@ -940,11 +947,11 @@ void CController::openRepository(QString sRepositoryPath)
                 // Interactive open scans immediately, background tabs stay lazy
                 pRepository->refresh();
 
-                setStatusText(QString(Strings::s_sSomeObjectNameOpened).arg(pRepository->repositoryName()));
+                setStatusText(Strings::objectOpened(pRepository->repositoryName()));
             }
             else
             {
-                setStatusText(QString(Strings::s_sSomeObjectNameIsNotARepository).arg(sRepositoryPath));
+                setStatusText(Strings::objectIsNotARepository(sRepositoryPath));
             }
         }
         else
@@ -954,7 +961,7 @@ void CController::openRepository(QString sRepositoryPath)
             lKnownRepositoryPaths.removeAll(sRepositoryPath);
             m_pKnownRepositoryModel->setStringList(lKnownRepositoryPaths);
 
-            setStatusText(QString(Strings::s_sSomeObjectDoesNotExist).arg(sRepositoryPath));
+            setStatusText(Strings::objectDoesNotExist(sRepositoryPath));
         }
     }
 }
@@ -967,7 +974,7 @@ void CController::removeRepository(int iRepositoryIndex)
     {
         CRepository* pRepository = m_pOpenRepositoryModel->repositories()[iRepositoryIndex];
         QString sName = pRepository->repositoryName();
-        setStatusText(QString(Strings::s_sSomeObjectNameClosed).arg(sName));
+        setStatusText(Strings::objectClosed(sName));
 
         removeRecentRepositoryPath(pRepository->repositoryPath());
 

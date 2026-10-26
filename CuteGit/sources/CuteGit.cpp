@@ -74,6 +74,9 @@ CuteGit::CuteGit(bool bMasterMode, const QString& sStubFileName, const QString& 
 
         QQuickStyle::setStyle("Material");
 
+        // Hot language switch: re-evaluate every qsTr() binding on language change
+        connect(m_pController, &CController::languageChanged, m_pEngine, &QQmlApplicationEngine::retranslate);
+
         // Load UI
         m_pEngine->load(QUrl(QStringLiteral("qrc:/qml/App.qml")));
     }

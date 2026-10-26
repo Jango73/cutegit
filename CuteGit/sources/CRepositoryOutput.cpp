@@ -140,30 +140,30 @@ void CRepository::reportOperationStatus(CEnums::EProcessCommand eCommand, int iE
     switch (eCommand)
     {
     case CEnums::eCommit:
-        sFinishedText = Strings::s_sCommitFinished;
-        sFailedText = Strings::s_sCommitFailed;
+        sFinishedText = Strings::commitFinished();
+        sFailedText = Strings::commitFailed();
         break;
 
     case CEnums::eAmend:
-        sFinishedText = Strings::s_sAmendFinished;
-        sFailedText = Strings::s_sAmendFailed;
+        sFinishedText = Strings::amendFinished();
+        sFailedText = Strings::amendFailed();
         break;
 
     case CEnums::ePush:
     case CEnums::eForcePush:
     case CEnums::ePushAsWIP:
-        sFinishedText = Strings::s_sPushFinished;
-        sFailedText = Strings::s_sPushFailed;
+        sFinishedText = Strings::pushFinished();
+        sFailedText = Strings::pushFailed();
         break;
 
     case CEnums::ePull:
-        sFinishedText = Strings::s_sPullFinished;
-        sFailedText = Strings::s_sPullFailed;
+        sFinishedText = Strings::pullFinished();
+        sFailedText = Strings::pullFailed();
         break;
 
     case CEnums::eFetch:
-        sFinishedText = Strings::s_sFetchFinished;
-        sFailedText = Strings::s_sFetchFailed;
+        sFinishedText = Strings::fetchFinished();
+        sFailedText = Strings::fetchFailed();
         break;
 
     default:

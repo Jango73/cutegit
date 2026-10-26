@@ -497,8 +497,8 @@ MenuBar {
                 MenuItem {
                     text: model.display
                     checkable: true
-                    checked: root.controller.language === model.display
-                    onClicked: root.requestLanguage(model.display)
+                    checked: root.controller.language === model.display.split(" ")[0]
+                    onClicked: root.requestLanguage(model.display.split(" ")[0])
                 }
 
                 onObjectAdded: function(index, object) { language.insertItem(index, object) }

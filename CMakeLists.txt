@@ -33,6 +33,7 @@ find_package(Qt6 REQUIRED COMPONENTS
   Xml
   Svg
   Test
+  LinguistTools
 )
 
 add_subdirectory(CuteGit)

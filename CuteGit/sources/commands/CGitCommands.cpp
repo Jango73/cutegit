@@ -418,7 +418,7 @@ void CGitCommands::push(const QString& sPath)
     }
     else
     {
-        emit newOutputString(CEnums::eNotification, Strings::s_sUnableToGetBranch);
+        emit newOutputString(CEnums::eNotification, Strings::unableToGetBranch());
     }
 }
 
@@ -435,7 +435,7 @@ void CGitCommands::forcePush(const QString& sPath)
     }
     else
     {
-        emit newOutputString(CEnums::eNotification, Strings::s_sUnableToGetBranch);
+        emit newOutputString(CEnums::eNotification, Strings::unableToGetBranch());
     }
 }
 

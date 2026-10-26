@@ -148,6 +148,14 @@
     </message>
 </context>
 <context>
+    <name>CController</name>
+    <message>
+        <location filename="../sources/CController.cpp" line="465"/>
+        <source>Layouts loaded from %1</source>
+        <translation>Layouts geladen aus %1</translation>
+    </message>
+</context>
+<context>
     <name>Calendar</name>
     <message>
         <location filename="../qml/components/Calendar.qml" line="308"/>
@@ -782,11 +790,6 @@ Are you sure you want to do this?</source>
         <source>You are about to delete a branch.
 
 Are you sure you want to do this? It cannot be undone.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/components/Const.qml" line="213"/>
-        <source>The language selection (%1) will be applied when the application is restarted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

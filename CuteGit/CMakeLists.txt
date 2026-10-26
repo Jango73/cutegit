@@ -112,6 +112,24 @@ target_link_libraries(CuteGitApp PRIVATE
   Qt6::Svg
 )
 
+# Translations: compile .ts to .qm and embed them as :/i18n/CuteGit_<lang>.qm
+# so CController::setLanguage() can load them with QTranslator. Only lrelease
+# runs here (no lupdate), source .ts files are never modified by the build.
+qt_add_lrelease(CuteGitApp
+  TS_FILES
+    i18n/CuteGit_de.ts
+    i18n/CuteGit_es.ts
+    i18n/CuteGit_fr.ts
+    i18n/CuteGit_ja.ts
+    i18n/CuteGit_zh.ts
+  QM_FILES_OUTPUT_VARIABLE QM_FILES
+)
+qt_add_resources(CuteGitApp "translations"
+  PREFIX "/i18n"
+  BASE "${CMAKE_CURRENT_BINARY_DIR}"
+  FILES ${QM_FILES}
+)
+
 # Binary layout matches the former qmake build: build-<type>/CuteGit/bin/,
 # CuteGitApp in Release, CuteGitApp-dbg in Debug.
 set_target_properties(CuteGitApp PROPERTIES
