@@ -443,9 +443,19 @@ Item {
 
     readonly property ListModel shortcutModel: ListModel {
         ListElement { name: qsTr("Open a repository"); sequence: "Control O" }
+        ListElement { name: qsTr("Clone a repository"); sequence: "Control Shift O" }
         ListElement { name: qsTr("Quit"); sequence: "Control Q" }
         ListElement { name: ""; sequence: "" }
         ListElement { name: qsTr("Refresh"); sequence: "F5" }
+        ListElement { name: qsTr("Show all"); sequence: "Control Shift A" }
+        ListElement { name: qsTr("Show clean"); sequence: "Alt 1" }
+        ListElement { name: qsTr("Show added"); sequence: "Alt 2" }
+        ListElement { name: qsTr("Show modified"); sequence: "Alt 3" }
+        ListElement { name: qsTr("Show renamed"); sequence: "Alt 4" }
+        ListElement { name: qsTr("Show deleted"); sequence: "Alt 5" }
+        ListElement { name: qsTr("Show missing"); sequence: "Alt 6" }
+        ListElement { name: qsTr("Show untracked"); sequence: "Alt 7" }
+        ListElement { name: qsTr("Show ignored"); sequence: "Alt 8" }
         ListElement { name: ""; sequence: "" }
         ListElement { name: qsTr("Stage all"); sequence: "Control Shift +" }
         ListElement { name: qsTr("Unstage all"); sequence: "Control Shift -" }
@@ -457,11 +467,16 @@ Item {
         ListElement { name: qsTr("Amend"); sequence: "Control M" }
         ListElement { name: qsTr("Continue rebase"); sequence: "Control R" }
         ListElement { name: qsTr("Abort rebase"); sequence: "Control T" }
+        ListElement { name: qsTr("Update submodules"); sequence: "Control U" }
         ListElement { name: ""; sequence: "" }
         ListElement { name: qsTr("Fetch"); sequence: "Control F" }
         ListElement { name: qsTr("Pull"); sequence: "Control L" }
         ListElement { name: qsTr("Push"); sequence: "Control P" }
         ListElement { name: qsTr("Force push"); sequence: "Control Shift P" }
+        ListElement { name: ""; sequence: "" }
+        ListElement { name: qsTr("Save stash"); sequence: "Control S" }
+        ListElement { name: qsTr("Pop stash"); sequence: "Control Shift S" }
+        ListElement { name: qsTr("Apply patch"); sequence: "Control E" }
         ListElement { name: ""; sequence: "" }
         ListElement { name: qsTr("Activate file view"); sequence: "Alt Shift F" }
         ListElement { name: qsTr("Activate graph view"); sequence: "Alt Shift G" }
@@ -471,5 +486,9 @@ Item {
         ListElement { name: qsTr("In log view"); sequence: "" }
         ListElement { name: qsTr("Diff with previous commit"); sequence: "Space" }
         ListElement { name: qsTr("Mark file for diff"); sequence: "Enter" }
+        ListElement { name: ""; sequence: "" }
+        ListElement { name: qsTr("Settings"); sequence: "Control ," }
+        ListElement { name: qsTr("Help"); sequence: "F1" }
+        ListElement { name: qsTr("Reload layouts"); sequence: "Control Shift L" }
     }
 }

@@ -68,10 +68,13 @@ MenuBar {
     Menu {
         id: repositoryMenu
         title: Const.repositoryMenuText
+        width: Math.round(implicitBackgroundWidth * 4 / 3)
+        delegate: ShortcutMenuItem {}
 
         Action {
             id: cloneRepository
             text: Const.cloneMenuText
+            shortcut: "Ctrl+Shift+O"
             onTriggered: root.requestCloneRepository()
         }
 
@@ -129,6 +132,8 @@ MenuBar {
 
     Menu {
         title: Const.remoteMenuText
+        width: Math.round(implicitBackgroundWidth * 4 / 3)
+        delegate: ShortcutMenuItem {}
 
         Action {
             id: fetch
@@ -173,6 +178,8 @@ MenuBar {
 
     Menu {
         title: Const.localMenuText
+        width: Math.round(implicitBackgroundWidth * 4 / 3)
+        delegate: ShortcutMenuItem {}
 
         Action {
             id: cleanUp
@@ -187,6 +194,7 @@ MenuBar {
         Action {
             id: updateSubmodules
             text: Const.updateSubmodulesMenuText
+            shortcut: "Ctrl+U"
             enabled: root.repository
                      ? root.repository.can(CEnums.UpdateSubmodules)
                      : false
@@ -290,10 +298,13 @@ MenuBar {
 
     Menu {
         title: Const.stashAndPatchMenuText
+        width: Math.round(implicitBackgroundWidth * 4 / 3)
+        delegate: ShortcutMenuItem {}
 
         Action {
             id: saveStash
             text: Const.saveStashMenuText
+            shortcut: "Ctrl+S"
             enabled: root.repository
                      ? root.repository.can(CEnums.Stash) && root.repository.hasModifiedFiles
                      : false
@@ -303,6 +314,7 @@ MenuBar {
         Action {
             id: popStash
             text: Const.popStashMenuText
+            shortcut: "Ctrl+Shift+S"
             enabled: root.repository ? root.repository.can(CEnums.Stash) : false
             onTriggered: root.requestStashPop()
         }
@@ -312,6 +324,7 @@ MenuBar {
         Action {
             id: applyPatch
             text: Const.applyPatchMenuText
+            shortcut: "Ctrl+E"
             enabled: root.repository
                      ? root.repository.can(CEnums.ApplyPatch)
                      : false
@@ -343,6 +356,8 @@ MenuBar {
 
     Menu {
         title: Const.viewMenuText
+        width: Math.round(implicitBackgroundWidth * 4 / 3)
+        delegate: ShortcutMenuItem {}
 
         Action {
             text: Const.refreshMenuText
@@ -352,10 +367,11 @@ MenuBar {
 
         MenuSeparator { }
 
-        MenuItem {
+        Action {
             text: Const.showAllMenuText
+            shortcut: "Ctrl+Shift+A"
 
-            onClicked: {
+            onTriggered: {
                 root.controller.showClean = true
                 root.controller.showAdded = true
                 root.controller.showModified = true
@@ -369,68 +385,79 @@ MenuBar {
 
         MenuSeparator { }
 
-        MenuItem {
+        Action {
             text: Const.showCleanMenuText
+            shortcut: "Alt+1"
             checkable: true
             checked: root.controller.showClean
-            onClicked: root.controller.showClean = !root.controller.showClean
+            onTriggered: root.controller.showClean = !root.controller.showClean
         }
 
-        MenuItem {
+        Action {
             text: Const.showAddedMenuText
+            shortcut: "Alt+2"
             checkable: true
             checked: root.controller.showAdded
-            onClicked: root.controller.showAdded = !root.controller.showAdded
+            onTriggered: root.controller.showAdded = !root.controller.showAdded
         }
 
-        MenuItem {
+        Action {
             text: Const.showModifiedMenuText
+            shortcut: "Alt+3"
             checkable: true
             checked: root.controller.showModified
-            onClicked: root.controller.showModified = !root.controller.showModified
+            onTriggered: root.controller.showModified = !root.controller.showModified
         }
 
-        MenuItem {
+        Action {
             text: Const.showRenamedMenuText
+            shortcut: "Alt+4"
             checkable: true
             checked: root.controller.showRenamed
-            onClicked: root.controller.showRenamed = !root.controller.showRenamed
+            onTriggered: root.controller.showRenamed = !root.controller.showRenamed
         }
 
-        MenuItem {
+        Action {
             text: Const.showDeletedMenuText
+            shortcut: "Alt+5"
             checkable: true
             checked: root.controller.showDeleted
-            onClicked: root.controller.showDeleted = !root.controller.showDeleted
+            onTriggered: root.controller.showDeleted = !root.controller.showDeleted
         }
 
-        MenuItem {
+        Action {
             text: Const.showMissingMenuText
+            shortcut: "Alt+6"
             checkable: true
             checked: root.controller.showMissing
-            onClicked: root.controller.showMissing = !root.controller.showMissing
+            onTriggered: root.controller.showMissing = !root.controller.showMissing
         }
 
-        MenuItem {
+        Action {
             text: Const.showUntrackedMenuText
+            shortcut: "Alt+7"
             checkable: true
             checked: root.controller.showUntracked
-            onClicked: root.controller.showUntracked = !root.controller.showUntracked
+            onTriggered: root.controller.showUntracked = !root.controller.showUntracked
         }
 
-        MenuItem {
+        Action {
             text: Const.showIgnoredMenuText
+            shortcut: "Alt+8"
             checkable: true
             checked: root.controller.showIgnored
-            onClicked: root.controller.showIgnored = !root.controller.showIgnored
+            onTriggered: root.controller.showIgnored = !root.controller.showIgnored
         }
     }
 
     Menu {
         title: Const.optionsMenuText
+        width: Math.round(implicitBackgroundWidth * 4 / 3)
+        delegate: ShortcutMenuItem {}
 
         Action {
             text: Const.settingsMenuText
+            shortcut: "Ctrl+,"
             onTriggered: root.requestSettings()
         }
 
@@ -438,6 +465,7 @@ MenuBar {
 
         Action {
             text: Const.helpMenuText
+            shortcut: "F1"
             onTriggered: root.requestHelp()
         }
 
@@ -498,9 +526,10 @@ MenuBar {
 
             MenuSeparator { }
 
-            MenuItem {
+            Action {
                 text: Const.reloadLayoutsMenuText
-                onClicked: root.controller.reloadLayouts()
+                shortcut: "Ctrl+Shift+L"
+                onTriggered: root.controller.reloadLayouts()
             }
         }
     }

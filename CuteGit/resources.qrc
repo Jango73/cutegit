@@ -19,6 +19,7 @@
         <file>qml/components/LogLabel.qml</file>
         <file>qml/components/SecondaryButton.qml</file>
         <file>qml/components/Selection.qml</file>
+        <file>qml/components/ShortcutMenuItem.qml</file>
         <file>qml/components/StandardButton.qml</file>
         <file>qml/components/StandardLabel.qml</file>
         <file>qml/components/StandardListView.qml</file>
