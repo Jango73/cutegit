@@ -438,54 +438,55 @@ Item {
 
     // Models
 
-    readonly property ListModel shortcutModel: ListModel {
-        ListElement { name: qsTr("Open a repository"); sequence: "Control O" }
-        ListElement { name: qsTr("Clone a repository"); sequence: "Control Shift O" }
-        ListElement { name: qsTr("Quit"); sequence: "Control Q" }
-        ListElement { name: ""; sequence: "" }
-        ListElement { name: qsTr("Refresh"); sequence: "F5" }
-        ListElement { name: qsTr("Show all"); sequence: "Control Shift A" }
-        ListElement { name: qsTr("Show clean"); sequence: "Alt 1" }
-        ListElement { name: qsTr("Show added"); sequence: "Alt 2" }
-        ListElement { name: qsTr("Show modified"); sequence: "Alt 3" }
-        ListElement { name: qsTr("Show renamed"); sequence: "Alt 4" }
-        ListElement { name: qsTr("Show deleted"); sequence: "Alt 5" }
-        ListElement { name: qsTr("Show missing"); sequence: "Alt 6" }
-        ListElement { name: qsTr("Show untracked"); sequence: "Alt 7" }
-        ListElement { name: qsTr("Show ignored"); sequence: "Alt 8" }
-        ListElement { name: ""; sequence: "" }
-        ListElement { name: qsTr("Stage all"); sequence: "Control Shift +" }
-        ListElement { name: qsTr("Unstage all"); sequence: "Control Shift -" }
-        ListElement { name: qsTr("Toggle staged"); sequence: "Space" }
-        ListElement { name: qsTr("Stage selection"); sequence: "Control +" }
-        ListElement { name: qsTr("Unstage selection"); sequence: "Control -" }
-        ListElement { name: qsTr("Revert selection"); sequence: "Control Z" }
-        ListElement { name: qsTr("Commit"); sequence: "Control C" }
-        ListElement { name: qsTr("Amend"); sequence: "Control M" }
-        ListElement { name: qsTr("Continue rebase"); sequence: "Control R" }
-        ListElement { name: qsTr("Abort rebase"); sequence: "Control T" }
-        ListElement { name: qsTr("Update submodules"); sequence: "Control U" }
-        ListElement { name: ""; sequence: "" }
-        ListElement { name: qsTr("Fetch"); sequence: "Control F" }
-        ListElement { name: qsTr("Pull"); sequence: "Control L" }
-        ListElement { name: qsTr("Push"); sequence: "Control P" }
-        ListElement { name: qsTr("Force push"); sequence: "Control Shift P" }
-        ListElement { name: ""; sequence: "" }
-        ListElement { name: qsTr("Save stash"); sequence: "Control S" }
-        ListElement { name: qsTr("Pop stash"); sequence: "Control Shift S" }
-        ListElement { name: qsTr("Apply patch"); sequence: "Control E" }
-        ListElement { name: ""; sequence: "" }
-        ListElement { name: qsTr("Activate file view"); sequence: "Alt Shift F" }
-        ListElement { name: qsTr("Activate graph view"); sequence: "Alt Shift G" }
-        ListElement { name: qsTr("Activate diff view"); sequence: "Alt Shift D" }
-        ListElement { name: qsTr("Activate blame view"); sequence: "Alt Shift B" }
-        ListElement { name: ""; sequence: "" }
-        ListElement { name: qsTr("In log view"); sequence: "" }
-        ListElement { name: qsTr("Diff with previous commit"); sequence: "Space" }
-        ListElement { name: qsTr("Mark file for diff"); sequence: "Enter" }
-        ListElement { name: ""; sequence: "" }
-        ListElement { name: qsTr("Settings"); sequence: "Control ," }
-        ListElement { name: qsTr("Help"); sequence: "F1" }
-        ListElement { name: qsTr("Reload layouts"); sequence: "Control Shift L" }
-    }
+    // JS array (not ListModel) so qsTr() bindings are re-evaluated by engine.retranslate() on language change
+    readonly property var shortcutModel: [
+        { name: qsTr("Open a repository"), sequence: "Control O" },
+        { name: qsTr("Clone a repository"), sequence: "Control Shift O" },
+        { name: qsTr("Quit"), sequence: "Control Q" },
+        { name: "", sequence: "" },
+        { name: qsTr("Refresh"), sequence: "F5" },
+        { name: qsTr("Show all"), sequence: "Control Shift A" },
+        { name: qsTr("Show clean"), sequence: "Alt 1" },
+        { name: qsTr("Show added"), sequence: "Alt 2" },
+        { name: qsTr("Show modified"), sequence: "Alt 3" },
+        { name: qsTr("Show renamed"), sequence: "Alt 4" },
+        { name: qsTr("Show deleted"), sequence: "Alt 5" },
+        { name: qsTr("Show missing"), sequence: "Alt 6" },
+        { name: qsTr("Show untracked"), sequence: "Alt 7" },
+        { name: qsTr("Show ignored"), sequence: "Alt 8" },
+        { name: "", sequence: "" },
+        { name: qsTr("Stage all"), sequence: "Control Shift +" },
+        { name: qsTr("Unstage all"), sequence: "Control Shift -" },
+        { name: qsTr("Toggle staged"), sequence: "Space" },
+        { name: qsTr("Stage selection"), sequence: "Control +" },
+        { name: qsTr("Unstage selection"), sequence: "Control -" },
+        { name: qsTr("Revert selection"), sequence: "Control Z" },
+        { name: qsTr("Commit"), sequence: "Control C" },
+        { name: qsTr("Amend"), sequence: "Control M" },
+        { name: qsTr("Continue rebase"), sequence: "Control R" },
+        { name: qsTr("Abort rebase"), sequence: "Control T" },
+        { name: qsTr("Update submodules"), sequence: "Control U" },
+        { name: "", sequence: "" },
+        { name: qsTr("Fetch"), sequence: "Control F" },
+        { name: qsTr("Pull"), sequence: "Control L" },
+        { name: qsTr("Push"), sequence: "Control P" },
+        { name: qsTr("Force push"), sequence: "Control Shift P" },
+        { name: "", sequence: "" },
+        { name: qsTr("Save stash"), sequence: "Control S" },
+        { name: qsTr("Pop stash"), sequence: "Control Shift S" },
+        { name: qsTr("Apply patch"), sequence: "Control E" },
+        { name: "", sequence: "" },
+        { name: qsTr("Activate file view"), sequence: "Alt Shift F" },
+        { name: qsTr("Activate graph view"), sequence: "Alt Shift G" },
+        { name: qsTr("Activate diff view"), sequence: "Alt Shift D" },
+        { name: qsTr("Activate blame view"), sequence: "Alt Shift B" },
+        { name: "", sequence: "" },
+        { name: qsTr("In log view"), sequence: "" },
+        { name: qsTr("Diff with previous commit"), sequence: "Space" },
+        { name: qsTr("Mark file for diff"), sequence: "Enter" },
+        { name: "", sequence: "" },
+        { name: qsTr("Settings"), sequence: "Control ," },
+        { name: qsTr("Help"), sequence: "F1" },
+        { name: qsTr("Reload layouts"), sequence: "Control Shift L" }
+    ]
 }

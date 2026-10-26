@@ -15,6 +15,7 @@ StandardPopup {
             id: copyrightText
             width: parent.width
             height: parent.height * 0.15
+            text: Const.copyrightText.arg(root.controller ? root.controller.version : "")
         },
 
         TabBar {
@@ -50,6 +51,7 @@ StandardPopup {
                 StandardText {
                     id: generalText
                     padding: Const.mainPadding * 2
+                    text: Const.generalHelpText
                 }
             }
 
@@ -60,6 +62,7 @@ StandardPopup {
                     id: shortcutText
                     anchors.top: parent.top
                     padding: Const.mainPadding * 2
+                    text: Const.shortcutsText
                 }
 
                 StandardListView {
@@ -78,13 +81,13 @@ StandardPopup {
                         StandardText {
                             id: shortcutName
                             width: parent.width * 0.6
-                            text: name
+                            text: modelData.name
                         }
 
                         StandardText {
                             anchors.left: shortcutName.right
                             width: parent.width * 0.4
-                            text: sequence
+                            text: modelData.sequence
                         }
                     }
                 }
@@ -103,10 +106,4 @@ StandardPopup {
             }
         }
     ]
-
-    Component.onCompleted: {
-        copyrightText.text = Const.copyrightText.arg(root.controller.version)
-        generalText.text = Const.generalHelpText
-        shortcutText.text = Const.shortcutsText
-    }
 }

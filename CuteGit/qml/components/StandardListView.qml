@@ -74,8 +74,9 @@ ListView {
     }
 
     /*! Cached model indexes dangle after a layout change or a reset: drop them, delegates repopulate on demand */
+    // Only QObject models expose modelReset/layoutChanged: keep detached for plain JS values (arrays)
     Connections {
-        target: root.model ? root.model : null
+        target: Array.isArray(root.model) ? null : (root.model ? root.model : null)
         function onModelReset() {
             root.modelIndices = ({})
         }
