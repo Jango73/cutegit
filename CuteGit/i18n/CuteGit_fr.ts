@@ -95,6 +95,22 @@
         <source>Undeleting...</source>
         <translation>Annulation d&apos;effacement...</translation>
     </message>
+    <message>
+        <source>Force pushing...</source>
+        <translation>Synchro sortante forcée...</translation>
+    </message>
+    <message>
+        <source>Rebasing on branch %1...</source>
+        <translation>Rebasage sur la branche %1...</translation>
+    </message>
+    <message>
+        <source>Cleaning up...</source>
+        <translation>Nettoyage...</translation>
+    </message>
+    <message>
+        <source>Updating submodules...</source>
+        <translation>Mise à jour des sous-modules...</translation>
+    </message>
 </context>
 <context>
     <name>CHgCommands</name>
@@ -117,6 +133,72 @@
     <message>
         <source>Creating branch %1...</source>
         <translation>Création de la branche %1...</translation>
+    </message>
+    <message>
+        <source>Force pushing...</source>
+        <translation>Synchro sortante forcée...</translation>
+    </message>
+</context>
+<context>
+    <name>CRepository</name>
+    <message>
+        <source>No staged change in selection</source>
+        <translation>Aucun changement accepté dans la sélection</translation>
+    </message>
+    <message>
+        <source>No unstaged change in selection</source>
+        <translation>Aucun changement non accepté dans la sélection</translation>
+    </message>
+    <message>
+        <source>Unable to create patch file</source>
+        <translation>Impossible de créer le fichier de rustine</translation>
+    </message>
+</context>
+<context>
+    <name>CSvnCommands</name>
+    <message>
+        <source>Scheduling all new files...</source>
+        <translation>Planification de tous les nouveaux fichiers...</translation>
+    </message>
+    <message>
+        <source>Subversion has no staging area, nothing to unschedule</source>
+        <translation>Subversion n'a pas de zone d'acceptation, rien à déplanifier</translation>
+    </message>
+    <message>
+        <source>Reverting...</source>
+        <translation>Retour en arrière...</translation>
+    </message>
+    <message>
+        <source>Undeleting...</source>
+        <translation>Annulation d'effacement...</translation>
+    </message>
+    <message>
+        <source>Commiting...</source>
+        <translation>Validation en cours...</translation>
+    </message>
+    <message>
+        <source>Updating...</source>
+        <translation>Mise à jour...</translation>
+    </message>
+    <message>
+        <source>Switching to %1...</source>
+        <translation>Changement vers %1...</translation>
+    </message>
+    <message>
+        <source>Creating branch %1...</source>
+        <translation>Création de la branche %1...</translation>
+    </message>
+    <message>
+        <source>Create branch %1</source>
+        <translation>Créer la branche %1</translation>
+    </message>
+    <message>
+        <source>Creating tag %1...</source>
+        <translation>Création de l'étiquette %1...</translation>
+    </message>
+    <message>
+        <source>Create tag %1</source>
+        <translation>Créer l'étiquette %1</translation>
     </message>
 </context>
 <context>
@@ -841,6 +923,230 @@ La première ligne contient l&apos;action faite, la seconde contient l&apos;inde
         <source>Show only lines matching this text. When text is empty, all lines are shown.</source>
         <translation>Ne montrer que les lignes correspondant à ce texte. Quand le texte est vide, toutes les lignes sont montrées.</translation>
     </message>
+    <message>
+        <source>Layout</source>
+        <translation>Disposition</translation>
+    </message>
+    <message>
+        <source>Classic</source>
+        <translation>Classique</translation>
+    </message>
+    <message>
+        <source>BranchesLeft</source>
+        <translation>Branches à gauche</translation>
+    </message>
+    <message>
+        <source>Fallback</source>
+        <translation>Secours</translation>
+    </message>
+    <message>
+        <source>Reload layouts</source>
+        <translation>Recharger les dispositions</translation>
+    </message>
+    <message>
+        <source>Rebase on</source>
+        <translation>Rebaser sur</translation>
+    </message>
+    <message>
+        <source>Empty panel</source>
+        <translation>Panneau vide</translation>
+    </message>
+    <message>
+        <source>Tab '%1' not found in current layout</source>
+        <translation>Onglet '%1' introuvable dans la disposition courante</translation>
+    </message>
+    <message>
+        <source>Save as patch</source>
+        <translation>Enregistrer comme rustine</translation>
+    </message>
+    <message>
+        <source>Open a repository...</source>
+        <translation>Ouvrir un dépôt...</translation>
+    </message>
+    <message>
+        <source>Rebase on branch</source>
+        <translation>Rebaser sur la branche</translation>
+    </message>
+    <message>
+        <source>Select repository folder</source>
+        <translation>Sélectionner le dossier du dépôt</translation>
+    </message>
+    <message>
+        <source>Select file for patch</source>
+        <translation>Sélectionner le fichier pour la rustine</translation>
+    </message>
+    <message>
+        <source>You are about to rebase on %1.
+
+Are you sure you want to do this?</source>
+        <translation>Vous êtes sur le point de rebaser sur %1.
+
+Etes-vous sûr(e) de vouloir faire cela?</translation>
+    </message>
+    <message>
+        <source>The language selection (%1) could not be set.</source>
+        <translation>La sélection de langue (%1) n'a pas pu être appliquée.</translation>
+    </message>
+    <message>
+        <source>Clone a repository</source>
+        <translation>Cloner un dépôt</translation>
+    </message>
+    <message>
+        <source>Show all</source>
+        <translation>Montrer tout</translation>
+    </message>
+    <message>
+        <source>Show clean</source>
+        <translation>Propres</translation>
+    </message>
+    <message>
+        <source>Show added</source>
+        <translation>Ajoutés</translation>
+    </message>
+    <message>
+        <source>Show modified</source>
+        <translation>Modifiés</translation>
+    </message>
+    <message>
+        <source>Show renamed</source>
+        <translation>Renommés</translation>
+    </message>
+    <message>
+        <source>Show deleted</source>
+        <translation>Effacés</translation>
+    </message>
+    <message>
+        <source>Show missing</source>
+        <translation>Manquants</translation>
+    </message>
+    <message>
+        <source>Show untracked</source>
+        <translation>Non suivis</translation>
+    </message>
+    <message>
+        <source>Show ignored</source>
+        <translation>Ignorés</translation>
+    </message>
+    <message>
+        <source>Fo&amp;rce push</source>
+        <translation>Synchro sortante fo&amp;rcée</translation>
+    </message>
+    <message>
+        <source>Clea&amp;n up</source>
+        <translation>&amp;Nettoyer</translation>
+    </message>
+    <message>
+        <source>Update s&amp;ubmodules</source>
+        <translation>Mettre à jour les so&amp;us-modules</translation>
+    </message>
+    <message>
+        <source>&amp;Settings</source>
+        <translation>&amp;Paramètres</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Paramètres</translation>
+    </message>
+    <message>
+        <source>Maximum loaded repositories</source>
+        <translation>Nombre maximum de dépôts chargés</translation>
+    </message>
+    <message>
+        <source>Open su&amp;bmodule</source>
+        <translation>Ouvrir le so&amp;us-module</translation>
+    </message>
+    <message>
+        <source>Staged</source>
+        <translation>Acceptés</translation>
+    </message>
+    <message>
+        <source>Unstaged</source>
+        <translation>Non acceptés</translation>
+    </message>
+    <message>
+        <source>Commit diff</source>
+        <translation>Différence de validation</translation>
+    </message>
+    <message>
+        <source>Commit details</source>
+        <translation>Détails de validation</translation>
+    </message>
+    <message>
+        <source>Commit ID</source>
+        <translation>ID de validation</translation>
+    </message>
+    <message>
+        <source>Author</source>
+        <translation>Auteur</translation>
+    </message>
+    <message>
+        <source>Date</source>
+        <translation>Date</translation>
+    </message>
+    <message>
+        <source>Added lines</source>
+        <translation>Lignes ajoutées</translation>
+    </message>
+    <message>
+        <source>Removed lines</source>
+        <translation>Lignes supprimées</translation>
+    </message>
+    <message>
+        <source>No staged changes</source>
+        <translation>Aucun changement accepté</translation>
+    </message>
+    <message>
+        <source>No unstaged changes</source>
+        <translation>Aucun changement non accepté</translation>
+    </message>
+    <message>
+        <source>Stage selected &amp;lines</source>
+        <translation>Accepter les &amp;lignes sélectionnées</translation>
+    </message>
+    <message>
+        <source>Unstage selected &amp;lines</source>
+        <translation>Rejeter les &amp;lignes sélectionnées</translation>
+    </message>
+    <message>
+        <source>Stage &amp;hunk</source>
+        <translation>Accepter le &amp;bloc</translation>
+    </message>
+    <message>
+        <source>Unstage &amp;hunk</source>
+        <translation>Rejeter le &amp;bloc</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>File log</source>
+        <translation>Journal du fichier</translation>
+    </message>
+    <message>
+        <source>File diff</source>
+        <translation>Diff du fichier</translation>
+    </message>
+    <message>
+        <source>Force push</source>
+        <translation>Synchro sortante forcée</translation>
+    </message>
+    <message>
+        <source>Update submodules</source>
+        <translation>Mettre à jour les sous-modules</translation>
+    </message>
+    <message>
+        <source>Save stash</source>
+        <translation>Sauvegarder le brouillon</translation>
+    </message>
+    <message>
+        <source>Pop stash</source>
+        <translation>Restaurer le brouillon</translation>
+    </message>
+    <message>
+        <source>Apply patch</source>
+        <translation>Appliquer la rustine</translation>
+    </message>
 </context>
 <context>
     <name>FilePane</name>
@@ -880,6 +1186,66 @@ Veuillez sélectionner un dossier contenant un dépôt.</translation>
     <message>
         <source>%1 closed.</source>
         <translation>%1 fermé.</translation>
+    </message>
+    <message>
+        <source>Commit started...</source>
+        <translation>Validation commencée...</translation>
+    </message>
+    <message>
+        <source>Commit finished.</source>
+        <translation>Validation terminée.</translation>
+    </message>
+    <message>
+        <source>Commit failed.</source>
+        <translation>La validation a échoué.</translation>
+    </message>
+    <message>
+        <source>Amend started...</source>
+        <translation>Modification commencée...</translation>
+    </message>
+    <message>
+        <source>Amend finished.</source>
+        <translation>Modification terminée.</translation>
+    </message>
+    <message>
+        <source>Amend failed.</source>
+        <translation>La modification a échoué.</translation>
+    </message>
+    <message>
+        <source>Push started...</source>
+        <translation>Synchro sortante commencée...</translation>
+    </message>
+    <message>
+        <source>Push finished.</source>
+        <translation>Synchro sortante terminée.</translation>
+    </message>
+    <message>
+        <source>Push failed.</source>
+        <translation>La synchro sortante a échoué.</translation>
+    </message>
+    <message>
+        <source>Pull started...</source>
+        <translation>Synchro entrante commencée...</translation>
+    </message>
+    <message>
+        <source>Pull finished.</source>
+        <translation>Synchro entrante terminée.</translation>
+    </message>
+    <message>
+        <source>Pull failed.</source>
+        <translation>La synchro entrante a échoué.</translation>
+    </message>
+    <message>
+        <source>Fetch started...</source>
+        <translation>Pré-synchro commencée...</translation>
+    </message>
+    <message>
+        <source>Fetch finished.</source>
+        <translation>Pré-synchro terminée.</translation>
+    </message>
+    <message>
+        <source>Fetch failed.</source>
+        <translation>La pré-synchro a échoué.</translation>
     </message>
 </context>
 </TS>

@@ -259,6 +259,7 @@ Item {
     readonly property string statusChangeText: qsTr("...")
     readonly property string deleteBranchText: qsTr("Delete branch")
     readonly property string repositoriesText: qsTr("Repositories")
+    readonly property string openRepositoryPlaceholderText: qsTr("Open a repository...")
     readonly property string repositoryURLText: qsTr("Repository URL")
     readonly property string statusHistoryText: qsTr("Status history")
     readonly property string mergeProgressText: qsTr("Merge in progress...")

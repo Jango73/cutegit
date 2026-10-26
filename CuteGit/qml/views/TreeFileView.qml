@@ -26,7 +26,7 @@ TreeView {
     // "None", "Single", "Extended", "Multi", "Contig."
 
     TableViewColumn {
-        title: "Name"
+        title: Const.nameText
         role: "fileName"
     }
 

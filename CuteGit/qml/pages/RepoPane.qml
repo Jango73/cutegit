@@ -19,7 +19,7 @@ TitlePane {
             id: listPlaceHolder
             anchors.fill: parent
             visible: !list.visible
-            text: "Open a repository..."
+            text: Const.openRepositoryPlaceholderText
         }
 
         StandardListView {
