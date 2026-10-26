@@ -209,7 +209,25 @@ QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sW
     }
 
     startProcess(process, sCommand);
-    msleep(1000);
+
+    // A missing working folder or a missing binary fails to start: report it
+    // instead of returning an empty output that callers mistake for silence
+    if (process.state() == QProcess::NotRunning && process.error() != QProcess::UnknownError)
+    {
+        QString sError = process.errorString();
+
+        if (sError.isEmpty())
+            sError = tr("Failed to start process");
+
+        if (pExitCode != nullptr)
+            *pExitCode = 1;
+
+        emit newOutputString(eCommand, sError);
+
+        return sError;
+    }
+
+    QString sFullOutput;
 
     while (process.state() == QProcess::Running)
     {
@@ -220,6 +238,7 @@ QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sW
 
         if (not sOutput.isEmpty())
         {
+            sFullOutput += sOutput;
             emit newOutputString(eCommand, sOutput);
         }
 
@@ -236,5 +255,10 @@ QString CExecution::execNowLiveFeed(CEnums::EProcessCommand eCommand, QString sW
     QString sOutput = process.readAllStandardOutput();
     sOutput += process.readAllStandardError();
 
-    return sOutput;
+    // Fast processes finish before the first poll: their output only shows up
+    // here, so keep it in the returned text for the end signal. When the loop
+    // already emitted chunks, only the trailing remainder arrives here.
+    sFullOutput += sOutput;
+
+    return sFullOutput;
 }

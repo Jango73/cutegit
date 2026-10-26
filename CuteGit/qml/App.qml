@@ -347,6 +347,9 @@ ApplicationWindow {
         anchors.centerIn: parent
         width: root.width * Const.popupWidthNorm
         title: Const.statusHistoryText
+        progressVisible: root.ctrl.cloneProgressVisible
+        progressValue: root.ctrl.cloneProgressValue
+        progressIndeterminate: root.ctrl.cloneProgressIndeterminate
 
         controls: [
             StandardStringListView {

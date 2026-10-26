@@ -364,6 +364,9 @@ public:
     //! Returns the type of repository from an URL
     static CEnums::ERepositoryType getRepositoryTypeFromURL(const QString& sRepositoryURL);
 
+    //! Returns the default folder name for a repository URL, handles scp-like SSH syntax
+    static QString repositoryNameFromURL(const QString& sRepositoryURL);
+
     //! Returns a command interface for a given repository type
     static CCommands* getCommandsForRepositoryType(CController* pController, CEnums::ERepositoryType eType);
 

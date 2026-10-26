@@ -12,6 +12,7 @@
 // Application
 #include "CSvnCommands.h"
 #include "../CUtils.h"
+#include "../CRepository.h"
 
 /*!
     \class CSvnCommands
@@ -31,7 +32,7 @@
 const QString CSvnCommands::sCommandAdd                = "svn add \"%1\"";
 const QString CSvnCommands::sCommandAddForce           = "svn add --force \"%1\"";
 const QString CSvnCommands::sCommandBlame              = "svn blame \"%1\"";
-const QString CSvnCommands::sCommandCheckout           = "svn checkout \"%1\"";
+const QString CSvnCommands::sCommandCheckout           = "svn checkout \"%1\" \"%2\"";
 const QString CSvnCommands::sCommandCommit             = "svn commit -m \"%1\"";
 const QString CSvnCommands::sCommandCopyBranch         = "svn copy -r %1 \"^/trunk\" \"^/branches/%2\" -m \"%3\"";
 const QString CSvnCommands::sCommandCopyTag            = "svn copy -r %1 \"^/trunk\" \"^/tags/%2\" -m \"%3\"";
@@ -187,10 +188,32 @@ bool CSvnCommands::can(CEnums::ECapability eWhat) const
 
 void CSvnCommands::cloneRepository(const QString& sRepositoryURL, const QString& sRepositoryPath)
 {
-    QString sCommand = QString(sCommandCheckout).arg(sRepositoryURL);
+    QString sParentPath = CUtils::localFilePath(sRepositoryPath.trimmed());
+    QString sRepositoryName = CRepository::repositoryNameFromURL(sRepositoryURL);
+
+    QString sDestinationPath = sParentPath;
+    QString sWorkPath = sParentPath;
+
+    if (not sRepositoryName.isEmpty())
+    {
+        if (sParentPath.endsWith("/" + sRepositoryName))
+        {
+            sDestinationPath = sParentPath;
+            sWorkPath = sParentPath.left(sParentPath.length() - sRepositoryName.length() - 1);
+        }
+        else
+        {
+            sDestinationPath = sParentPath + "/" + sRepositoryName;
+        }
+    }
+
+    if (not sWorkPath.isEmpty())
+        QDir().mkpath(sWorkPath);
+
+    QString sCommand = QString(sCommandCheckout).arg(sRepositoryURL).arg(sDestinationPath);
     exec(new CProcessCommand(
              CEnums::eCloneRepository,
-             sRepositoryPath,
+             sWorkPath,
              sCommand,
              false,
              QMap<QString, QString>(),

@@ -22,6 +22,11 @@ Popup {
     property alias controls: controlsLayout.children
     property alias buttons: buttonsLayout.children
 
+    //! Progress bar shown at the very bottom, hidden unless needed
+    property bool progressVisible: false
+    property real progressValue: 0
+    property bool progressIndeterminate: false
+
     background: Rectangle {
         anchors.fill: parent
         color: Material.background
@@ -34,7 +39,7 @@ Popup {
     contentItem: Item {
         id: content
 
-        property int computedHeight: title.height + controls.height + buttonToolBar.height
+        property int computedHeight: title.height + controls.height + buttonToolBar.height + progressArea.height
 
         Column {
             id: layout
@@ -69,6 +74,24 @@ Popup {
                     id: buttonsLayout
                     anchors.centerIn: parent
                     spacing: Const.mainPadding
+                }
+            }
+
+            Item {
+                id: progressArea
+                width: parent.width
+                height: root.progressVisible ? progressBar.implicitHeight + Const.mainPadding : 0
+                visible: root.progressVisible
+
+                ProgressBar {
+                    id: progressBar
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    from: 0
+                    to: 1
+                    value: root.progressValue
+                    indeterminate: root.progressIndeterminate
                 }
             }
         }

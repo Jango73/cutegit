@@ -956,6 +956,45 @@ CEnums::ERepositoryType CRepository::getRepositoryTypeFromURL(const QString& sRe
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    \fn QString CRepository::repositoryNameFromURL
+    Returns the folder name derived from a repository URL.
+    Supports https/ssh/file URLs and scp-like SSH syntax (git@host:path/repo.git).
+*/
+QString CRepository::repositoryNameFromURL(const QString& sRepositoryURL)
+{
+    QString sTrimmed = sRepositoryURL.trimmed();
+
+    while (sTrimmed.endsWith('/'))
+        sTrimmed.chop(1);
+
+    // Strip query and fragment when present
+    int iQuery = sTrimmed.indexOf('?');
+    if (iQuery >= 0)
+        sTrimmed = sTrimmed.left(iQuery);
+
+    int iFragment = sTrimmed.indexOf('#');
+    if (iFragment >= 0)
+        sTrimmed = sTrimmed.left(iFragment);
+
+    // Keep text after the last '/' or ':' so scp-like syntax works
+    int iSlash = sTrimmed.lastIndexOf('/');
+    int iColon = sTrimmed.lastIndexOf(':');
+    int iSeparator = iSlash > iColon ? iSlash : iColon;
+
+    QString sName = iSeparator >= 0 ? sTrimmed.mid(iSeparator + 1) : sTrimmed;
+
+    if (sName.endsWith(".git"))
+        sName.chop(4);
+
+    while (sName.endsWith('/'))
+        sName.chop(1);
+
+    return sName;
+}
+
+//-------------------------------------------------------------------------------------------------
+
 CCommands* CRepository::getCommandsForRepositoryType(CController* pController, CEnums::ERepositoryType eType)
 {
     switch (eType)

@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
+#include <QRegularExpression>
 #include <QUrl>
 #include <QFileDialog>
 #include <QStandardPaths>
@@ -116,6 +117,9 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_tPollTimer(this)
     , m_iPollIndex(0)
     , m_pCloneCommands(nullptr)
+    , m_bCloneProgressVisible(false)
+    , m_dCloneProgressValue(0.0)
+    , m_bCloneProgressIndeterminate(false)
     , m_pTranslator(new QTranslator(this))
 {
     QCoreApplication::installTranslator(m_pTranslator);
@@ -191,6 +195,9 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_tPollTimer(this)
     , m_iPollIndex(0)
     , m_pCloneCommands(nullptr)
+    , m_bCloneProgressVisible(false)
+    , m_dCloneProgressValue(0.0)
+    , m_bCloneProgressIndeterminate(false)
     , m_pTranslator(new QTranslator(this))
 {
     reloadLayouts();
@@ -906,25 +913,89 @@ void CController::quit()
 
 void CController::cloneRepository(QString sRepositoryURL, QString sRepositoryPath)
 {
-    sRepositoryPath = CUtils::localFilePath(sRepositoryPath);
+    sRepositoryURL = sRepositoryURL.trimmed();
+    sRepositoryPath = CUtils::localFilePath(sRepositoryPath.trimmed());
+
+    if (sRepositoryURL.isEmpty() || sRepositoryPath.isEmpty())
+    {
+        setStatusText(tr("Repository URL and destination folder are required."));
+        return;
+    }
+
+    if (m_pCloneCommands != nullptr)
+    {
+        if (m_pCloneCommands->isBusy())
+        {
+            setStatusText(tr("A clone is already running."));
+            return;
+        }
+
+        delete m_pCloneCommands;
+        m_pCloneCommands = nullptr;
+    }
 
     CEnums::ERepositoryType eType = CRepository::getRepositoryTypeFromURL(sRepositoryURL);
 
-    if (eType != CEnums::UnknownRepositoryType)
+    if (eType == CEnums::UnknownRepositoryType)
     {
-        // Remember the repository to show in the tab view
-        m_sCurrentRepositoryPath = sRepositoryPath;
-
-        QUrl url(sRepositoryURL);
-        QString sRepositoryName = url.fileName().split(".").first();
-
-        m_sCloneCommandsRepositoryPath = sRepositoryPath + "/" + sRepositoryName;
-        m_pCloneCommands = CRepository::getCommandsForRepositoryType(this, eType);
-
-        connect(m_pCloneCommands, &CCommands::newOutputString, this, &CController::onNewCloneOutput);
-
-        m_pCloneCommands->cloneRepository(sRepositoryURL, sRepositoryPath);
+        setStatusText(tr("Unsupported repository URL."));
+        return;
     }
+
+    QString sRepositoryName = CRepository::repositoryNameFromURL(sRepositoryURL);
+
+    if (sRepositoryName.isEmpty())
+    {
+        setStatusText(tr("Cannot derive a folder name from the repository URL."));
+        return;
+    }
+
+    QString sDestinationPath;
+    QString sParentPath;
+
+    if (sRepositoryPath.endsWith("/" + sRepositoryName))
+    {
+        sDestinationPath = sRepositoryPath;
+        sParentPath = sRepositoryPath.left(sRepositoryPath.length() - sRepositoryName.length() - 1);
+    }
+    else
+    {
+        sDestinationPath = sRepositoryPath + "/" + sRepositoryName;
+        sParentPath = sRepositoryPath;
+    }
+
+    if (not sParentPath.isEmpty())
+        QDir().mkpath(sParentPath);
+
+    // A previous clone may already hold the destination: open it instead of
+    // failing on the git "already exists and is not an empty directory" error
+    if (QDir(sDestinationPath).exists())
+    {
+        if (CRepository::getRepositoryTypeFromFolder(sDestinationPath) != CEnums::UnknownRepositoryType)
+        {
+            setStatusText(tr("Destination already holds a repository, opening it."));
+            openRepository(sDestinationPath);
+            return;
+        }
+
+        if (not QDir(sDestinationPath).entryList(QDir::NoDotAndDotDot | QDir::AllEntries).isEmpty())
+        {
+            setStatusText(tr("Destination already exists and is not empty."));
+            return;
+        }
+    }
+
+    // Remember the cloned folder so the tab view selects it on success
+    m_sCurrentRepositoryPath = sDestinationPath;
+    m_sCloneCommandsRepositoryPath = sDestinationPath;
+    setCloneProgressIndeterminate(true);
+    setCloneProgressValue(0.0);
+    setCloneProgressVisible(true);
+    m_pCloneCommands = CRepository::getCommandsForRepositoryType(this, eType);
+
+    connect(m_pCloneCommands, &CCommands::newOutputString, this, &CController::onNewCloneOutput);
+
+    m_pCloneCommands->cloneRepository(sRepositoryURL, sRepositoryPath);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1027,21 +1098,64 @@ QString CController::browseForExistingFolder(QString sTitle)
 
 //-------------------------------------------------------------------------------------------------
 
-void CController::onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOutput)
+void CController::onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOutput, QString sUserData, int iExitCode)
 {
+    Q_UNUSED(sUserData);
+
     switch (eCommand)
     {
     default:
+    case CEnums::eIssuedCommand:
     case CEnums::eCloneRepository:
     {
-        QStringList lNewTextLines = sOutput.split(NEW_LINE);
-        setStatusText(lNewTextLines.last());
+        // Git progress uses carriage returns without newlines: split on both
+        QString sNormalized = sOutput;
+        sNormalized.replace('\r', '\n');
+        QStringList lNewTextLines = sNormalized.split(NEW_LINE);
+
+        QString sLastLine;
+
+        for (int iIndex = lNewTextLines.count() - 1; iIndex >= 0; iIndex--)
+        {
+            sLastLine = lNewTextLines[iIndex].trimmed();
+
+            if (not sLastLine.isEmpty())
+                break;
+        }
+
+        if (not sLastLine.isEmpty())
+            setStatusText(sLastLine);
 
         QStringList lHistory = m_pStatusTextHistory->stringList();
-        lHistory << lNewTextLines;
+
+        for (QString sLine : lNewTextLines)
+        {
+            sLine = sLine.trimmed();
+
+            if (not sLine.isEmpty())
+                lHistory << sLine;
+        }
+
         while (lHistory.count() > 50)
             lHistory.takeFirst();
         m_pStatusTextHistory->setStringList(lHistory);
+
+        // Feed the generic dialog progress bar from git percentages
+        // ("Receiving objects: 45% ..."): last value wins for the chunk
+        static const QRegularExpression tPercentRegExp("(\\d+)\\s*%");
+        QRegularExpressionMatchIterator tIterator = tPercentRegExp.globalMatch(sOutput);
+        int iLastPercent = -1;
+
+        while (tIterator.hasNext())
+            iLastPercent = tIterator.next().captured(1).toInt();
+
+        if (iLastPercent >= 0)
+        {
+            setCloneProgressIndeterminate(false);
+            setCloneProgressValue(iLastPercent / 100.0);
+            setCloneProgressVisible(true);
+        }
+
         break;
     }
 
@@ -1052,10 +1166,52 @@ void CController::onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOu
 
         m_pCloneCommands = nullptr;
 
-        // Open the cloned repository
-        if (true)
+        setCloneProgressVisible(false);
+        setCloneProgressIndeterminate(false);
+
+        if (iExitCode == 0)
         {
             openRepository(m_sCloneCommandsRepositoryPath);
+        }
+        else
+        {
+            QString sNormalized = sOutput;
+            sNormalized.replace('\r', '\n');
+            QStringList lNewTextLines = sNormalized.split(NEW_LINE);
+
+            QString sSummary;
+
+            for (QString sLine : lNewTextLines)
+            {
+                sLine = sLine.trimmed();
+
+                if (not sLine.isEmpty())
+                {
+                    sSummary = sLine;
+
+                    if (sLine.startsWith("fatal:") || sLine.startsWith("error:"))
+                        break;
+                }
+            }
+
+            if (sSummary.isEmpty())
+                sSummary = tr("Clone failed.");
+
+            setStatusText(sSummary);
+
+            QStringList lHistory = m_pStatusTextHistory->stringList();
+
+            for (QString sLine : lNewTextLines)
+            {
+                sLine = sLine.trimmed();
+
+                if (not sLine.isEmpty())
+                    lHistory << sLine;
+            }
+
+            while (lHistory.count() > 50)
+                lHistory.takeFirst();
+            m_pStatusTextHistory->setStringList(lHistory);
         }
 
         break;

@@ -1,6 +1,7 @@
 
 // Qt
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QTextStream>
 #include <QUrl>
@@ -46,13 +47,24 @@ void CUtils::setTextFileContents(const QString& sFileName, const QString& sText)
 /*!
     \fn CUtils::localFilePath
     Returns the local file path for a file name possibly holding a file URL.
+    A leading tilde is expanded to the user home folder: shells do this,
+    QProcess and QDir do not, so an unexpanded tilde creates literal
+    folders named "~" instead of the intended home-relative path.
 */
 QString CUtils::localFilePath(const QString& sFileName)
 {
-    if (sFileName.startsWith(sFileUrlSchemePrefix))
-        return QUrl(sFileName).toLocalFile();
+    QString sLocalPath = sFileName;
 
-    return sFileName;
+    if (sLocalPath.startsWith(sFileUrlSchemePrefix))
+        sLocalPath = QUrl(sLocalPath).toLocalFile();
+
+    if (sLocalPath == "~")
+        return QDir::homePath();
+
+    if (sLocalPath.startsWith("~/"))
+        return QDir::homePath() + sLocalPath.mid(1);
+
+    return sLocalPath;
 }
 
 //-------------------------------------------------------------------------------------------------

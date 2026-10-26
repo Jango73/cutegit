@@ -9,6 +9,7 @@
 #include "CGitCommands.h"
 #include "../CUtils.h"
 #include "../CController.h"
+#include "../CRepository.h"
 #include "../Strings.h"
 #include "../CDiffLine.h"
 #include "../CDiffConstants.h"
@@ -43,7 +44,7 @@ const QString CGitCommands::sCommandBlame               = "git annotate \"%1\"";
 const QString CGitCommands::sCommandBranchAheadBehind = "git for-each-ref --format=\"%(refname:short) %(upstream:track)\" refs/heads";
 const QString CGitCommands::sCommandBranches            = "git branch -a";
 const QString CGitCommands::sCommandBranchFromCommit    = "git checkout -b \"%1\" \"%2\"";
-const QString CGitCommands::sCommandClone               = "git clone --progress \"%1\"";
+const QString CGitCommands::sCommandClone               = "git clone --progress \"%1\" \"%2\"";
 const QString CGitCommands::sCommandCommit              = "git commit -m \"%1\"";
 const QString CGitCommands::sCommandCommitDiffPrevious  = "git diff %1~1 %1";
 const QString CGitCommands::sCommandContinueMerge       = "git merge --continue";
@@ -164,10 +165,33 @@ bool CGitCommands::can(CEnums::ECapability eWhat) const
 
 void CGitCommands::cloneRepository(const QString& sRepositoryURL, const QString& sRepositoryPath)
 {
-    QString sCommand = QString(sCommandClone).arg(sRepositoryURL);
+    QString sParentPath = CUtils::localFilePath(sRepositoryPath.trimmed());
+    QString sRepositoryName = CRepository::repositoryNameFromURL(sRepositoryURL);
+
+    // Accept both a parent folder and the final folder: avoid parent/repo/repo nesting
+    QString sDestinationPath = sParentPath;
+    QString sWorkPath = sParentPath;
+
+    if (not sRepositoryName.isEmpty())
+    {
+        if (sParentPath.endsWith("/" + sRepositoryName))
+        {
+            sDestinationPath = sParentPath;
+            sWorkPath = sParentPath.left(sParentPath.length() - sRepositoryName.length() - 1);
+        }
+        else
+        {
+            sDestinationPath = sParentPath + "/" + sRepositoryName;
+        }
+    }
+
+    if (not sWorkPath.isEmpty())
+        QDir().mkpath(sWorkPath);
+
+    QString sCommand = QString(sCommandClone).arg(sRepositoryURL).arg(sDestinationPath);
     exec(new CProcessCommand(
              CEnums::eCloneRepository,
-             sRepositoryPath,
+             sWorkPath,
              sCommand,
              false,
              QMap<QString, QString>(),

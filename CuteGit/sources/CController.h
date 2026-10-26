@@ -57,6 +57,11 @@ class CController : public QObject
     Q_FAST_PROPERTY(QString, s, theme, Theme)
     Q_FAST_PROPERTY(QString, s, stubFileName, StubFileName)
 
+    //! Clone progress shown in the generic dialog bottom bar, hidden otherwise
+    Q_FAST_PROPERTY(bool, b, cloneProgressVisible, CloneProgressVisible)
+    Q_FAST_PROPERTY(double, d, cloneProgressValue, CloneProgressValue)
+    Q_FAST_PROPERTY(bool, b, cloneProgressIndeterminate, CloneProgressIndeterminate)
+
     // Descriptive UI layouts loaded from layouts.json next to the binary
     Q_FAST_PROPERTY(QStringList, l, layoutNames, LayoutNames)
     Q_FAST_PROPERTY_NO_SET_IMPL(int, i, currentLayoutIndex, CurrentLayoutIndex)
@@ -182,7 +187,7 @@ public:
 protected slots:
 
     //!
-    void onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOutput);
+    void onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOutput, QString sUserData, int iExitCode);
 
     //! Triggered for shared memory operation sync
     void onSharedTimerTick();
