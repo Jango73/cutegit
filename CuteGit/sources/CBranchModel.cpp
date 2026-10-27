@@ -89,15 +89,12 @@ QVariant CBranchModel::data(const QModelIndex& qIndex, int iRole) const
 
 void CBranchModel::setBranchList(QList<CBranch*> lNewList, CEnums::ELabelType eType)
 {
-    beginResetModel();
-
     QMap<QString, QString> mKnownHeadCommits;
 
     for (CBranch* pBranch : m_lBranches)
         mKnownHeadCommits[pBranch->name()] = pBranch->commitId();
 
-    qDeleteAll(m_lBranches);
-    m_lBranches.clear();
+    QList<CBranch*> lFilteredBranches;
 
     for (CBranch* pBranch : lNewList)
     {
@@ -106,9 +103,41 @@ void CBranchModel::setBranchList(QList<CBranch*> lNewList, CEnums::ELabelType eT
             if (mKnownHeadCommits.contains(pBranch->name()))
                 pBranch->setCommitId(mKnownHeadCommits[pBranch->name()]);
 
-            m_lBranches << pBranch;
+            lFilteredBranches << pBranch;
         }
     }
+
+    // Identical content keeps loaded rows untouched: no reset, no flicker,
+    // the scrollbar and the selection stay where they are
+    if (m_lBranches.count() == lFilteredBranches.count())
+    {
+        bool bIdentical = true;
+
+        for (int iIndex = 0; iIndex < m_lBranches.count(); iIndex++)
+        {
+            if (m_lBranches[iIndex]->name() != lFilteredBranches[iIndex]->name()
+                    || m_lBranches[iIndex]->commitId() != lFilteredBranches[iIndex]->commitId()
+                    || m_lBranches[iIndex]->type() != lFilteredBranches[iIndex]->type())
+            {
+                bIdentical = false;
+                break;
+            }
+        }
+
+        if (bIdentical)
+        {
+            qDeleteAll(lFilteredBranches);
+            return;
+        }
+    }
+
+    beginResetModel();
+
+    qDeleteAll(m_lBranches);
+    m_lBranches.clear();
+
+    for (CBranch* pBranch : lFilteredBranches)
+        m_lBranches << pBranch;
 
     endResetModel();
 }

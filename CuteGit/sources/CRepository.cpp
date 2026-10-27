@@ -854,6 +854,12 @@ void CRepository::setFileSortDirection(bool bDirection)
 
 void CRepository::setWorkingTreeDiffFilter(const QString& sText)
 {
+    // Identical filter keeps the views untouched: no re-filter, no flicker,
+    // the scrollbars and the selections stay where they are
+    if (m_pStagedFileDiffModelProxy->textFilter() == sText
+            && m_pUnstagedFileDiffModelProxy->textFilter() == sText)
+        return;
+
     m_pStagedFileDiffModelProxy->setTextFilter(sText);
     m_pStagedFileDiffModelProxy->filterChanged();
     m_pUnstagedFileDiffModelProxy->setTextFilter(sText);
@@ -867,6 +873,9 @@ void CRepository::setWorkingTreeDiffFilter(const QString& sText)
 */
 void CRepository::setCommitDiffFilter(const QString& sText)
 {
+    if (m_pFileDiffModelProxy->textFilter() == sText)
+        return;
+
     m_pFileDiffModelProxy->setTextFilter(sText);
     m_pFileDiffModelProxy->filterChanged();
 }
@@ -875,6 +884,9 @@ void CRepository::setCommitDiffFilter(const QString& sText)
 
 void CRepository::setFileBlameFilter(const QString& sText)
 {
+    if (m_pFileBlameModelProxy->textFilter() == sText)
+        return;
+
     m_pFileBlameModelProxy->setTextFilter(sText);
     m_pFileBlameModelProxy->filterChanged();
 }
@@ -883,6 +895,9 @@ void CRepository::setFileBlameFilter(const QString& sText)
 
 void CRepository::setGraphFilter(const QString& sText)
 {
+    if (m_pGraphModelProxy->textFilter() == sText)
+        return;
+
     m_pGraphModelProxy->setTextFilter(sText);
     m_pGraphModelProxy->filterChanged();
 }

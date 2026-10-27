@@ -64,6 +64,13 @@ QVariant CLabelModel::data(const QModelIndex& qIndex, int iRole) const
 
 void CLabelModel::setLabelList(QList<CLabel*> lNewList)
 {
+    // Identical content keeps loaded rows untouched: no reset, no flicker
+    if (isEqualTo(lNewList))
+    {
+        qDeleteAll(lNewList);
+        return;
+    }
+
     beginResetModel();
 
     qDeleteAll(m_lLabels);

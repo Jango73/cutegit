@@ -49,8 +49,11 @@ public:
     // Control methods
     //-------------------------------------------------------------------------------------------------
 
-    //! Sets all lines
+    //! Sets all lines without flicker, keeping loaded rows when identical
     void setLines(QList<CDiffLine*> lNewLines);
+
+    //! Returns true when both lines show the same diff content
+    static bool isSameLine(const CDiffLine* pExistingLine, const CDiffLine* pIncomingLine);
 
     //! Returns the line at row, nullptr when out of range
     CDiffLine* lineAt(int iRow) const;
@@ -68,6 +71,9 @@ public:
     virtual QVariant data(const QModelIndex& index, int role) const;
 
 private:
+
+    //! Returns true when the loaded lines match the incoming lines
+    bool isEqualTo(const QList<CDiffLine*>& lNewLines) const;
 
     //! Diff lines
     QList<CDiffLine*>   m_lLines;

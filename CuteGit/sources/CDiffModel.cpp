@@ -20,15 +20,100 @@ CDiffModel::~CDiffModel()
 
 void CDiffModel::setLines(QList<CDiffLine*> lNewLines)
 {
-    beginResetModel();
+    // Identical content keeps loaded rows untouched: no reset, no flicker,
+    // the scrollbar and the selection stay where they are
+    if (isEqualTo(lNewLines))
+    {
+        qDeleteAll(lNewLines);
+        return;
+    }
 
-    qDeleteAll(m_lLines);
-    m_lLines.clear();
+    int iExistingCount = m_lLines.count();
+    int iIncomingCount = lNewLines.count();
+    int iCommonCount = qMin(iExistingCount, iIncomingCount);
 
-    for (CDiffLine* pLine : lNewLines)
-        m_lLines << pLine;
+    for (int iIndex = 0; iIndex < iCommonCount; iIndex++)
+    {
+        if (isSameLine(m_lLines[iIndex], lNewLines[iIndex]))
+        {
+            delete lNewLines[iIndex];
+        }
+        else
+        {
+            delete m_lLines[iIndex];
+            m_lLines[iIndex] = lNewLines[iIndex];
+            QModelIndex tIndex = index(iIndex, 0);
+            emit dataChanged(tIndex, tIndex);
+        }
 
-    endResetModel();
+        lNewLines[iIndex] = nullptr;
+    }
+
+    if (iIncomingCount > iExistingCount)
+    {
+        beginInsertRows(QModelIndex(), iExistingCount, iIncomingCount - 1);
+
+        for (int iIndex = iCommonCount; iIndex < iIncomingCount; iIndex++)
+            m_lLines << lNewLines[iIndex];
+
+        endInsertRows();
+    }
+    else if (iExistingCount > iIncomingCount)
+    {
+        beginRemoveRows(QModelIndex(), iIncomingCount, iExistingCount - 1);
+
+        while (m_lLines.count() > iIncomingCount)
+            delete m_lLines.takeLast();
+
+        endRemoveRows();
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool CDiffModel::isSameLine(const CDiffLine* pExistingLine, const CDiffLine* pIncomingLine)
+{
+    if (pExistingLine == nullptr || pIncomingLine == nullptr)
+        return pExistingLine == pIncomingLine;
+
+    if (pExistingLine->operation() != pIncomingLine->operation())
+        return false;
+
+    if (pExistingLine->text() != pIncomingLine->text())
+        return false;
+
+    if (pExistingLine->commitId() != pIncomingLine->commitId())
+        return false;
+
+    if (pExistingLine->fileName() != pIncomingLine->fileName())
+        return false;
+
+    if (pExistingLine->hunkId() != pIncomingLine->hunkId())
+        return false;
+
+    if (pExistingLine->oldLineNumber() != pIncomingLine->oldLineNumber())
+        return false;
+
+    if (pExistingLine->newLineNumber() != pIncomingLine->newLineNumber())
+        return false;
+
+    return true;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+bool CDiffModel::isEqualTo(const QList<CDiffLine*>& lNewLines) const
+{
+    if (m_lLines.count() != lNewLines.count())
+        return false;
+
+    for (int iIndex = 0; iIndex < m_lLines.count(); iIndex++)
+    {
+        if (not isSameLine(m_lLines[iIndex], lNewLines[iIndex]))
+            return false;
+    }
+
+    return true;
 }
 
 //-------------------------------------------------------------------------------------------------

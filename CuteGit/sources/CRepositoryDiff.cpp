@@ -112,13 +112,10 @@ void CRepository::unstageDiffHunk(int iHunkId)
 */
 void CRepository::requestWorkingTreeDiffs(const QString& sFileFullName)
 {
-    // Drop stale views immediately: results arrive asynchronously and the
-    // slots below ignore outputs tagged for a previously selected file
-    m_pStagedFileDiffModel->setLines(QList<CDiffLine*>());
-    m_pUnstagedFileDiffModel->setLines(QList<CDiffLine*>());
-    setStagedFileDiffString("");
-    setUnstagedFileDiffString("");
-
+    // Loaded rows stay visible while the new diffs load: setWorkingTreeDiffLines
+    // reconciles the content without rebuilding when nothing changed, so no
+    // preemptive clear happens here, otherwise every refresh would flicker and
+    // reset the scrollbar even for identical content
     m_pCommands->stagedFileDiff(m_sRepositoryPath, sFileFullName);
     m_pCommands->unstagedFileDiff(m_sRepositoryPath, sFileFullName);
 }

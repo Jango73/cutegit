@@ -21,6 +21,9 @@ CFlatFileModelProxy::CFlatFileModelProxy(CController* pController, QObject *pare
 
 void CFlatFileModelProxy::setNameFilter(QString sNameFilter)
 {
+    if (m_sNameFilter == sNameFilter)
+        return;
+
     m_sNameFilter = sNameFilter;
     invalidateFilter();
 }
@@ -29,6 +32,9 @@ void CFlatFileModelProxy::setNameFilter(QString sNameFilter)
 
 void CFlatFileModelProxy::setSortField(CEnums::ESortField eField)
 {
+    if (m_eSortField == eField)
+        return;
+
     m_eSortField = eField;
     invalidate();
     sort(0);
@@ -38,6 +44,9 @@ void CFlatFileModelProxy::setSortField(CEnums::ESortField eField)
 
 void CFlatFileModelProxy::setSortDirection(bool bDirection)
 {
+    if (m_bSortDirection == bDirection)
+        return;
+
     m_bSortDirection = bDirection;
     invalidate();
     sort(0);
