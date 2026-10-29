@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QRegularExpression>
 #include <QDir>
+#include <QSet>
 
 // Application
 #include "CGitCommands.h"
@@ -82,6 +83,9 @@ const QString CGitCommands::sCommandStage               = "git add -f \"%1\"";
 const QString CGitCommands::sCommandStageAll            = "git add -u";
 const QString CGitCommands::sCommandStashPop            = "git stash pop";
 const QString CGitCommands::sCommandStashSave           = "git stash save";
+const QString CGitCommands::sCommandStashRef             = "git rev-parse --verify refs/stash";
+const QString CGitCommands::sCommandStashSecondParent   = "git rev-parse --verify refs/stash^2";
+const QString CGitCommands::sCommandStashThirdParent    = "git rev-parse --verify refs/stash^3";
 const QString CGitCommands::sCommandStatus              = "git status --porcelain --untracked-files=all";
 const QString CGitCommands::sCommandTags                = "git tag";
 const QString CGitCommands::sCommandTagCommits           = "git for-each-ref --format=\"%(refname:short) %(*objectname:short) %(objectname:short)\" refs/tags";
@@ -321,8 +325,34 @@ void CGitCommands::tagCommits(const QString& sPath, QStringList lTags)
 void CGitCommands::graph(const QString& sPath, int iFrom, int iCount)
 {
     int iPotentialCount = execNow(sPath, sCommandGraphCount).trimmed().toInt();
+
+    // Stash internals (index and untracked commits) are reachable through --all:
+    // resolve them so the graph output keeps a single stash row like other clients
+    QStringList lHiddenIds;
+    int iStashExitCode = 0;
+    QString sStashRef = execNow(sPath, sCommandStashRef, QMap<QString, QString>(), &iStashExitCode).trimmed();
+
+    if (iStashExitCode == 0 && not sStashRef.isEmpty())
+    {
+        int iSecondExitCode = 0;
+        QString sSecondParent = execNow(sPath, sCommandStashSecondParent, QMap<QString, QString>(), &iSecondExitCode).trimmed();
+
+        if (iSecondExitCode == 0 && not sSecondParent.isEmpty())
+            lHiddenIds << sSecondParent;
+
+        int iThirdExitCode = 0;
+        QString sThirdParent = execNow(sPath, sCommandStashThirdParent, QMap<QString, QString>(), &iThirdExitCode).trimmed();
+
+        if (iThirdExitCode == 0 && not sThirdParent.isEmpty())
+            lHiddenIds << sThirdParent;
+    }
+
     QString sCommand = QString(sCommandGraph).arg(iFrom).arg(iCount);
     QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
+
+    for (const QString& sHiddenId : lHiddenIds)
+        sUserData += "," + sHiddenId;
+
     exec(new CProcessCommand(CEnums::eGraph, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
 }
 
@@ -1548,12 +1578,44 @@ static QStringList splitDecorations(const QString& sValue)
 
 /***************************************************************************/
 
+/*!
+    \fn static bool isStashDecoration(const QStringList& lDecorations)
+    Returns true when git decorations mark a stash commit.
+*/
+static bool isStashDecoration(const QStringList& lDecorations)
+{
+    for (const QString& sDecoration : lDecorations)
+    {
+        if (sDecoration.contains("refs/stash") || sDecoration.contains("stash@{"))
+            return true;
+    }
+
+    return false;
+}
+
+/***************************************************************************/
+
 void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
 {
-    // Create a CGraphLineCollection with the returned string of the process
+    // Create a CGraphLineCollection with the returned string of the process, hiding
+    // stash internal commits (index and untracked) so the stash shows as one row
 
     CGraphLineCollection lReturnValue;
     QStringList lStrings = tResult.m_sValue.split(sRecordSeparator);
+
+    QStringList lUserValues = tResult.m_sUserData.split(",");
+    int iPotentialCount = lUserValues.count() > 0 ? lUserValues[0].toInt() : 0;
+    int iStartIndex = lUserValues.count() > 1 ? lUserValues[1].toInt() : 0;
+
+    QSet<QString> sHiddenIds;
+
+    for (int iValue = 2; iValue < lUserValues.count(); iValue++)
+    {
+        QString sHiddenId = lUserValues[iValue].trimmed();
+
+        if (not sHiddenId.isEmpty())
+            sHiddenIds << sHiddenId;
+    }
 
     for (QString sLine : lStrings)
     {
@@ -1571,6 +1633,9 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
             if (sCommitId.isEmpty())
                 continue;
 
+            if (sHiddenIds.contains(sCommitId))
+                continue;
+
             CGraphLine* pLine = new CGraphLine();
 
             pLine->setCommitId(sCommitId);
@@ -1581,18 +1646,22 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
             pLine->setAuthor(sValues[5].trimmed());
             pLine->setDate(QDateTime::fromString(sValues[6].trimmed(), Qt::ISODate));
 
+            if (isStashDecoration(pLine->decorations()) && pLine->parents().count() > 1)
+                pLine->setParents(QStringList(pLine->parents().first()));
+
             lReturnValue.add(pLine);
         }
     }
 
-    QStringList lUserValues = tResult.m_sUserData.split(",");
-    int iPotentialCount = lUserValues.count() > 0 ? lUserValues[0].toInt() : 0;
-    int iStartIndex = lUserValues.count() > 1 ? lUserValues[1].toInt() : 0;
+    int iFilteredPotentialCount = iPotentialCount - sHiddenIds.count();
+
+    if (iFilteredPotentialCount < 0)
+        iFilteredPotentialCount = 0;
 
     if (iPotentialCount == 0)
-        iPotentialCount = lReturnValue.lines().count();
+        iFilteredPotentialCount = lReturnValue.lines().count();
 
-    lReturnValue.setPotentialCount(iPotentialCount);
+    lReturnValue.setPotentialCount(iFilteredPotentialCount);
     lReturnValue.setStartIndex(iStartIndex);
 
     emit newOutputCGraphLineCollection(tResult.m_eCommand, lReturnValue);

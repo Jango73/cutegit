@@ -322,6 +322,9 @@ protected:
     static const QString sCommandStageAll;
     static const QString sCommandStashPop;
     static const QString sCommandStashSave;
+    static const QString sCommandStashRef;
+    static const QString sCommandStashSecondParent;
+    static const QString sCommandStashThirdParent;
     static const QString sCommandStatus;
     static const QString sCommandTags;
     static const QString sCommandTagCommits;

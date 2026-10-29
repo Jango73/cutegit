@@ -41,6 +41,41 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
 {
     setPotentialCount(iPotentialCount);
 
+    // Filtered pages (stash internals hidden) overlap by the hidden rows:
+    // drop leading incoming rows present in loaded rows so the combined
+    // sequence used for layout stays contiguous
+    if (iStartIndex > 0 && not m_lLines.isEmpty() && not lIncomingLines.isEmpty())
+    {
+        QSet<QString> sTailIds;
+        int iTailFirst = m_lLines.count() - 10;
+
+        if (iTailFirst < 0)
+            iTailFirst = 0;
+
+        for (int iLine = iTailFirst; iLine < m_lLines.count(); iLine++)
+        {
+            const CLogLine* pLoadedLine = m_lLines[iLine];
+
+            if (pLoadedLine != nullptr && not pLoadedLine->commitId().isEmpty())
+                sTailIds << pLoadedLine->commitId();
+        }
+
+        while (not lIncomingLines.isEmpty())
+        {
+            CLogLine* pFirstLine = lIncomingLines.first();
+
+            if (pFirstLine != nullptr && sTailIds.contains(pFirstLine->commitId()))
+            {
+                delete pFirstLine;
+                lIncomingLines.removeFirst();
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
     int iIncomingCount = lIncomingLines.count();
 
     prepareLines(m_lLines, lIncomingLines, iStartIndex);
