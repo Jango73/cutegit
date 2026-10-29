@@ -358,6 +358,21 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(not branchCommitId(pTags, "v-batch-annotated").isEmpty(), s_iAsyncTimeoutMs);
     }
 
+    // A local branch without upstream reports no upstream and no ahead count,
+    // so the QML push action stays enabled through hasUpstreamBranch
+    void branchWithoutUpstream_reportsMissingUpstream()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"checkout", "-b", "no-upstream-probe"}, sUnused));
+
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->currentBranch() == "no-upstream-probe", s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(not m_pRepository->hasUpstreamBranch(), s_iAsyncTimeoutMs);
+        QCOMPARE(m_pRepository->commitCountAhead(), 0);
+    }
+
  private:
 
     // True when any loaded graph row carries at least one label

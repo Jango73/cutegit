@@ -41,7 +41,7 @@ const QString CGitCommands::sCommandAbortMerge          = "git merge --abort";
 const QString CGitCommands::sCommandAbortRebase         = "git rebase --abort";
 const QString CGitCommands::sCommandAmend               = "git commit --amend --reset-author --no-edit";
 const QString CGitCommands::sCommandBlame               = "git annotate \"%1\"";
-const QString CGitCommands::sCommandBranchAheadBehind = "git for-each-ref --format=\"%(refname:short) %(upstream:track)\" refs/heads";
+const QString CGitCommands::sCommandBranchAheadBehind = "git for-each-ref --format=\"%(refname:short)%09%(upstream:short)%09%(upstream:track)\" refs/heads";
 const QString CGitCommands::sCommandBranches            = "git branch -a";
 const QString CGitCommands::sCommandBranchFromCommit    = "git checkout -b \"%1\" \"%2\"";
 const QString CGitCommands::sCommandClone               = "git clone --progress \"%1\" \"%2\"";
@@ -69,8 +69,8 @@ const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
 const QString CGitCommands::sCommandPollFingerprint      = "git status --porcelain=v1 -b --ignored=no --untracked-files=normal";
 const QString CGitCommands::sCommandPollRefs              = "git for-each-ref --format=\"%(objectname:short) %(refname:short)\"";
 const QString CGitCommands::sCommandPull                = "git pull --no-rebase";
-const QString CGitCommands::sCommandPush                = "git push %1 %2";
-const QString CGitCommands::sCommandPushForce           = "git push --force-with-lease %1 %2";
+const QString CGitCommands::sCommandPush                = "git push -u %1 %2";
+const QString CGitCommands::sCommandPushForce           = "git push --force-with-lease -u %1 %2";
 const QString CGitCommands::sCommandRebaseOnBranch      = "git rebase \"%1\"";
 const QString CGitCommands::sCommandRebaseOnCommit      = "git rebase --interactive %1~1";
 const QString CGitCommands::sCommandRefLog              = "git reflog show --pretty=format:\"%h &&& %gD &&& %gs\" --skip=%1 --max-count=%2";
@@ -1024,26 +1024,48 @@ void CGitCommands::handleBranchAheadBehindOutput(const CProcessResult& tResult)
 
     for (QString sLine : lLines)
     {
-        sLine = sLine.trimmed();
-
         if (sLine.isEmpty())
             continue;
 
-        // Tracking states read "[ahead 1]", "[behind 2]", "[ahead 1, behind 2]",
-        // "[gone]" or empty when in sync or without upstream
-        QString sBranch = sLine;
+        // Lines read "branch<TAB>upstream<TAB>[track]", tabs separate fields
+        // because branch names may hold spaces. Upstream stays empty when the
+        // branch tracks nothing. Track reads "[ahead 1]", "[behind 2]",
+        // "[ahead 1, behind 2]", "[gone]" or stays empty when in sync.
+        QString sBranch;
+        QString sUpstream;
         QString sTrack;
+        QStringList lFields = sLine.split('\t');
 
-        if (sLine.endsWith(']'))
+        if (lFields.count() >= 3)
         {
-            int iTrack = sLine.lastIndexOf(" [");
+            sBranch = lFields[0].trimmed();
+            sUpstream = lFields[1].trimmed();
+            sTrack = lFields[2].trimmed();
+        }
+        else
+        {
+            sLine = sLine.trimmed();
 
-            if (iTrack > 0)
+            if (sLine.isEmpty())
+                continue;
+
+            sBranch = sLine;
+            sTrack.clear();
+
+            if (sLine.endsWith(']'))
             {
-                sBranch = sLine.left(iTrack);
-                sTrack = sLine.mid(iTrack + 1);
+                int iTrack = sLine.lastIndexOf(" [");
+
+                if (iTrack > 0)
+                {
+                    sBranch = sLine.left(iTrack);
+                    sTrack = sLine.mid(iTrack + 1);
+                }
             }
         }
+
+        if (sBranch.isEmpty())
+            continue;
 
         int iAhead = 0;
         int iBehind = 0;
@@ -1065,6 +1087,7 @@ void CGitCommands::handleBranchAheadBehindOutput(const CProcessResult& tResult)
 
         emit newOutputKeyValue(CEnums::eBranchCommitCountAhead, sBranch, QString::number(iAhead));
         emit newOutputKeyValue(CEnums::eBranchCommitCountBehind, sBranch, QString::number(iBehind));
+        emit newOutputKeyValue(CEnums::eBranchUpstream, sBranch, sUpstream);
     }
 }
 

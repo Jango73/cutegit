@@ -151,7 +151,7 @@ MenuBar {
             id: push
             text: Const.pushMenuText
             shortcut: "Ctrl+P"
-            enabled: root.repository ? root.repository.can(CEnums.Push) && root.repository.hasPushableCommits : false
+            enabled: root.repository ? root.repository.can(CEnums.Push) && (root.repository.hasPushableCommits || !root.repository.hasUpstreamBranch) : false
             onTriggered: root.requestPush()
         }
 

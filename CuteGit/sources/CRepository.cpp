@@ -96,6 +96,7 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_bHasCommitableFiles(false)
     , m_bHasPushableCommits(false)
     , m_bHasPullableCommits(false)
+    , m_bHasUpstreamBranch(true)
     , m_bHasStashableFiles(false)
     , m_bHasStaleSubmodules(false)
     , m_sPollFingerprint("")
@@ -486,6 +487,7 @@ void CRepository::unload()
     setHasCommitableFiles(false);
     setHasPushableCommits(false);
     setHasPullableCommits(false);
+    setHasUpstreamBranch(true);
     setHasStashableFiles(false);
     setHasStaleSubmodules(false);
     m_pCommandOutputModel->setStringList(QStringList());

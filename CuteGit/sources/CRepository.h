@@ -126,6 +126,7 @@ public:
     Q_FAST_PROPERTY(bool, b, hasCommitableFiles, HasCommitableFiles)
     Q_FAST_PROPERTY(bool, b, hasPushableCommits, HasPushableCommits)
     Q_FAST_PROPERTY(bool, b, hasPullableCommits, HasPullableCommits)
+    Q_FAST_PROPERTY(bool, b, hasUpstreamBranch, HasUpstreamBranch)
     Q_FAST_PROPERTY(bool, b, hasStashableFiles, HasStashableFiles)
     Q_FAST_PROPERTY(bool, b, hasStaleSubmodules, HasStaleSubmodules)
 

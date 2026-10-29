@@ -145,6 +145,7 @@ public:
         eBranchHeadCommit,
         eBranchCommitCountAhead,
         eBranchCommitCountBehind,
+        eBranchUpstream,
         eTags,
         eTagCommit,
         eCurrentBranch,

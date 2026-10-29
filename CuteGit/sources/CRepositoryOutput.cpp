@@ -330,6 +330,14 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
     {
         m_sCurrentBranch = sOutput;
         emit currentBranchChanged();
+
+        // A new branch owns no counts yet: drop the previous ones so a
+        // detached head or a branch without report never reuses stale values
+        setCommitCountAhead(0);
+        setCommitCountBehind(0);
+        setHasPushableCommits(false);
+        setHasPullableCommits(false);
+        setHasUpstreamBranch(true);
         break;
     }
 
@@ -412,6 +420,15 @@ void CRepository::onNewOutputKeyValue(CEnums::EProcessCommand eCommand, QString 
         {
             setCommitCountBehind(sValue.toInt());
             setHasPullableCommits(m_iCommitCountBehind > 0);
+        }
+        break;
+    }
+
+    case CEnums::eBranchUpstream:
+    {
+        if (sKey == m_sCurrentBranch)
+        {
+            setHasUpstreamBranch(not sValue.isEmpty());
         }
         break;
     }

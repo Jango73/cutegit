@@ -243,7 +243,7 @@ ApplicationWindow {
                                      : false
 
             property bool mayPush: root.ctrl.currentRepository
-                                   ? root.ctrl.currentRepository.can(CEnums.Push) && root.ctrl.currentRepository.hasPushableCommits
+                                   ? root.ctrl.currentRepository.can(CEnums.Push) && (root.ctrl.currentRepository.hasPushableCommits || !root.ctrl.currentRepository.hasUpstreamBranch)
                                    : false
 
             property bool mayUpdateSubmodules: root.ctrl.currentRepository
