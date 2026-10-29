@@ -2,7 +2,7 @@
 
 [![Build](https://github.com/Jango73/cutegit/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/Jango73/cutegit/actions/workflows/build.yml)
 
-![alt text](https://github.com/Jango73/cutegit/blob/main/Media/Screenshot01.jpg)
+![alt text](https://github.com/Jango73/cutegit/blob/main/Media/cutegit.jpg)
 
 This is a simple multi-document UI for versioning system executables (Git, Gerrit, Mercurial, Subversion).
 It is not meant to compete with paywares, just provide minimal versioning functionality.
