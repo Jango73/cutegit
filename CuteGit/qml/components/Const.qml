@@ -28,27 +28,22 @@ Item {
     readonly property color hunkHeaderColor: "#80404040"
 
     readonly property var graphLaneColors: [
-        "#e67e22",
-        "#3498db",
-        "#2ecc71",
-        "#9b59b6",
-        "#e73c3c",
-        "#1abc9c",
-        "#f1c40f",
-        "#fd79a8"
+        Material.color(Material.DeepOrange),
+        Material.color(Material.Teal),
+        Material.color(Material.Indigo),
+        Material.color(Material.Yellow),
+        Material.color(Material.Lime),
+        Material.color(Material.Red),
+        Material.color(Material.Blue),
+        Material.color(Material.Purple)
     ]
+
     readonly property color labelLocalColor: "aquamarine"
     readonly property color labelRemoteColor: "lightsalmon"
     readonly property color labelTagColor: "deepskyblue"
-    readonly property color labelUpToDateColor: graphLaneColors[2]
-    readonly property color labelUnsyncedColor: graphLaneColors[0]
-    readonly property color labelDivergedColor: graphLaneColors[4]
-    readonly property int graphLaneWidth: 12
-    readonly property int graphLaneMaximumCount: 8
-    readonly property int graphCornerRadius: 6
-    readonly property int graphLineWidth: 2
-    readonly property int graphDotRadius: 4
-    readonly property real graphDotFraction: 0.25
+    readonly property color labelUpToDateColor: Material.color(Material.Green)
+    readonly property color labelUnsyncedColor: Material.color(Material.Orange)
+    readonly property color labelDivergedColor: Material.color(Material.Red)
 
     // Margins and padding
     readonly property int mainPadding: mainFontSize * 0.6666
@@ -81,6 +76,13 @@ Item {
     readonly property real repositoryStatusHeight: elementHeight * statusLineHeightFactor * statusLineCount
     readonly property int branchSeparatorHeight: 2
     readonly property real branchListHeightFraction: 0.5
+
+    readonly property int graphLaneWidth: 12
+    readonly property int graphLaneMaximumCount: 8
+    readonly property int graphCornerRadius: 6
+    readonly property int graphLineWidth: 2
+    readonly property int graphDotRadius: 4
+    readonly property real graphDotFraction: 0.25
 
     // Durations
     readonly property int componentFadingDuration: 200

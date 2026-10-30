@@ -20,7 +20,7 @@ ApplicationWindow {
     property var currentRepositoryView: null
 
     Material.primary: Material.Teal
-    Material.accent: Material.Green
+    Material.accent: Material.Teal
 
     Component.onCompleted: {
         currentRepositoryView = Qt.binding(function() {
