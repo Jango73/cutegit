@@ -555,12 +555,14 @@ Sind Sie sicher?</translation>
         </message>
         <message>
             <source>CuteGit - version %1
-Copyright (c) 2019 Jango73
-Some icons are copyright Freepik from www.flaticon.com
 </source>
             <translation>CuteGit - Version %1
-Copyright (c) 2019 Jango73
-Einige Icons sind Copyright Freepik von www.flaticon.com
+</translation>
+        </message>
+        <message>
+            <source>Some icons are copyright Freepik from www.flaticon.com
+</source>
+            <translation>Einige Icons sind Copyright Freepik von www.flaticon.com
 </translation>
         </message>
         <message>

@@ -556,12 +556,14 @@ Are you sure you want to do this?</source>
     </message>
     <message>
         <source>CuteGit - version %1
-Copyright (c) 2019 Jango73
-Some icons are copyright Freepik from www.flaticon.com
 </source>
         <translation>CuteGit - 版本 %1
-Copyright (c) 2019 Jango73
-部分图标版权归 Freepik 所有，来自 www.flaticon.com
+</translation>
+    </message>
+    <message>
+        <source>Some icons are copyright Freepik from www.flaticon.com
+</source>
+        <translation>部分图标版权归 Freepik 所有，来自 www.flaticon.com
 </translation>
     </message>
     <message>

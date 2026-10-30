@@ -928,12 +928,14 @@ Sei sicuro di voler continuare? L'operazione non può essere annullata.</transla
     </message>
     <message>
         <source>CuteGit - version %1
-Copyright (c) 2019 Jango73
-Some icons are copyright Freepik from www.flaticon.com
 </source>
         <translation>CuteGit - versione %1
-Copyright (c) 2019 Jango73
-Alcune icone sono copyright Freepik da www.flaticon.com
+</translation>
+    </message>
+    <message>
+        <source>Some icons are copyright Freepik from www.flaticon.com
+</source>
+        <translation>Alcune icone sono copyright Freepik da www.flaticon.com
 </translation>
     </message>
     <message>

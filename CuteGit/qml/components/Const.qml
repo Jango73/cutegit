@@ -312,9 +312,14 @@ Item {
                                          "The language selection (%1) could not be set."
                                          )
 
+    //! Legal notice, identical in every language, never translated
+    readonly property string copyrightHolder: "Copyright (c) 2019-2026 Jango73\n"
+
     readonly property string copyrightText: qsTr(
-                                  "CuteGit - version %1\n" +
-                                  "Copyright (c) 2019 Jango73\n" +
+                                  "CuteGit - version %1\n"
+                                  ) +
+                                  copyrightHolder +
+                                  qsTr(
                                   "Some icons are copyright Freepik from www.flaticon.com\n"
                                   )
 

@@ -556,12 +556,14 @@ Are you sure you want to do this?</source>
     </message>
     <message>
         <source>CuteGit - version %1
-Copyright (c) 2019 Jango73
-Some icons are copyright Freepik from www.flaticon.com
 </source>
         <translation>CuteGit-バージョン%1
-Copyright（c）2019 Jango73
-一部のアイコンの著作権はwww.flaticon.comのFreepikにあります
+</translation>
+    </message>
+    <message>
+        <source>Some icons are copyright Freepik from www.flaticon.com
+</source>
+        <translation>一部のアイコンの著作権はwww.flaticon.comのFreepikにあります
 </translation>
     </message>
     <message>

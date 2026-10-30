@@ -556,12 +556,14 @@ Etes-vous sûr(e) de vouloir faire cela?</translation>
     </message>
     <message>
         <source>CuteGit - version %1
-Copyright (c) 2019 Jango73
-Some icons are copyright Freepik from www.flaticon.com
 </source>
         <translation>CuteGit - version %1
-Copyright (c) 2019 Jango73
-Certains ic$ones sont copyright Freepik de www.flaticon.com
+</translation>
+    </message>
+    <message>
+        <source>Some icons are copyright Freepik from www.flaticon.com
+</source>
+        <translation>Certains ic$ones sont copyright Freepik de www.flaticon.com
 </translation>
     </message>
     <message>

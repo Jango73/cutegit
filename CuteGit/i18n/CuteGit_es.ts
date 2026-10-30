@@ -931,14 +931,15 @@ Are you sure you want to do this? It cannot be undone.</source>
 %1</translation>
     </message>
     <message>
-        <location filename="../qml/components/Const.qml" line="217"/>
         <source>CuteGit - version %1
-Copyright (c) 2019 Jango73
-Some icons are copyright Freepik from www.flaticon.com
 </source>
         <translation>CuteGit - versión %1
-Copyright (c) 2019 Jango73
-Algunos iconos son copyright de Freepik de www.flaticon.com
+</translation>
+    </message>
+    <message>
+        <source>Some icons are copyright Freepik from www.flaticon.com
+</source>
+        <translation>Algunos iconos son copyright de Freepik de www.flaticon.com
 </translation>
     </message>
     <message>
