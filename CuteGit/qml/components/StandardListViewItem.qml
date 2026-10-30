@@ -63,7 +63,7 @@ Item {
             onClicked: function(mouse) {
                 if (root.listView) {
                     var previousIndex = root.listView.currentIndex
-                    root.listView.changeCurrentIndex(index)
+                    root.listView.changeCurrentIndex(index, (mouse.modifiers & Qt.ShiftModifier) !== 0)
                     root.listView.forceActiveFocus()
                     root.clicked(mouse, previousIndex)
                 }
@@ -72,7 +72,7 @@ Item {
             onDoubleClicked: function(mouse) {
                 if (root.listView) {
                     var previousIndex = root.listView.currentIndex
-                    root.listView.changeCurrentIndex(index)
+                    root.listView.changeCurrentIndex(index, (mouse.modifiers & Qt.ShiftModifier) !== 0)
                     root.listView.forceActiveFocus()
                     root.doubleClicked(mouse, previousIndex)
                 }

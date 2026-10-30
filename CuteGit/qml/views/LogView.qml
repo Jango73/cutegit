@@ -82,18 +82,22 @@ StandardListView {
             }
         ]
 
-        onClicked: function(mouse) {
+        onClicked: function(mouse, previousIndex) {
             if (mouse.button === Qt.RightButton) {
                 root.itemRightClicked(model.commitId, model.fullMessage)
             } else if (mouse.button === Qt.LeftButton) {
-                root.itemClicked(model.commitId)
+                // Selection change already emitted itemClicked via handleItemChange:
+                // only re-emit when clicking the already current (mono-line) item.
+                if (index === previousIndex && !(mouse.modifiers & Qt.ShiftModifier)) {
+                    root.itemClicked(model.commitId)
+                }
             }
         }
 
         onDoubleClicked: root.requestCommitDiffPrevious(root.currentCommitId)
     }
 
-    onCountChanged: handleItemChange()
+    onCountChanged: updateCurrentCommitId()
     onCurrentIndexChanged: handleItemChange()
 
     onSpacePressed: root.requestCommitDiffPrevious(root.currentCommitId)
@@ -106,10 +110,19 @@ StandardListView {
         }
     }
 
-    function handleItemChange() {
+    function updateCurrentCommitId() {
         if (root.currentItem)
             root.currentCommitId = root.currentItem.commitId
         else
             root.currentCommitId = ""
+    }
+
+    function handleItemChange() {
+        updateCurrentCommitId()
+
+        // Keyboard selection change acts like a click on the item,
+        // but only for a mono-line selection (no Shift range anchor).
+        if (root.previousIndex === -1 && root.currentCommitId !== "")
+            root.itemClicked(root.currentCommitId)
     }
 }
