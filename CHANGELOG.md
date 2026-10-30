@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-10-30
+
+### Added
+- Working-tree ghost line with staged plus unstaged diff, unified Git/Hg parser.
+- Stash shown as a single graph row, hiding index and untracked commits.
+- Push on branches without upstream, creating it on push.
+- Loaded repositories limited with LRU unload plus settings dialog.
+- Embedded translations with hot language apply and language selection fix.
+- Complete French, Japanese, German, Chinese, Spanish and Italian translations, hardcoded QML strings made translatable.
+- Shortcuts shown in menus with wider menu boxes.
+- Material palette for theme and graph lane colors.
+- Keyboard selection in graph acting as click in single-line mode.
+
+### Changed
+- Branch log tab removed with its filter reported to the graph view.
+- Log tab renamed to File log, Output view renamed to Commands, FileLog scoped to Files.
+- Theme, language and layout moved into settings, Options menu reordered.
+- Menu mnemonic drawn with styled text instead of fixed offset.
+- Screenshot image renamed to cutegit.jpg.
+- qt-plus submodule bumped to hardened CFastList.
+
+### Fixed
+- Clone failures, tilde expansion and progress bar in generic dialog.
+- View reset skipped when refreshed content is identical.
+- Change-message leading space, untracked files no longer blocking rebase actions.
+- Switching back to English unloading translator, help popup content updating on hot language switch.
+- Settings TypeError and tab preference hijack, QML warnings.
+- Unload use-after-free.
+
 ## [2.0.0] - 2026-10-25
 
 ### Added
