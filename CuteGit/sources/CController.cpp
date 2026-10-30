@@ -269,6 +269,21 @@ void CController::setLanguage(QString sLang)
 
 //-------------------------------------------------------------------------------------------------
 
+int CController::languageIndexForCode(const QString& sCode) const
+{
+    if (m_pLangModel == nullptr)
+        return -1;
+    const QStringList& lLanguages = m_pLangModel->stringList();
+    for (int iIndex = 0; iIndex < lLanguages.count(); iIndex++)
+    {
+        if (lLanguages[iIndex].section(' ', 0, 0) == sCode)
+            return iIndex;
+    }
+    return 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CController::setCurrentRepositoryIndex(int iValue)
 {
     if (m_iCurrentRepositoryIndex != iValue)

@@ -337,8 +337,8 @@
         <translation>キャンセル</translation>
     </message>
     <message>
-        <source>Output</source>
-        <translation>出力</translation>
+        <source>Commands</source>
+        <translation>コマンド</translation>
     </message>
     <message>
         <source>Browse</source>

@@ -52,7 +52,7 @@
         <file>qml/pages/FilePane.qml</file>
         <file>qml/pages/LogMenu.qml</file>
         <file>qml/pages/MainMenu.qml</file>
-        <file>qml/pages/OutputPane.qml</file>
+        <file>qml/pages/CommandsPane.qml</file>
         <file>qml/pages/RepoPane.qml</file>
         <file>qml/pages/ToolPane.qml</file>
 
@@ -66,7 +66,7 @@
         <file>qml/tabs/FileLogTab.qml</file>
         <file>qml/tabs/FilesTab.qml</file>
         <file>qml/tabs/GraphTab.qml</file>
-        <file>qml/tabs/OutputTab.qml</file>
+        <file>qml/tabs/CommandsTab.qml</file>
         <file>qml/tabs/RefLogTab.qml</file>
         <file>qml/tabs/TagsTab.qml</file>
 

@@ -19,8 +19,10 @@ ExtendablePane {
 
     property var visibleTabs: []
     property string currentTabId: root.computeCurrentTabId()
+    //! Last explicitly activated tab, empty until the user or the view activates one.
+    //! Automatic fallbacks follow the layout order without pinning, so a transient
+    //! visible set can never hijack the preference.
     property string preferredTabId: ""
-    property bool adjustingIndex: false
 
     content: [
         TabBar {
@@ -28,14 +30,13 @@ ExtendablePane {
             anchors.top: parent.top
             visible: root.visibleTabs.length > 1
 
-            onCurrentIndexChanged: root.handleUserIndexChange()
-
             Repeater {
                 model: root.visibleTabs
 
                 StandardTabButton {
                     width: implicitWidth
                     text: root.tabTitle(modelData[Const.panelTabIdKey])
+                    onClicked: root.preferTab(modelData[Const.panelTabIdKey])
                 }
             }
         },
@@ -124,6 +125,7 @@ ExtendablePane {
     }
     onVisibleTabsChanged: {
         root.restorePreferredTab()
+        Qt.callLater(root.restorePreferredTab)
     }
     onCurrentTabIdChanged: {
         root.loadCurrentTabData()
@@ -210,9 +212,7 @@ ExtendablePane {
     function setCurrentIndex(index) {
         if (tabBar.currentIndex === index)
             return
-        root.adjustingIndex = true
         tabBar.currentIndex = index
-        root.adjustingIndex = false
     }
 
     function clampCurrentIndex() {
@@ -221,8 +221,6 @@ ExtendablePane {
         if (tabBar.currentIndex === undefined || tabBar.currentIndex === null
                 || tabBar.currentIndex < 0 || tabBar.currentIndex >= root.visibleTabs.length)
             root.setCurrentIndex(0)
-        if (root.preferredTabId === "")
-            root.preferredTabId = root.computeCurrentTabId()
     }
 
     function restorePreferredTab() {
@@ -236,15 +234,19 @@ ExtendablePane {
             }
         }
         root.clampCurrentIndex()
-        root.preferredTabId = root.computeCurrentTabId()
     }
 
-    function handleUserIndexChange() {
-        if (root.adjustingIndex)
+    //! Pins the explicitly chosen tab and shows it. User clicks and view API
+    //! activations are the only preference sources. Raw index changes are
+    //! ignored on purpose: the container walks transient indexes while its
+    //! delegates are recreated, which must never override the choice.
+    function preferTab(tabId) {
+        if (tabId === undefined || tabId === null || tabId === "")
             return
-        var tabId = root.computeCurrentTabId()
-        if (tabId !== "")
-            root.preferredTabId = tabId
+        root.preferredTabId = tabId
+        var preferredIndex = root.tabIndexOf(tabId)
+        if (preferredIndex !== -1)
+            root.setCurrentIndex(preferredIndex)
     }
 
     function reportActiveTab() {
@@ -331,8 +333,7 @@ ExtendablePane {
         var index = root.tabIndexOf(tabId)
         if (index === -1)
             return false
-        root.preferredTabId = tabId
-        root.setCurrentIndex(index)
+        root.preferTab(tabId)
         var loader = swipeView.itemAt(index)
         if (loader !== null && loader.item !== null && loader.item !== undefined) {
             if ("focusTab" in loader.item)
@@ -345,8 +346,7 @@ ExtendablePane {
         var index = root.tabIndexOf(tabId)
         if (index === -1)
             return false
-        root.preferredTabId = tabId
-        root.setCurrentIndex(index)
+        root.preferTab(tabId)
         return true
     }
 

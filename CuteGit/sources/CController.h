@@ -171,6 +171,9 @@ public:
     //! Reloads descriptive layouts from layouts.json next to the binary
     Q_INVOKABLE void reloadLayouts();
 
+    //! Returns the row of the given language code in the language model, 0 when unknown, -1 without model
+    Q_INVOKABLE int languageIndexForCode(const QString& sCode) const;
+
     //!
     Q_INVOKABLE void removeRepository(int iRepositoryIndex);
 

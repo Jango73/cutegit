@@ -232,7 +232,7 @@ Item {
     readonly property string filterText: qsTr("Filter")
     readonly property string revertText: qsTr("Revert")
     readonly property string cancelText: qsTr("Cancel")
-    readonly property string outputText: qsTr("Output")
+    readonly property string commandsText: qsTr("Commands")
     readonly property string browseText: qsTr("Browse")
     readonly property string deleteText: qsTr("Delete")
     readonly property string commitText: qsTr("Commit")
@@ -384,10 +384,10 @@ Item {
     readonly property string commitDiffTabId: "CommitDiff"
     readonly property string fileLogTabId: "FileLog"
     readonly property string blameTabId: "Blame"
-    readonly property string outputTabId: "Output"
+    readonly property string commandsTabId: "Commands"
     readonly property var knownTabIds: [
         filesTabId, branchesTabId, tagsTabId, graphTabId, refLogTabId,
-        commitDetailsTabId, diffTabId, commitDiffTabId, fileLogTabId, blameTabId, outputTabId
+        commitDetailsTabId, diffTabId, commitDiffTabId, fileLogTabId, blameTabId, commandsTabId
     ]
     readonly property var tabSources: ({
         "Files": "../tabs/FilesTab.qml",
@@ -400,7 +400,7 @@ Item {
         "CommitDiff": "../tabs/CommitDiffTab.qml",
         "FileLog": "../tabs/FileLogTab.qml",
         "Blame": "../tabs/BlameTab.qml",
-        "Output": "../tabs/OutputTab.qml"
+        "Commands": "../tabs/CommandsTab.qml"
     })
     readonly property var tabTitles: ({
         "Files": filesText,
@@ -413,7 +413,7 @@ Item {
         "CommitDiff": commitDiffText,
         "FileLog": fileLogText,
         "Blame": blameText,
-        "Output": outputText
+        "Commands": commandsText
     })
 
     //

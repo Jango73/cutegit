@@ -9,7 +9,7 @@ ExtendablePane {
 
     property variant repository: null
 
-    title: Const.outputText
+    title: Const.commandsText
 
     content: Item {
         anchors.fill: parent

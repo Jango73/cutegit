@@ -685,8 +685,8 @@
         <translation>Annulla</translation>
     </message>
     <message>
-        <source>Output</source>
-        <translation>Output</translation>
+        <source>Commands</source>
+        <translation>Comandi</translation>
     </message>
     <message>
         <source>Browse</source>

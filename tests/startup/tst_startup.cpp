@@ -8,6 +8,7 @@
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlError>
+#include <QQuickItem>
 #include <QQuickStyle>
 #include <QStandardPaths>
 
@@ -130,6 +131,103 @@ private slots:
                                  s_iAsyncTimeoutMs);
         QVERIFY2(pPane->findChild<QObject*>("stagedDiffView") != nullptr,
                  "The staged diff view inside the file diff pane was never instantiated");
+        QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
+    }
+
+    void settingsPopup_resolvesLanguageIndex()
+    {
+        CController tController("");
+        QQmlApplicationEngine tEngine;
+        QStringList lWarnings;
+
+        prepareEngine(tController, tEngine, lWarnings);
+
+        // A visual parent: a standalone popup has no parent, while
+        // SettingsPopup.width binds to parent.width like in App.qml
+        QQmlComponent tHost(&tEngine);
+        tHost.setData("import QtQuick 2.12\nItem { width: 1024; height: 768 }",
+                      QUrl(QStringLiteral("qrc:/host.qml")));
+        QVERIFY2(tHost.isReady(), "Host item is not ready");
+        QScopedPointer<QObject> pHost(tHost.create());
+        QVERIFY2(not pHost.isNull(), "Host item produced no object");
+
+        QQmlComponent tPopup(&tEngine, QUrl(QStringLiteral("qrc:/qml/popups/SettingsPopup.qml")));
+        QVERIFY2(tPopup.isReady(), "SettingsPopup.qml is not ready");
+
+        QVariantMap mInitialProperties;
+        mInitialProperties.insert("parent", QVariant::fromValue(qobject_cast<QQuickItem*>(pHost.data())));
+        mInitialProperties.insert("controller", QVariant::fromValue(&tController));
+        QScopedPointer<QObject> pPopup(tPopup.createWithInitialProperties(mInitialProperties));
+        QVERIFY2(not pPopup.isNull(), "SettingsPopup.qml produced no object");
+
+        // Exercises the language lookup exactly like onOpened does: reaching
+        // into QStringListModel.stringList from QML threw a TypeError there
+        QVariant vIndex;
+        QVERIFY2(QMetaObject::invokeMethod(pPopup.data(), "languageIndexForCode",
+                 Q_RETURN_ARG(QVariant, vIndex), Q_ARG(QVariant, QString("fr"))),
+                 "languageIndexForCode could not be invoked");
+        QCOMPARE(vIndex.toInt(), 1);
+
+        QVERIFY2(QMetaObject::invokeMethod(pPopup.data(), "languageIndexForCode",
+                 Q_RETURN_ARG(QVariant, vIndex), Q_ARG(QVariant, QString("xx"))),
+                 "languageIndexForCode could not be invoked");
+        QCOMPARE(vIndex.toInt(), 0);
+
+        QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
+    }
+
+    void dockPanel_activatesFirstVisibleTab()
+    {
+        // The Right panel of the Horizontal layout holds conditional tabs
+        // (CommitDiff, FileDiff, ...) followed by the always visible Blame:
+        // at startup the conditions are unsettled so Blame shows first, then
+        // the panel must follow the layout order once Graph becomes active
+        QVariantMap mPanel = rightPanelMap();
+        QVERIFY2(not mPanel.isEmpty(), "Horizontal layout has no panel holding CommitDiff");
+
+        CController tController("");
+        QQmlApplicationEngine tEngine;
+        QStringList lWarnings;
+
+        prepareEngine(tController, tEngine, lWarnings);
+
+        QQmlComponent tHost(&tEngine);
+        tHost.setData("import QtQuick 2.12\nItem { width: 1024; height: 768 }",
+                      QUrl(QStringLiteral("qrc:/host.qml")));
+        QVERIFY2(tHost.isReady(), "Host item is not ready");
+        QScopedPointer<QObject> pHost(tHost.create());
+        QVERIFY2(not pHost.isNull(), "Host item produced no object");
+
+        QQmlComponent tStub(&tEngine);
+        tStub.setData("import QtQuick 2.12\nItem { property var activeTabIds: []\n function refreshActiveTabs() {} }",
+                      QUrl(QStringLiteral("qrc:/viewroot.qml")));
+        QVERIFY2(tStub.isReady(), "View root stub is not ready");
+        QScopedPointer<QObject> pStub(tStub.create());
+        QVERIFY2(not pStub.isNull(), "View root stub produced no object");
+
+        QQmlComponent tPanel(&tEngine, QUrl(QStringLiteral("qrc:/qml/components/DockPanel.qml")));
+        QVERIFY2(tPanel.isReady(), "DockPanel.qml is not ready");
+
+        QVariantMap mInitialProperties;
+        mInitialProperties.insert("parent", QVariant::fromValue(qobject_cast<QQuickItem*>(pHost.data())));
+        mInitialProperties.insert("panelDefinition", mPanel);
+        mInitialProperties.insert("viewRoot", QVariant::fromValue(pStub.data()));
+        QScopedPointer<QObject> pPanel(tPanel.createWithInitialProperties(mInitialProperties));
+        QVERIFY2(not pPanel.isNull(), "DockPanel.qml produced no object");
+
+        // Startup transient: no condition met, Blame leads the visible tabs
+        QTRY_COMPARE_WITH_TIMEOUT(panelTabId(pPanel.data()), QString("Blame"), s_iAsyncTimeoutMs);
+
+        // Graph becomes active: the first layout tab wins, not the transient one
+        pStub->setProperty("activeTabIds", QVariant::fromValue(QStringList() << "Graph"));
+        QTRY_COMPARE_WITH_TIMEOUT(panelTabId(pPanel.data()), QString("CommitDiff"), s_iAsyncTimeoutMs);
+
+        // An explicit activation survives condition changes
+        QVERIFY2(invokeActivate(pPanel.data(), "Blame"), "Blame could not be activated");
+        QTRY_COMPARE_WITH_TIMEOUT(panelTabId(pPanel.data()), QString("Blame"), s_iAsyncTimeoutMs);
+        pStub->setProperty("activeTabIds", QVariant::fromValue(QStringList() << "Files"));
+        QTRY_COMPARE_WITH_TIMEOUT(panelTabId(pPanel.data()), QString("Blame"), s_iAsyncTimeoutMs);
+
         QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
     }
 
@@ -289,6 +387,40 @@ private:
         }
 
         return false;
+    }
+
+    QString panelTabId(QObject* pPanel)
+    {
+        return pPanel->property("currentTabId").toString();
+    }
+
+    bool invokeActivate(QObject* pPanel, const QString& sTabId)
+    {
+        QVariant vResult;
+        if (not QMetaObject::invokeMethod(pPanel, "activateTab",
+            Q_RETURN_ARG(QVariant, vResult), Q_ARG(QVariant, sTabId)))
+            return false;
+        return vResult.toBool();
+    }
+
+    QVariantMap rightPanelMap()
+    {
+        for (const SLayoutDefinition& tLayout : CLayout::defaultLayouts())
+        {
+            if (tLayout.sName != QString("Horizontal"))
+                continue;
+            QVariantList lPanels = CLayout::toVariantPanels(tLayout);
+            for (const QVariant& vPanel : lPanels)
+            {
+                QVariantMap mPanel = vPanel.toMap();
+                for (const QVariant& vTab : mPanel.value(CLayout::sKeyTabs).toList())
+                {
+                    if (vTab.toMap().value(CLayout::sKeyTabIdentifier).toString() == QString("CommitDiff"))
+                        return mPanel;
+                }
+            }
+        }
+        return QVariantMap();
     }
 };
 

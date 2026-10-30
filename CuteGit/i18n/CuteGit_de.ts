@@ -336,8 +336,8 @@
             <translation>Abbrechen</translation>
         </message>
         <message>
-            <source>Output</source>
-            <translation>Ausgabe</translation>
+            <source>Commands</source>
+            <translation>Befehle</translation>
         </message>
         <message>
             <source>Browse</source>

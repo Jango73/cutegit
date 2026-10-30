@@ -337,8 +337,8 @@
         <translation>取消</translation>
     </message>
     <message>
-        <source>Output</source>
-        <translation>输出</translation>
+        <source>Commands</source>
+        <translation>命令</translation>
     </message>
     <message>
         <source>Browse</source>

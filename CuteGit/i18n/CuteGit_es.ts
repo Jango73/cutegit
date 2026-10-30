@@ -707,8 +707,8 @@
     </message>
     <message>
         <location filename="../qml/components/Const.qml" line="154"/>
-        <source>Output</source>
-        <translation>Salida</translation>
+        <source>Commands</source>
+        <translation>Comandos</translation>
     </message>
     <message>
         <location filename="../qml/components/Const.qml" line="155"/>

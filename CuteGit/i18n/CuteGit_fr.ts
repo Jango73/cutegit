@@ -337,8 +337,8 @@
         <translation>Annuler</translation>
     </message>
     <message>
-        <source>Output</source>
-        <translation>Sortie</translation>
+        <source>Commands</source>
+        <translation>Commandes</translation>
     </message>
     <message>
         <source>Browse</source>

@@ -141,14 +141,9 @@ StandardPopup {
     }
 
     function languageIndexForCode(sCode) {
-        if (root.controller === null || root.controller.langModel === null)
+        if (root.controller === null)
             return -1
-        var lLanguages = root.controller.langModel.stringList
-        for (var iIndex = 0; iIndex < lLanguages.length; iIndex++) {
-            if (lLanguages[iIndex].split(" ")[0] === sCode)
-                return iIndex
-        }
-        return 0
+        return root.controller.languageIndexForCode(sCode)
     }
 
     function layoutDisplayName(sLayoutName) {

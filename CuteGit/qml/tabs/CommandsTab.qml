@@ -4,8 +4,8 @@ import "../pages"
 BaseTab {
     id: root
 
-    OutputPane {
-        id: outputPane
+    CommandsPane {
+        id: commandsPane
         anchors.fill: parent
         showTitle: false
         extensionParent: root
@@ -13,6 +13,6 @@ BaseTab {
     }
 
     function focusTab() {
-        outputPane.forceActiveFocus()
+        commandsPane.forceActiveFocus()
     }
 }
