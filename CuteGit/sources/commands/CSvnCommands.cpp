@@ -38,6 +38,7 @@ const QString CSvnCommands::sCommandCopyBranch         = "svn copy -r %1 \"^/tru
 const QString CSvnCommands::sCommandCopyTag            = "svn copy -r %1 \"^/trunk\" \"^/tags/%2\" -m \"%3\"";
 const QString CSvnCommands::sCommandDelete             = "svn delete \"%1\"";
 const QString CSvnCommands::sCommandDiffFile           = "svn diff \"%1\"";
+const QString CSvnCommands::sCommandDiffWorkingTree      = "svn diff";
 const QString CSvnCommands::sCommandDiffRevision       = "svn diff -c %1";
 const QString CSvnCommands::sCommandDiffTwoRevisions   = "svn diff -r %1:%2";
 const QString CSvnCommands::sCommandFileLog            = "svn log --limit %1 --xml \"%2\"";
@@ -478,6 +479,17 @@ void CSvnCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommi
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    \fn CSvnCommands::workingTreeDiff
+    Shows uncommitted working tree changes of the whole tree.
+*/
+void CSvnCommands::workingTreeDiff(const QString& sPath)
+{
+    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommandDiffWorkingTree));
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CSvnCommands::setCurrentBranch(const QString& sPath, const QString& sBranch)
 {
     QString sCommand = (sBranch == sTrunkName)
@@ -909,6 +921,7 @@ void CSvnCommands::onExecFinished(const CProcessResult& tResult)
 
     case CEnums::eUnstagedFileDiff:
     case CEnums::eTwoCommitDiff:
+    case CEnums::eWorkingTreeDiff:
     {
         handleDiffOutput(tResult);
         break;

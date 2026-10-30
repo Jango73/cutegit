@@ -136,6 +136,13 @@
     </message>
 </context>
 <context>
+    <name>CGraphModel</name>
+    <message>
+        <source>No changes</source>
+        <translation>Sin cambios</translation>
+    </message>
+</context>
+<context>
     <name>CHgCommands</name>
     <message>
         <location filename="../sources/CHgCommands.cpp" line="197"/>
@@ -180,6 +187,18 @@
     <message>
         <source>Unable to create patch file</source>
         <translation>No se puede crear el archivo de parche</translation>
+    </message>
+    <message>
+        <source>No changes</source>
+        <translation>Sin cambios</translation>
+    </message>
+    <message>
+        <source>Working tree changes</source>
+        <translation>Cambios en el árbol de trabajo</translation>
+    </message>
+    <message>
+        <source>Changes: +%1 / -%2</source>
+        <translation>Cambios: +%1 / -%2</translation>
     </message>
 </context>
 <context>

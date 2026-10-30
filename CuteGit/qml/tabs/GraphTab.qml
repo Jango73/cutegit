@@ -13,7 +13,7 @@ CommitLogTabBase {
         text: Const.filterText
         tipText: Const.tipLineFilter
 
-        onFilterTextChanged: {
+        onFilterTextChanged: function(text) {
             if (root.repository !== null)
                 root.repository.setGraphFilter(text)
         }
@@ -38,11 +38,11 @@ CommitLogTabBase {
         diffFromCommitId: root.diffFromCommitId
         diffToCommitId: root.diffToCommitId
 
-        onItemClicked: root.showCommitDiffPrevious(commitId)
-        onItemRightClicked: root.showCommitMenu(commitId, message)
-        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
+        onItemClicked: function(commitId) { root.showCommitDiffPrevious(commitId) }
+        onItemRightClicked: function(commitId, message) { root.showCommitMenu(commitId, message) }
+        onRequestCommitDiffPrevious: function(commitId) { root.requestCommitDiffPrevious(commitId) }
+        onRequestCommitDiffFrom: function(commitId) { root.requestCommitDiffFrom(commitId) }
+        onRequestCommitDiffTo: function(commitId) { root.requestCommitDiffTo(commitId) }
     }
 
     function focusTab() {

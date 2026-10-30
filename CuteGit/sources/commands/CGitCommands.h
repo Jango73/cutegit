@@ -163,6 +163,9 @@ public:
     virtual void twoCommitDiff(const QString& sPath, const QString& sFromCommitId, const QString& sToCommitId) override;
 
     //!
+    virtual void workingTreeDiff(const QString& sPath) override;
+
+    //!
     virtual void setCurrentBranch(const QString& sPath, const QString& sBranch) override;
 
     //!
@@ -338,6 +341,9 @@ protected:
     static const QString sCommandSubmoduleStatus;
     static const QString sCommandIsTracked;
     static const QString sCommandStagedDiff;
+    static const QString sCommandWorkingTreeDiff;
+    static const QString sCommandWorkingTreeDiffEmpty;
+    static const QString sCommandVerifyHead;
     static const QString sCommandApplyPatchCached;
     static const QString sCommandApplyPatchCachedReverse;
     static const QString sCommandApplyPatch;

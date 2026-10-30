@@ -42,7 +42,7 @@ StandardListView {
         graphVerticals: model.graphVerticals !== undefined ? model.graphVerticals : []
         graphConnections: model.graphConnections !== undefined ? model.graphConnections : []
         primaryText: fullText
-        secondaryText: model.commitId === "" ? "" : model.author + " - " + (isValidDate(model.date) ? model.date : "")
+        secondaryText: (model.commitId === "" || model.isWorkingTree === true) ? "" : model.author + " - " + (isValidDate(model.date) ? model.date : "")
         selectionShown: index === root.currentIndex
         focusShown: root.activeFocus && index === root.currentIndex
 

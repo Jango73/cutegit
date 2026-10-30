@@ -86,7 +86,7 @@ ListView {
     }
 
     onCurrentIndexChanged: {
-        if (selection && currentIndex !== -1) {
+        if (hasSelectionModel() && currentIndex !== -1) {
             var freshCurrentIndex = modelIndexForRow(currentIndex)
 
             if (freshCurrentIndex !== undefined)
@@ -164,9 +164,15 @@ ListView {
         }
     }
 
+    /*! True when the selection model is bound to a model, false during startup or teardown */
+    function hasSelectionModel() {
+        return selection !== null && selection !== undefined
+                && selection.model !== null && selection.model !== undefined
+    }
+
     /*! Re-asserts the selection current for the visible current row after rows shift without currentIndexChanged */
     function resyncSelectionToCurrentIndex() {
-        if (!selection || currentIndex < 0 || currentIndex >= count)
+        if (!hasSelectionModel() || currentIndex < 0 || currentIndex >= count)
             return
 
         if (!model || typeof model.index !== "function")
@@ -259,7 +265,7 @@ ListView {
     }
 
     function selectTo(targetIndex) {
-        if (!selection)
+        if (!hasSelectionModel())
             return
 
         selection.clear()
@@ -280,7 +286,7 @@ ListView {
     }
 
     function selectOnly(targetIndex) {
-        if (!selection)
+        if (!hasSelectionModel())
             return
 
         selection.clear()
@@ -289,6 +295,9 @@ ListView {
 
     /*! Selects a single row, refreshing its model index when missing */
     function selectSingle(targetIndex, selectionFlag) {
+        if (!hasSelectionModel())
+            return
+
         var targetModelIndex = modelIndexForRow(targetIndex)
 
         if (targetModelIndex !== undefined)
@@ -299,7 +308,7 @@ ListView {
     function selectRange(from, to) {
         var selIndex
 
-        if (!selection)
+        if (!hasSelectionModel())
             return
 
         selection.clear()

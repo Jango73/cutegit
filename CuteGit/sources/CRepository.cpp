@@ -104,6 +104,8 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_bFileInventoryDone(false)
     , m_bShowIgnored(false)
     , m_bPollPending(false)
+    , m_iWorkingTreeAddedCount(0)
+    , m_iWorkingTreeRemovedCount(0)
     , m_sCommitDetailsId("")
     , m_sCommitDetailsAuthor("")
     , m_sCommitDetailsMessage("")
@@ -237,6 +239,28 @@ QString CRepository::repositoryTypeString() const
     }
 
     return "";
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn QString CRepository::workingTreeCommitId() const
+    Returns the commit identifier of the working tree line, never a real commit.
+*/
+QString CRepository::workingTreeCommitId() const
+{
+    return CGraphModel::workingTreeCommitId();
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn bool CRepository::isWorkingTreeCommit(const QString& sCommitId) const
+    Returns true when the identifier is the working tree line.
+*/
+bool CRepository::isWorkingTreeCommit(const QString& sCommitId) const
+{
+    return not sCommitId.isEmpty() && sCommitId == CGraphModel::workingTreeCommitId();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -444,6 +468,7 @@ void CRepository::unload()
     m_pFileLogModel->setFullSourceName("");
     m_pFileLogModel->setRelativeSourceName("");
     m_pFileLogModel->invalidate();
+    m_pGraphModel->setWorkingTreePresent(false);
     m_pGraphModel->clear();
     m_pGraphModel->invalidate();
     m_pRefLogModel->clear();
@@ -728,6 +753,9 @@ void CRepository::stashPop()
 
 void CRepository::commitReset(const QString& sCommitId)
 {
+    if (isWorkingTreeCommit(sCommitId))
+        return;
+
     m_pCommands->commitReset(m_sRepositoryPath, sCommitId);
 }
 
@@ -735,6 +763,9 @@ void CRepository::commitReset(const QString& sCommitId)
 
 void CRepository::commitRebase(const QString& sCommitId)
 {
+    if (isWorkingTreeCommit(sCommitId))
+        return;
+
     m_pCommands->commitRebase(m_sRepositoryPath, sCommitId);
 }
 
@@ -742,6 +773,9 @@ void CRepository::commitRebase(const QString& sCommitId)
 
 void CRepository::commitSquash(const QString& sCommitId)
 {
+    if (isWorkingTreeCommit(sCommitId))
+        return;
+
     m_pCommands->commitSquash(m_sRepositoryPath, sCommitId);
 }
 
@@ -749,6 +783,9 @@ void CRepository::commitSquash(const QString& sCommitId)
 
 void CRepository::commitBranchFrom(const QString& sCommitId, const QString& sBranchName)
 {
+    if (isWorkingTreeCommit(sCommitId))
+        return;
+
     m_pCommands->createBranchOnCommit(m_sRepositoryPath, sCommitId, sBranchName);
 }
 
@@ -756,6 +793,9 @@ void CRepository::commitBranchFrom(const QString& sCommitId, const QString& sBra
 
 void CRepository::changeCommitMessage(const QString& sCommitId, const QString& sMessage)
 {
+    if (isWorkingTreeCommit(sCommitId))
+        return;
+
     m_pCommands->changeCommitMessage(m_sRepositoryPath, sCommitId, sMessage);
 }
 
@@ -784,6 +824,9 @@ void CRepository::deleteBranch(const QString& sName)
 
 void CRepository::createTagOnCommit(const QString& sCommitId, const QString& sTagName, const QString& sMessage)
 {
+    if (isWorkingTreeCommit(sCommitId))
+        return;
+
     m_pCommands->createTagOnCommit(m_sRepositoryPath, sCommitId, sTagName, sMessage);
 }
 
@@ -793,6 +836,12 @@ void CRepository::commitDiffPrevious(const QString& sCommitId)
 {
     setCommitDetailsId(sCommitId);
     updateCommitDetails();
+
+    if (isWorkingTreeCommit(sCommitId))
+    {
+        m_pCommands->workingTreeDiff(m_sRepositoryPath);
+        return;
+    }
 
     m_pCommands->commitDiffPrevious(m_sRepositoryPath, sCommitId);
 }
@@ -1231,6 +1280,95 @@ void CRepository::updateCommitDetails()
 
     setCommitDetailsAddedCount(iAddedCount);
     setCommitDetailsRemovedCount(iRemovedCount);
+
+    if (isWorkingTreeCommit(m_sCommitDetailsId))
+        refreshWorkingTreeMessage(iAddedCount, iRemovedCount);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn void CRepository::updateWorkingTreeLine()
+    Keeps the working tree line on top of the graph, its message shows the diff state.
+*/
+void CRepository::updateWorkingTreeLine()
+{
+    if (m_pGraphModel == nullptr)
+        return;
+
+    if (not m_pGraphModel->hasWorkingTreePresent())
+        m_pGraphModel->setWorkingTreePresent(true);
+
+    if (not m_bHasModifiedFiles)
+    {
+        refreshWorkingTreeMessage(0, 0);
+
+        if (isWorkingTreeCommit(m_sCommitDetailsId))
+        {
+            setCommitDetailsAddedCount(0);
+            setCommitDetailsRemovedCount(0);
+
+            if (m_pFileDiffModel != nullptr && m_pFileDiffModel->rowCount() > 0)
+                m_pFileDiffModel->setLines(QList<CDiffLine*>());
+        }
+
+        return;
+    }
+
+    const CLogLine* pLine = m_pGraphModel->findLine(m_pGraphModel->workingTreeCommitId());
+
+    if (pLine != nullptr && pLine->message() == tr("No changes"))
+        m_pGraphModel->setWorkingTreeMessage(tr("Working tree changes"));
+
+    m_pCommands->workingTreeDiff(m_sRepositoryPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn void CRepository::refreshWorkingTreeMessage(int iAddedCount, int iRemovedCount)
+    Shows the diff state on the working tree line: clean, counted changes or pending.
+*/
+void CRepository::refreshWorkingTreeMessage(int iAddedCount, int iRemovedCount)
+{
+    if (m_pGraphModel == nullptr || not m_pGraphModel->hasWorkingTreePresent())
+        return;
+
+    m_iWorkingTreeAddedCount = iAddedCount;
+    m_iWorkingTreeRemovedCount = iRemovedCount;
+
+    if (not m_bHasModifiedFiles && iAddedCount == 0 && iRemovedCount == 0)
+    {
+        m_pGraphModel->setWorkingTreeMessage(tr("No changes"));
+        return;
+    }
+
+    if (iAddedCount > 0 || iRemovedCount > 0)
+    {
+        m_pGraphModel->setWorkingTreeMessage(tr("Changes: +%1 / -%2").arg(iAddedCount).arg(iRemovedCount));
+        return;
+    }
+
+    const CLogLine* pLine = m_pGraphModel->findLine(m_pGraphModel->workingTreeCommitId());
+
+    if (pLine == nullptr || pLine->message() == tr("No changes"))
+        m_pGraphModel->setWorkingTreeMessage(tr("Working tree changes"));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn void CRepository::onLanguageChanged()
+    Re-translates the working tree line with the stored counts, like the QML
+    engine does for the views. Real commit messages come from the version
+    control and never translate.
+*/
+void CRepository::onLanguageChanged()
+{
+    refreshWorkingTreeMessage(m_iWorkingTreeAddedCount, m_iWorkingTreeRemovedCount);
+
+    if (isWorkingTreeCommit(m_sCommitDetailsId))
+        updateCommitDetails();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1285,13 +1423,26 @@ void CRepository::onDiffCommitIdChanged()
 
     if (not m_sDiffFromCommitId.isEmpty() && not m_sDiffToCommitId.isEmpty())
     {
-        setCommitDetailsId(m_sDiffToCommitId);
-        updateCommitDetails();
+        if (isWorkingTreeCommit(m_sDiffFromCommitId) || isWorkingTreeCommit(m_sDiffToCommitId))
+        {
+            setCommitDetailsId(workingTreeCommitId());
+            updateCommitDetails();
 
-        m_pCommands->twoCommitDiff(m_sRepositoryPath, m_sDiffFromCommitId, m_sDiffToCommitId);
+            m_pCommands->workingTreeDiff(m_sRepositoryPath);
 
-        setDiffFromCommitId("");
-        setDiffToCommitId("");
+            setDiffFromCommitId("");
+            setDiffToCommitId("");
+        }
+        else
+        {
+            setCommitDetailsId(m_sDiffToCommitId);
+            updateCommitDetails();
+
+            m_pCommands->twoCommitDiff(m_sRepositoryPath, m_sDiffFromCommitId, m_sDiffToCommitId);
+
+            setDiffFromCommitId("");
+            setDiffToCommitId("");
+        }
     }
 
     m_pFileLogModel->commitChanged(sDiffFromCommitId);

@@ -27,8 +27,12 @@ Menu {
     signal requestCommitDiffFrom(var commitId)
     signal requestCommitDiffTo(var commitId)
 
+    /*! True when the selected row is the working tree line, most actions do not apply */
+    readonly property bool isWorkingTree: root.repository !== null && root.commitId !== "" && root.commitId === root.repository.workingTreeCommitId
+
     Action {
         text: Const.logCopyCommitIdMenuText
+        enabled: !root.isWorkingTree
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -51,7 +55,7 @@ Menu {
 
     Action {
         text: Const.logCreateTagMenuText
-        enabled: root.repository ? root.repository.can(CEnums.TagOnCommit) : false
+        enabled: !root.isWorkingTree && (root.repository ? root.repository.can(CEnums.TagOnCommit) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -62,7 +66,7 @@ Menu {
 
     Action {
         text: Const.logCreateBranchMenuText
-        enabled: root.repository ? root.repository.can(CEnums.BranchFromCommit) : false
+        enabled: !root.isWorkingTree && (root.repository ? root.repository.can(CEnums.BranchFromCommit) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -73,7 +77,7 @@ Menu {
 
     Action {
         text: Const.logResetMenuText
-        enabled: root.repository ? root.repository.can(CEnums.ResetToCommit) : false
+        enabled: !root.isWorkingTree && (root.repository ? root.repository.can(CEnums.ResetToCommit) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -86,7 +90,7 @@ Menu {
 
     Action {
         text: Const.logRebaseMenuText
-        enabled: root.repository ? (root.repository.can(CEnums.RebaseOnCommit) && !root.repository.hasTrackedModifiedFiles) : false
+        enabled: !root.isWorkingTree && (root.repository ? (root.repository.can(CEnums.RebaseOnCommit) && !root.repository.hasTrackedModifiedFiles) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -97,7 +101,7 @@ Menu {
 
     Action {
         text: Const.logSquashMenuText
-        enabled: root.repository ? (root.repository.can(CEnums.SquashCommit) && !root.repository.hasTrackedModifiedFiles) : false
+        enabled: !root.isWorkingTree && (root.repository ? (root.repository.can(CEnums.SquashCommit) && !root.repository.hasTrackedModifiedFiles) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -108,7 +112,7 @@ Menu {
 
     Action {
         text: Const.logChangeMessageMenuText
-        enabled: root.repository ? (root.repository.can(CEnums.ChangeCommitMessage) && !root.repository.hasTrackedModifiedFiles) : false
+        enabled: !root.isWorkingTree && (root.repository ? (root.repository.can(CEnums.ChangeCommitMessage) && !root.repository.hasTrackedModifiedFiles) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -131,6 +135,7 @@ Menu {
 
     Action {
         text: Const.logMarkDiffFrom
+        enabled: !root.isWorkingTree
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -141,6 +146,7 @@ Menu {
 
     Action {
         text: Const.logMarkDiffTo
+        enabled: !root.isWorkingTree
 
         onTriggered: {
             if (root.commitId !== "") {

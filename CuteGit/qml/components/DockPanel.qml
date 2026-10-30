@@ -14,8 +14,8 @@ ExtendablePane {
     property var tabIds: panelDefinition !== null && panelDefinition[Const.panelTabsKey] !== undefined
                          ? panelDefinition[Const.panelTabsKey] : []
 
-    property var activeTabIds: viewRoot !== null && viewRoot.activeTabIds !== undefined
-                               ? viewRoot.activeTabIds : []
+    /*! Mirrors the repository view active tabs without a binding, so reporting the current tab never loops */
+    property var activeTabIds: []
 
     property var visibleTabs: []
     property string currentTabId: root.computeCurrentTabId()
@@ -90,7 +90,15 @@ ExtendablePane {
         }
     }
 
+    Connections {
+        target: root.viewRoot
+        function onActiveTabIdsChanged() {
+            root.syncActiveTabIds()
+        }
+    }
+
     Component.onCompleted: {
+        root.syncActiveTabIds()
         root.updateVisibleTabs()
         root.clampCurrentIndex()
         root.reportActiveTab()
@@ -103,7 +111,10 @@ ExtendablePane {
         refreshTabItems()
         loadCurrentTabData()
     }
-    onViewRootChanged: refreshTabItems()
+    onViewRootChanged: {
+        root.syncActiveTabIds()
+        refreshTabItems()
+    }
     onFlatSelectionChanged: refreshTabItems()
     onPanelDefinitionChanged: {
         root.preferredTabId = ""
@@ -164,6 +175,24 @@ ExtendablePane {
         var computedTabs = root.computeVisibleTabs()
         if (root.visibleTabIdsEqual(root.visibleTabs, computedTabs) === false)
             root.visibleTabs = computedTabs
+    }
+
+    function activeTabIdsEqual(first, second) {
+        if (first.length !== second.length)
+            return false
+        for (var index = 0; index < first.length; index++) {
+            if (second.indexOf(first[index]) === -1)
+                return false
+        }
+        return true
+    }
+
+    function syncActiveTabIds() {
+        var mirroredIds = []
+        if (root.viewRoot !== null && root.viewRoot !== undefined && root.viewRoot.activeTabIds !== undefined)
+            mirroredIds = root.viewRoot.activeTabIds
+        if (root.activeTabIdsEqual(root.activeTabIds, mirroredIds) === false)
+            root.activeTabIds = mirroredIds
     }
 
     function computeCurrentTabId() {

@@ -18,7 +18,15 @@ public:
         eGraphCommitLaneRole = Qt::UserRole + 0x0A,
         eGraphVerticalsRole,
         eGraphConnectionsRole,
+        eIsWorkingTreeRole,
     };
+
+    //-------------------------------------------------------------------------------------------------
+    // Static control methods
+    //-------------------------------------------------------------------------------------------------
+
+    //! Returns the commit identifier of the working tree line, never a real commit
+    static QString workingTreeCommitId();
 
 public:
 
@@ -31,6 +39,23 @@ public:
 
     //! Destructor
     virtual ~CGraphModel() override;
+
+    //-------------------------------------------------------------------------------------------------
+    // Getters
+    //-------------------------------------------------------------------------------------------------
+
+    //! Returns true when the working tree line is shown on top of the graph
+    bool hasWorkingTreePresent() const;
+
+    //-------------------------------------------------------------------------------------------------
+    // Setters
+    //-------------------------------------------------------------------------------------------------
+
+    //! Shows or hides the working tree line on top of the graph, keeping lanes stable
+    void setWorkingTreePresent(bool bPresent);
+
+    //! Updates the working tree line message, no-op when absent
+    void setWorkingTreeMessage(const QString& sMessage);
 
     //-------------------------------------------------------------------------------------------------
     // Control methods
@@ -64,4 +89,25 @@ protected:
     virtual int defaultPageSize() const override;
     virtual void requestLines(int iStartIndex, int iCount) override;
     virtual QList<CLabel*> labelsFromLine(const CLogLine* pLine) const override;
+
+    //-------------------------------------------------------------------------------------------------
+    // Protected control methods
+    //-------------------------------------------------------------------------------------------------
+
+    //! Builds the working tree line with the given parent, owned by the caller
+    CGraphLine* createWorkingTreeLine(const QString& sParentId) const;
+
+    //! Returns the commit identifier of the first real commit, empty when none is loaded
+    QString firstRealCommitId() const;
+
+    //! Updates the parent of the working tree line to the first real commit
+    void refreshWorkingTreeParent();
+
+    //! Lays out every loaded line, working tree line included
+    void layoutLoadedLines();
+
+protected:
+
+    //! True when the working tree line is shown on top of the graph
+    bool m_bWorkingTreePresent;
 };

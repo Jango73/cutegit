@@ -200,17 +200,25 @@ private slots:
     }
 
     // Hidden log panes are never read: refresh alone leaves log models empty,
-    // each named refresh loads one domain while the others stay stale
+    // each named refresh loads one domain while the others stay stale.
+    // The working tree line may show from file status alone: it never counts
+    // as a loaded log row.
     void logPane_loadsOnlyOnDemand()
     {
         QTest::qWait(3000);
 
-        QCOMPARE(m_pRepository->graphModel()->rowCount(), 0);
+        QVERIFY(m_pRepository->graphModel()->rowCount() <= 1);
         QCOMPARE(m_pRepository->refLogModel()->rowCount(), 0);
+
+        if (m_pRepository->graphModel()->rowCount() == 1)
+        {
+            QModelIndex tIndex = m_pRepository->graphModel()->index(0, 0);
+            QCOMPARE(m_pRepository->graphModel()->data(tIndex, CGraphModel::eIsWorkingTreeRole).toBool(), true);
+        }
 
         m_pRepository->refreshGraph();
 
-        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
 
         QCOMPARE(m_pRepository->refLogModel()->rowCount(), 0);
 
@@ -223,7 +231,7 @@ private slots:
         m_pRepository->refresh();
         m_pRepository->refreshGraph();
 
-        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
     }
 
     // Graph filter hides every row on a nonsense string and restores them
@@ -371,6 +379,89 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->currentBranch() == "no-upstream-probe", s_iAsyncTimeoutMs);
         QTRY_VERIFY_WITH_TIMEOUT(not m_pRepository->hasUpstreamBranch(), s_iAsyncTimeoutMs);
         QCOMPARE(m_pRepository->commitCountAhead(), 0);
+    }
+
+    // The working tree line shows on top of the graph when the tree is dirty,
+    // with its parent on the current head and its message showing the diff state
+    void workingTreeLine_showsOnTopWhenDirty()
+    {
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        CGraphModel* pModel = m_pRepository->graphModel();
+        QModelIndex tGhostIndex = pModel->index(0, 0);
+
+        QCOMPARE(pModel->data(tGhostIndex, CGraphModel::eCommitIdRole).toString(), m_pRepository->workingTreeCommitId());
+        QCOMPARE(pModel->data(tGhostIndex, CGraphModel::eIsWorkingTreeRole).toBool(), true);
+
+        const CLogLine* pGhostLine = pModel->findLine(m_pRepository->workingTreeCommitId());
+        QVERIFY(pGhostLine != nullptr);
+
+        const CGraphLine* pGhostGraphLine = qobject_cast<const CGraphLine*>(pGhostLine);
+        QVERIFY(pGhostGraphLine != nullptr);
+        QCOMPARE(pGhostGraphLine->parents().count(), 1);
+
+        QModelIndex tHeadIndex = pModel->index(1, 0);
+        QString sHeadId = pModel->data(tHeadIndex, CGraphModel::eCommitIdRole).toString();
+        QVERIFY(not sHeadId.isEmpty());
+        QCOMPARE(pGhostGraphLine->parents().first(), sHeadId);
+
+        QTRY_VERIFY_WITH_TIMEOUT(pModel->data(pModel->index(0, 0), CGraphModel::eMessageRole).toString().startsWith("Changes: +"), s_iAsyncTimeoutMs);
+    }
+
+    // The working tree line stays on top when the tree is clean, with No changes
+    void workingTreeLine_showsNoChangesWhenClean()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"checkout", "--", m_sRelativeName}, sUnused));
+
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(not m_pRepository->hasModifiedFiles(), s_iAsyncTimeoutMs);
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+
+        CGraphModel* pModel = m_pRepository->graphModel();
+        QModelIndex tGhostIndex = pModel->index(0, 0);
+
+        QCOMPARE(pModel->data(tGhostIndex, CGraphModel::eCommitIdRole).toString(), m_pRepository->workingTreeCommitId());
+        QCOMPARE(pModel->data(tGhostIndex, CGraphModel::eIsWorkingTreeRole).toBool(), true);
+        QTRY_COMPARE_WITH_TIMEOUT(pModel->data(tGhostIndex, CGraphModel::eMessageRole).toString(), QString("No changes"), s_iAsyncTimeoutMs);
+    }
+
+    // The working tree diff shows staged and unstaged changes together,
+    // like the tree state the working tree line stands for
+    void workingTreeDiff_showsStagedUnstaged()
+    {
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        m_pRepository->commitDiffPrevious(m_pRepository->workingTreeCommitId());
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->fileDiffModel()->rowCount() > 0, s_iAsyncTimeoutMs);
+        QCOMPARE(m_pRepository->commitDetailsId(), m_pRepository->workingTreeCommitId());
+        QVERIFY(modelContains(m_pRepository->fileDiffModel(), "line-B1"));
+        QVERIFY(m_pRepository->commitDetailsAddedCount() > 0);
+
+        // Stage one line: the working tree diff keeps showing it together
+        // with the remaining unstaged lines
+        selectFileAndWaitForDiff();
+
+        CDiffModel* pUnstaged = m_pRepository->unstagedFileDiffModel();
+        QList<int> lAdded = addedSourceRows(pUnstaged, "line-B1");
+
+        QCOMPARE(lAdded.count(), 1);
+
+        m_pRepository->stageDiffLines(proxyRows(pUnstaged, lAdded));
+        m_pRepository->commitDiffPrevious(m_pRepository->workingTreeCommitId());
+
+        QTRY_VERIFY_WITH_TIMEOUT(modelContains(m_pRepository->fileDiffModel(), "line-B1"), s_iAsyncTimeoutMs);
+        QVERIFY(modelContains(m_pRepository->fileDiffModel(), "line-B2"));
     }
 
  private:

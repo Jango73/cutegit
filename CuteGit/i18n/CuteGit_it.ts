@@ -120,6 +120,13 @@
     </message>
 </context>
 <context>
+    <name>CGraphModel</name>
+    <message>
+        <source>No changes</source>
+        <translation>Nessuna modifica</translation>
+    </message>
+</context>
+<context>
     <name>CHgCommands</name>
     <message>
         <source>Commiting...</source>
@@ -159,6 +166,18 @@
     <message>
         <source>Unable to create patch file</source>
         <translation>Impossibile creare il file di patch</translation>
+    </message>
+    <message>
+        <source>No changes</source>
+        <translation>Nessuna modifica</translation>
+    </message>
+    <message>
+        <source>Working tree changes</source>
+        <translation>Modifiche nella copia di lavoro</translation>
+    </message>
+    <message>
+        <source>Changes: +%1 / -%2</source>
+        <translation>Modifiche: +%1 / -%2</translation>
     </message>
 </context>
 <context>

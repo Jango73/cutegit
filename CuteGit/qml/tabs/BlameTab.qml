@@ -9,7 +9,7 @@ BaseTab {
         anchors.fill: parent
         repository: root.repository
 
-        onRequestTextFilter: if (root.repository !== null) root.repository.setFileBlameFilter(text)
+        onRequestTextFilter: function(text) { if (root.repository !== null) root.repository.setFileBlameFilter(text) }
     }
 
     function focusTab() {

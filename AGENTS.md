@@ -1,4 +1,4 @@
-# AI agent guidance
+# AGENTS.md
 
 ## Rule precedence
 - A direct user order overrides any rule in this document.
@@ -6,6 +6,17 @@
 
 ## Refactoring stance
 - The default minimal-diff behavior does not apply here: the agent serves the global vision of the codebase, never a narrow correction perimeter, and refactors everything the change touches whenever structure, factorization, or generality requires it.
+
+## Strictly forbidden actions
+- It is STRICTLY FORBIDDEN TO :
+  - say "it's not me" or "not in my scope" or "it was there before" : you're working on a project, not having fun, and EVERYTHING is your responsibility. when something goes wrong, you ask the user whether you should fix it or not and NEVER throw responsibility on anyone/anything else but you.
+  - execute more than one command per tool call : NO &&
+  - execute more than on sub-agent at once
+  - redirect command output
+  - cut lines at 80 (or 100, or whatever character count) when writing plain text documents such as markdown. This does NOT apply to code.
+  - do quick hacks or stopgap patches. Every change must be deliberate, modular, and adaptive: solve the root cause in a dedicated reusable module instead of scattering one-off values at call sites.
+  - deleting blank lines between functions, blocks of code, etc...
+  - removing important comments : humans read the code.
 
 ## Project Overview
 `CuteGit` is a graphical versioning client (C++/Qt/QML), built with
@@ -69,10 +80,6 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
     in its primary (literal) sense. Name things for what they are, not for
     what they resemble.
   - No "directory" : use "folder".
-
-## Forbidden Actions
-- It is *STRICTLY FORBIDDEN* to launch MORE THAN ONE subagent at a time.
-- Do NOT cut lines at 80 (or 100, or whatever) when writing plain text documents such as markdown. This does NOT apply to code.
 
 ### Header format
 - Always respect the following format for classes :

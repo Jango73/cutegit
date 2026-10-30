@@ -58,6 +58,8 @@ public:
     Q_FAST_PROPERTY(QString, s, diffFromCommitId, DiffFromCommitId)
     Q_FAST_PROPERTY(QString, s, diffToCommitId, DiffToCommitId)
 
+    Q_PROPERTY(QString workingTreeCommitId READ workingTreeCommitId CONSTANT)
+
     // Main controller (plain member: no Q_PROPERTY to avoid an inclusion cycle
     // with CController, which exposes the repository to QML)
     CController* controller() const { return m_pController; }
@@ -163,6 +165,12 @@ public:
 
     //!
     QString repositoryTypeString() const;
+
+    //! Returns the commit identifier of the working tree line, never a real commit
+    QString workingTreeCommitId() const;
+
+    //! Returns true when the identifier is the working tree line
+    bool isWorkingTreeCommit(const QString& sCommitId) const;
 
     //-------------------------------------------------------------------------------------------------
     // Invokable control methods
@@ -389,6 +397,10 @@ protected:
     //! True while a poll fingerprint command is waiting for its result
     bool m_bPollPending;
 
+    //! Last working tree diff counts, re-applied to the ghost line on language change
+    int m_iWorkingTreeAddedCount;
+    int m_iWorkingTreeRemovedCount;
+
     //! Log domains that missed a refresh, reloaded on demand by shown views
     QSet<QString> m_sStaleLogDomains;
 
@@ -437,6 +449,12 @@ protected:
 
     //! Refreshes the commit details from the loaded logs and commit diff
     void updateCommitDetails();
+
+    //! Shows or hides the working tree line from the dirty state, clears its diff when hidden
+    void updateWorkingTreeLine();
+
+    //! Refreshes the working tree line message from added and removed line counts
+    void refreshWorkingTreeMessage(int iAddedCount, int iRemovedCount);
 
     //! Refreshes branch/tag labels of every commit model from the repository
     void refreshCommitLabels();
@@ -489,6 +507,11 @@ signals:
     //-------------------------------------------------------------------------------------------------
     // Slots
     //-------------------------------------------------------------------------------------------------
+
+public slots:
+
+    //! Re-translates the working tree line when the application language changes
+    void onLanguageChanged();
 
 protected slots:
 

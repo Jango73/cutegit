@@ -9,10 +9,10 @@ CommitLogTabBase {
         anchors.fill: parent
         repository: root.repository
 
-        onRequestMenu: root.showCommitMenu(commitId, message)
-        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
+        onRequestMenu: function(commitId, message) { root.showCommitMenu(commitId, message) }
+        onRequestCommitDiffPrevious: function(commitId) { root.requestCommitDiffPrevious(commitId) }
+        onRequestCommitDiffFrom: function(commitId) { root.requestCommitDiffFrom(commitId) }
+        onRequestCommitDiffTo: function(commitId) { root.requestCommitDiffTo(commitId) }
     }
 
     function focusTab() {

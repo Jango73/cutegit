@@ -187,6 +187,7 @@ Item {
     readonly property string unstageSelectedLinesText: qsTr("Unstage selected &lines")
     readonly property string stageHunkText: qsTr("Stage &hunk")
     readonly property string unstageHunkText: qsTr("Unstage &hunk")
+    readonly property string workingTreeText: qsTr("Working tree")
 
     // Diff selection sentinels, header prefixes and pane weights (no magic literals in views)
     readonly property int invalidHunkId: -1

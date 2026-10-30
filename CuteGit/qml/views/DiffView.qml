@@ -51,7 +51,7 @@ StandardListView {
 
     /*! Toggles a single row without clearing the selection (Control+click) */
     function toggleSelection(row) {
-        if (!selection)
+        if (!hasSelectionModel())
             return
 
         var proxyIndex = root.modelIndexForRow(row)

@@ -113,6 +113,13 @@
     </message>
 </context>
 <context>
+    <name>CGraphModel</name>
+    <message>
+        <source>No changes</source>
+        <translation>无更改</translation>
+    </message>
+</context>
+<context>
     <name>CHgCommands</name>
     <message>
         <source>Commiting...</source>
@@ -152,6 +159,18 @@
     <message>
         <source>Unable to create patch file</source>
         <translation>无法创建补丁文件</translation>
+    </message>
+    <message>
+        <source>No changes</source>
+        <translation>无更改</translation>
+    </message>
+    <message>
+        <source>Working tree changes</source>
+        <translation>工作树更改</translation>
+    </message>
+    <message>
+        <source>Changes: +%1 / -%2</source>
+        <translation>更改：+%1 / -%2</translation>
     </message>
 </context>
 <context>

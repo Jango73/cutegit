@@ -103,6 +103,9 @@ const QString CGitCommands::sCommandUpdateSubmodules      = "git submodule updat
 const QString CGitCommands::sCommandSubmoduleStatus        = "git submodule status --recursive";
 const QString CGitCommands::sCommandIsTracked            = "git ls-files --error-unmatch -- \"%1\"";
 const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
+const QString CGitCommands::sCommandWorkingTreeDiff        = "git diff --no-color -U3 HEAD";
+const QString CGitCommands::sCommandWorkingTreeDiffEmpty  = "git diff --no-color -U3 4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+const QString CGitCommands::sCommandVerifyHead             = "git rev-parse --verify HEAD";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCachedReverse = "git apply --cached --reverse --unidiff-zero \"%1\"";
 const QString CGitCommands::sCommandApplyPatch         = "git apply --unidiff-zero \"%1\"";
@@ -616,6 +619,24 @@ void CGitCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommi
 {
     QString sCommand = QString(sCommandTwoCommitDiff).arg(sFromCommitId).arg(sToCommitId);
     exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CGitCommands::workingTreeDiff
+    Shows uncommitted working tree changes of the whole tree (index versus HEAD
+    plus working tree versus index together). A repository without any commit
+    diffs against the empty tree, so the first changes still show up.
+*/
+void CGitCommands::workingTreeDiff(const QString& sPath)
+{
+    int iExitCode = 0;
+
+    execNow(sPath, sCommandVerifyHead, QMap<QString, QString>(), &iExitCode);
+
+    QString sCommand = (iExitCode == 0) ? sCommandWorkingTreeDiff : sCommandWorkingTreeDiffEmpty;
+    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommand));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1154,124 +1175,9 @@ void CGitCommands::handleTagCommitOutput(const CProcessResult& tResult)
 
 //-------------------------------------------------------------------------------------------------
 
-/***************************************************************************/
-
-/*! Builds a fully configured diff line, so callers set every field in one call */
-static CDiffLine* makeDiffLine(CEnums::EDiffOperation eOperation, const QString& sText, const QString& sFileName, int iHunkId, int iOldLineNumber, int iNewLineNumber)
-{
-    CDiffLine* pReturnValue = new CDiffLine();
-
-    pReturnValue->setOperation(eOperation);
-    pReturnValue->setText(sText);
-    pReturnValue->setFileName(sFileName);
-    pReturnValue->setHunkId(iHunkId);
-    pReturnValue->setOldLineNumber(iOldLineNumber);
-    pReturnValue->setNewLineNumber(iNewLineNumber);
-
-    return pReturnValue;
-}
-
-/***************************************************************************/
-
 void CGitCommands::handleDiffOutput(const CProcessResult& tResult)
 {
-    // Create CDiffLine objects with the returned string of the process
-    // Hunk headers are kept with operation DiffHunk so callers can rebuild
-    // applicable patches for partial staging
-
-    QList<CDiffLine*> lReturnValue;
-    QStringList lLines = tResult.m_sValue.split(NEW_LINE);
-    bool bAtLeastOneLineOK = false;
-
-    const int iInvalidHunkId = CDiffConstants::iInvalidHunkId;
-    const int iNoLineNumber = CDiffConstants::iNoLineNumber;
-    QString sCurrentFileName;
-    int iHunkId = iInvalidHunkId;
-    int iOldLineNumber = iNoLineNumber;
-    int iNewLineNumber = iNoLineNumber;
-
-    QRegularExpression tFileRegExp(sDiffLineRegExp);
-    QRegularExpression tHunkRegExp(sDiffHunkRegExp);
-
-    for (QString sLine : lLines)
-    {
-        // Keep context lines holding an empty file line (" "): only the
-        // trailing split artifact (truly empty) is skipped
-        if (not sLine.isEmpty())
-        {
-            bAtLeastOneLineOK = true;
-
-            if (sLine.startsWith(CDiffConstants::sDiffIndexPrefix) || sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix)
-                    || sLine.startsWith(CDiffConstants::sDiffNewFilePrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedFilePrefix)
-                    || sLine.startsWith(CDiffConstants::sDiffOldModePrefix) || sLine.startsWith(CDiffConstants::sDiffNewModePrefix)
-                    || sLine.startsWith(CDiffConstants::sDiffSimilarityPrefix) || sLine.startsWith(CDiffConstants::sDiffDissimilarityPrefix)
-                    || sLine.startsWith(CDiffConstants::sDiffRenameFromPrefix) || sLine.startsWith(CDiffConstants::sDiffRenameToPrefix)
-                    || sLine.startsWith(CDiffConstants::sDiffCopyFromPrefix) || sLine.startsWith(CDiffConstants::sDiffCopyToPrefix))
-            {
-                continue;
-            }
-
-            CDiffLine* pDiffLine = nullptr;
-
-            if (sLine.startsWith(CDiffConstants::sDiffFilePrefix))
-            {
-                QString sNewText = sLine;
-
-                QRegularExpressionMatch match = tFileRegExp.match(sLine);
-                if (match.hasMatch())
-                {
-                    sNewText = match.captured(CDiffConstants::iDiffFilePathCapture).trimmed();
-                }
-
-                sCurrentFileName = sNewText;
-
-                // Keep hunk identifiers unique across files: patch grouping
-                // by hunk alone stays correct on multi-file diffs
-                pDiffLine = makeDiffLine(CEnums::DiffFileName, sNewText, sCurrentFileName, iInvalidHunkId, iNoLineNumber, iNoLineNumber);
-            }
-            else if (sLine.startsWith(CDiffConstants::sDiffHunkPrefix))
-            {
-                QRegularExpressionMatch match = tHunkRegExp.match(sLine);
-                if (match.hasMatch())
-                {
-                    iOldLineNumber = match.captured(CDiffConstants::iHunkOldStartCapture).toInt();
-                    iNewLineNumber = match.captured(CDiffConstants::iHunkNewStartCapture).toInt();
-                }
-
-                iHunkId++;
-
-                pDiffLine = makeDiffLine(CEnums::DiffHunk, sLine, sCurrentFileName, iHunkId, iNoLineNumber, iNoLineNumber);
-            }
-            else if (sLine.startsWith(CDiffConstants::sDiffAddedPrefix) && not sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix))
-            {
-                pDiffLine = makeDiffLine(CEnums::DiffAdd, sLine, sCurrentFileName, iHunkId, iNoLineNumber, iNewLineNumber);
-                iNewLineNumber++;
-            }
-            else if (sLine.startsWith(CDiffConstants::sDiffDeletedPrefix) && not sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix))
-            {
-                pDiffLine = makeDiffLine(CEnums::DiffDelete, sLine, sCurrentFileName, iHunkId, iOldLineNumber, iNoLineNumber);
-                iOldLineNumber++;
-            }
-            else if (sLine.startsWith(CDiffConstants::sDiffNoNewlinePrefix))
-            {
-                pDiffLine = makeDiffLine(CEnums::None, sLine, sCurrentFileName, iHunkId, iNoLineNumber, iNoLineNumber);
-            }
-            else
-            {
-                pDiffLine = makeDiffLine(CEnums::None, sLine, sCurrentFileName, iHunkId, iOldLineNumber, iNewLineNumber);
-                iOldLineNumber++;
-                iNewLineNumber++;
-            }
-
-            lReturnValue << pDiffLine;
-        }
-    }
-
-    if (not bAtLeastOneLineOK)
-    {
-        qDeleteAll(lReturnValue);
-        lReturnValue.clear();
-    }
+    QList<CDiffLine*> lReturnValue = parseGitStyleDiff(tResult.m_sValue);
 
     emit newOutputString(tResult.m_eCommand, tResult.m_sValue, tResult.m_sUserData);
     emit newOutputListOfCDiffLine(tResult.m_eCommand, lReturnValue, tResult.m_sUserData);
@@ -1762,6 +1668,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eUnstagedFileDiff:
     case CEnums::eStagedFileDiff:
     case CEnums::eTwoCommitDiff:
+    case CEnums::eWorkingTreeDiff:
     {
         handleDiffOutput(tResult);
         break;

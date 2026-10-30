@@ -87,6 +87,9 @@ public:
     //!
     virtual void createBranchOnCommit(const QString& sPath, const QString& sCommitId, const QString& sBranchName) override;
 
+    //! Shows uncommitted working tree changes of the whole tree
+    virtual void workingTreeDiff(const QString& sPath) override;
+
     //-------------------------------------------------------------------------------------------------
     // Protected control methods
     //-------------------------------------------------------------------------------------------------
@@ -110,6 +113,9 @@ protected:
 
     //!
     void handleGraphOutput(const CProcessResult& tResult);
+
+    //!
+    void handleDiffOutput(const CProcessResult& tResult);
 
     //-------------------------------------------------------------------------------------------------
     // Protected slots

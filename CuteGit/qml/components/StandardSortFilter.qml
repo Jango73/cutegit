@@ -21,7 +21,7 @@ Item {
         width: parent.width * 0.5
         text: Const.filterText
 
-        onFilterTextChanged: root.requestFilter(text)
+        onFilterTextChanged: function(text) { root.requestFilter(text) }
     }
 
     StandardLabel {

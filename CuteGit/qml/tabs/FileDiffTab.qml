@@ -13,7 +13,7 @@ BaseTab {
         onRequestMenu: function(staged, operation, text, hunkId, selectedRows) {
             root.viewRoot.showDiffMenu(staged, operation, text, hunkId, selectedRows, false)
         }
-        onRequestTextFilter: if (root.repository !== null) root.repository.setWorkingTreeDiffFilter(text)
+        onRequestTextFilter: function(text) { if (root.repository !== null) root.repository.setWorkingTreeDiffFilter(text) }
         onRequestSaveAsPatch: root.viewRoot.requestPatchSave(false)
     }
 

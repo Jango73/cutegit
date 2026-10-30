@@ -112,7 +112,7 @@ Item {
             text: Const.filterText
             tipText: Const.tipLineFilter
 
-            onFilterTextChanged: root.requestTextFilter(text)
+            onFilterTextChanged: function(text) { root.requestTextFilter(text) }
         }
 
         StandardButton {

@@ -43,9 +43,9 @@ Item {
         diffFromCommitId: root.repository ? root.repository.diffFromCommitId : ""
         diffToCommitId: root.repository ? root.repository.diffToCommitId : ""
 
-        onItemRightClicked: root.requestMenu(commitId, message)
-        onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-        onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-        onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
+        onItemRightClicked: function(commitId, message) { root.requestMenu(commitId, message) }
+        onRequestCommitDiffPrevious: function(commitId) { root.requestCommitDiffPrevious(commitId) }
+        onRequestCommitDiffFrom: function(commitId) { root.requestCommitDiffFrom(commitId) }
+        onRequestCommitDiffTo: function(commitId) { root.requestCommitDiffTo(commitId) }
     }
 }

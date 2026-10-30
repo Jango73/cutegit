@@ -60,8 +60,8 @@ Item {
         repository: root.repository
         selection: root.flatSelection
 
-        onRequestMenu: root.requestMenu(fileNames)
-        onRequestDeleteFiles: root.requestDeleteFiles(fileNames)
+        onRequestMenu: function(fileNames) { root.requestMenu(fileNames) }
+        onRequestDeleteFiles: function(fileNames) { root.requestDeleteFiles(fileNames) }
     }
 
     function getSelectedFiles() {

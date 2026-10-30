@@ -52,8 +52,8 @@ ExtendablePane {
                 id: diffView
                 repository: root.repository
 
-                onRequestMenu: root.requestDiffMenu(operation, text)
-                onRequestTextFilter: root.repository.setWorkingTreeDiffFilter(text)
+                onRequestMenu: function(staged, operation, text, hunkId, selectedRows) { root.requestDiffMenu(operation, text) }
+                onRequestTextFilter: function(text) { root.repository.setWorkingTreeDiffFilter(text) }
                 onRequestSaveAsPatch: root.requestSaveFileDiffAsPatch()
             }
 
@@ -61,17 +61,17 @@ ExtendablePane {
                 id: fileLogPane
                 repository: root.repository
 
-                onRequestMenu: root.requestLogMenu(commitId, message)
-                onRequestCommitDiffPrevious: root.requestCommitDiffPrevious(commitId)
-                onRequestCommitDiffFrom: root.requestCommitDiffFrom(commitId)
-                onRequestCommitDiffTo: root.requestCommitDiffTo(commitId)
+                onRequestMenu: function(commitId, message) { root.requestLogMenu(commitId, message) }
+                onRequestCommitDiffPrevious: function(commitId) { root.requestCommitDiffPrevious(commitId) }
+                onRequestCommitDiffFrom: function(commitId) { root.requestCommitDiffFrom(commitId) }
+                onRequestCommitDiffTo: function(commitId) { root.requestCommitDiffTo(commitId) }
             }
 
             BlameView {
                 id: blameView
                 repository: root.repository
 
-                onRequestTextFilter: root.repository.setFileBlameFilter(text)
+                onRequestTextFilter: function(text) { root.repository.setFileBlameFilter(text) }
             }
         }
     ]

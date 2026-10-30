@@ -171,6 +171,7 @@ public:
         eStagedFileDiff,
         eApplyPatch,
         eTwoCommitDiff,
+        eWorkingTreeDiff,
         eSetCurrentBranch,
         eResetToCommit,
         eRebaseOnCommit,

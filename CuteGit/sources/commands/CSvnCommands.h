@@ -98,6 +98,9 @@ public:
     //!
     virtual void twoCommitDiff(const QString& sPath, const QString& sFromCommitId, const QString& sToCommitId) override;
 
+    //! Shows uncommitted working tree changes of the whole tree
+    virtual void workingTreeDiff(const QString& sPath) override;
+
     //!
     virtual void setCurrentBranch(const QString& sPath, const QString& sBranch) override;
 
@@ -163,6 +166,7 @@ protected:
     static const QString sCommandCopyTag;
     static const QString sCommandDelete;
     static const QString sCommandDiffFile;
+    static const QString sCommandDiffWorkingTree;
     static const QString sCommandDiffRevision;
     static const QString sCommandDiffTwoRevisions;
     static const QString sCommandFileLog;

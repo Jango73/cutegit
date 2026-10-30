@@ -38,7 +38,7 @@ Item {
         text: Const.filterText
         tipText: Const.tipLineFilter
 
-        onFilterTextChanged: {
+        onFilterTextChanged: function(text) {
             root.requestTextFilter(text)
         }
     }

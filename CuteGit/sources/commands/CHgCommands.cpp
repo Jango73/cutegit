@@ -3,9 +3,12 @@
 #include <QDebug>
 #include <QRegularExpression>
 #include <QDir>
+#include <QFileInfo>
 
 // Application
 #include "CHgCommands.h"
+#include "../CDiffLine.h"
+#include "../CDiffConstants.h"
 
 /*!
     \class CHgCommands
@@ -52,6 +55,7 @@ static const char* sCommandIgnoredStatus      = "hg status --ignored";
 static const char* sCommandTrackedFiles       = "hg manifest";
 static const char* sCommandParentNode         = "hg log -r . --template \"{node}\"";
 static const char* sCommandResetOnCommit      = "hg update \"%1\"";
+static const char* sCommandWorkingTreeDiff    = "hg diff --git";
 
 //-------------------------------------------------------------------------------------------------
 // Regular expressions
@@ -261,6 +265,17 @@ void CHgCommands::createBranchOnCommit(const QString& sPath, const QString& sCom
     sOutput = execNow(sPath, sCommand);
     sCommand = QString(sCommandCreateBranch).arg(sBranchName);
     exec(new CProcessCommand(CEnums::eCreateBranchOnCommit, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CHgCommands::workingTreeDiff
+    Shows uncommitted working tree changes of the whole tree.
+*/
+void CHgCommands::workingTreeDiff(const QString& sPath)
+{
+    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommandWorkingTreeDiff));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -537,10 +552,31 @@ void CHgCommands::onExecFinished(const CProcessResult& tResult)
         break;
     }
 
+    case CEnums::eTwoCommitDiff:
+    case CEnums::eWorkingTreeDiff:
+    {
+        handleDiffOutput(tResult);
+        break;
+    }
+
     default:
     {
         break;
     }
 
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CHgCommands::handleDiffOutput
+    Builds working tree diff lines from a unified git-style diff, through the shared parser.
+*/
+void CHgCommands::handleDiffOutput(const CProcessResult& tResult)
+{
+    QList<CDiffLine*> lReturnValue = parseGitStyleDiff(tResult.m_sValue);
+
+    emit newOutputString(tResult.m_eCommand, tResult.m_sValue, tResult.m_sUserData);
+    emit newOutputListOfCDiffLine(tResult.m_eCommand, lReturnValue, tResult.m_sUserData);
 }

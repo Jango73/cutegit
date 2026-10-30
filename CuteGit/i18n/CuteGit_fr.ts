@@ -21,7 +21,7 @@
     </message>
     <message>
         <source>Amending...</source>
-        <translation>Modification en cours...</translation>
+        <translation>Amendement en cours...</translation>
     </message>
     <message>
         <source>Pushing...</source>
@@ -113,6 +113,13 @@
     </message>
 </context>
 <context>
+    <name>CGraphModel</name>
+    <message>
+        <source>No changes</source>
+        <translation>Aucun changement</translation>
+    </message>
+</context>
+<context>
     <name>CHgCommands</name>
     <message>
         <source>Commiting...</source>
@@ -120,7 +127,7 @@
     </message>
     <message>
         <source>Amending...</source>
-        <translation>Modification en cours...</translation>
+        <translation>Amendement en cours...</translation>
     </message>
     <message>
         <source>Pushing...</source>
@@ -152,6 +159,18 @@
     <message>
         <source>Unable to create patch file</source>
         <translation>Impossible de créer le fichier de rustine</translation>
+    </message>
+    <message>
+        <source>No changes</source>
+        <translation>Aucun changement</translation>
+    </message>
+    <message>
+        <source>Working tree changes</source>
+        <translation>Changements de l'arbre de travail</translation>
+    </message>
+    <message>
+        <source>Changes: +%1 / -%2</source>
+        <translation>Changements : +%1 / -%2</translation>
     </message>
 </context>
 <context>
@@ -307,7 +326,7 @@
     </message>
     <message>
         <source>Amend</source>
-        <translation>Modifier</translation>
+        <translation>Amender</translation>
     </message>
     <message>
         <source>Revert</source>
@@ -555,7 +574,7 @@ Certains ic$ones sont copyright Freepik de www.flaticon.com
     </message>
     <message>
         <source>&amp;Amend</source>
-        <translation>&amp;Modifier</translation>
+        <translation>&amp;Amender</translation>
     </message>
     <message>
         <source>C&amp;ontinue rebase</source>
@@ -779,7 +798,7 @@ Certains ic$ones sont copyright Freepik de www.flaticon.com
     </message>
     <message>
         <source>Amending. The changes will be appended to the last commit...</source>
-        <translation>Amendement. Les changements seront ajoutés à la dernière validation...</translation>
+        <translation>Amendement du commit. Les changements seront ajoutés à la dernière validation...</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -1201,15 +1220,15 @@ Veuillez sélectionner un dossier contenant un dépôt.</translation>
     </message>
     <message>
         <source>Amend started...</source>
-        <translation>Modification commencée...</translation>
+        <translation>Amendement commencé...</translation>
     </message>
     <message>
         <source>Amend finished.</source>
-        <translation>Modification terminée.</translation>
+        <translation>Amendement terminé.</translation>
     </message>
     <message>
         <source>Amend failed.</source>
-        <translation>La modification a échoué.</translation>
+        <translation>L'amendement a échoué.</translation>
     </message>
     <message>
         <source>Push started...</source>

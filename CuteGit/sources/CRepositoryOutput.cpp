@@ -218,6 +218,13 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
         break;
     }
 
+    case CEnums::eWorkingTreeDiff:
+    {
+        if (isWorkingTreeCommit(m_sCommitDetailsId))
+            setFileDiffString(sOutput);
+        break;
+    }
+
         // Following commands need only output
     case CEnums::eIssuedCommand:
     case CEnums::eCloneRepository:
@@ -628,6 +635,7 @@ void CRepository::onNewOutputListOfCRepoFile(CEnums::EProcessCommand eCommand, C
             setHasModifiedFiles(bHasModifiedFiles);
             setHasTrackedModifiedFiles(bHasTrackedModifiedFiles);
             setHasCommitableFiles(bHasCommitableFiles);
+            updateWorkingTreeLine();
         }
 
         // Sort the files
@@ -731,6 +739,36 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
     {
         m_pFileDiffModel->setLines(lNewLines);
         updateCommitDetails();
+        break;
+    }
+
+    case CEnums::eWorkingTreeDiff:
+    {
+        int iAddedCount = 0;
+        int iRemovedCount = 0;
+
+        for (const CDiffLine* pLine : lNewLines)
+        {
+            if (pLine == nullptr)
+                continue;
+
+            if (pLine->operation() == CEnums::DiffAdd)
+                iAddedCount++;
+            else if (pLine->operation() == CEnums::DiffDelete)
+                iRemovedCount++;
+        }
+
+        refreshWorkingTreeMessage(iAddedCount, iRemovedCount);
+
+        if (isWorkingTreeCommit(m_sCommitDetailsId))
+        {
+            m_pFileDiffModel->setLines(lNewLines);
+            updateCommitDetails();
+        }
+        else
+        {
+            qDeleteAll(lNewLines);
+        }
         break;
     }
 

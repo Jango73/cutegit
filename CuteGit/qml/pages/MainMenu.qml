@@ -113,7 +113,7 @@ MenuBar {
                 }
 
                 onObjectAdded: function(index, object) { knownRepos.insertItem(index, object) }
-                onObjectRemoved: knownRepos.removeItem(object)
+                onObjectRemoved: function(object) { knownRepos.removeItem(object) }
             }
         }
 

@@ -155,6 +155,9 @@ public:
     //!
     virtual void twoCommitDiff(const QString& sPath, const QString& sFromCommitId, const QString& sToCommitId);
 
+    //! Shows uncommitted working tree changes of the whole tree, staged and unstaged together
+    virtual void workingTreeDiff(const QString& sPath);
+
     //!
     virtual void setCurrentBranch(const QString& sPath, const QString& sBranch);
 
@@ -212,6 +215,9 @@ protected:
     //! Builds clean CRepoFile entries for VCS-tracked relative paths, single
     //! place for the file inventory seed shared by all backends
     static CRepoFileList cleanFilesForRelativePaths(const QString& sPath, const QStringList& lRelativeNames);
+
+    //! Parses unified git-style diff text into owned diff lines, shared by Git and Mercurial with --git
+    static QList<CDiffLine*> parseGitStyleDiff(const QString& sValue);
 
     CController*    m_pController;
 };

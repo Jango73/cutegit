@@ -217,7 +217,7 @@ Pane {
         objectName: "diffMenu"
         repository: root.repository
 
-        onRequestCopyText: {
+        onRequestCopyText: function(text) {
             root.repository.copyText(text)
         }
     }
@@ -227,33 +227,33 @@ Pane {
         objectName: "logMenu"
         repository: root.repository
 
-        onRequestCopyText: {
+        onRequestCopyText: function(text) {
             root.repository.copyText(text)
         }
 
-        onRequestCommitTagOn: {
+        onRequestCommitTagOn: function(commitId) {
             tagOn.commitId = commitId
             tagOn.open()
         }
 
-        onRequestCommitBranchFrom: {
+        onRequestCommitBranchFrom: function(commitId) {
             branchFrom.commitId = commitId
             branchFrom.open()
         }
 
-        onRequestCommitReset: {
+        onRequestCommitReset: function(commitId) {
             root.repository.commitReset(commitId)
         }
 
-        onRequestCommitRebase: {
+        onRequestCommitRebase: function(commitId) {
             root.repository.commitRebase(commitId)
         }
 
-        onRequestCommitSquash: {
+        onRequestCommitSquash: function(commitId) {
             root.repository.commitSquash(commitId)
         }
 
-        onRequestCommitMessageChange: {
+        onRequestCommitMessageChange: function(commitId, commitMessage) {
             commit.messageEnabled = true
             commit.messageText = commitMessage
             commit.showFileList = false
@@ -262,15 +262,15 @@ Pane {
             commit.open()
         }
 
-        onRequestCommitDiffPrevious: {
+        onRequestCommitDiffPrevious: function(commitId) {
             root.requestCommitDiffPrevious(commitId)
         }
 
-        onRequestCommitDiffFrom: {
+        onRequestCommitDiffFrom: function(commitId) {
             root.requestCommitDiffFrom(commitId)
         }
 
-        onRequestCommitDiffTo: {
+        onRequestCommitDiffTo: function(commitId) {
             root.requestCommitDiffTo(commitId)
         }
     }
@@ -280,9 +280,9 @@ Pane {
         objectName: "fileMenu"
         repository: root.repository
 
-        onRequestDelete: root.requestDeleteFiles(fileNames)
-        onRequestBlame: root.requestBlameFiles(fileNames)
-        onRequestOpenSubmodule: root.requestOpenSubmodule(fileNames)
+        onRequestDelete: function(fileNames) { root.requestDeleteFiles(fileNames) }
+        onRequestBlame: function(fileNames) { root.requestBlameFiles(fileNames) }
+        onRequestOpenSubmodule: function(fileNames) { root.requestOpenSubmodule(fileNames) }
     }
 
     //--------------------------------------------------------------------------------

@@ -6,9 +6,11 @@
 #include <QMutexLocker>
 #include <QDir>
 #include <QFileInfo>
+#include <QRegularExpression>
 
 // Application
 #include "CCommands.h"
+#include "../CDiffConstants.h"
 
 /*!
     \class CCommands
@@ -378,6 +380,13 @@ void CCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommitId
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::workingTreeDiff(const QString& sPath)
+{
+    Q_UNUSED(sPath);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::setCurrentBranch(const QString& sPath, const QString& sBranch)
 {
     Q_UNUSED(sPath);
@@ -500,4 +509,139 @@ void CCommands::submoduleStatus(const QString& sPath)
 void CCommands::editSequenceFile(const QString& sFileName)
 {
     Q_UNUSED(sFileName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn QList<CDiffLine*> CCommands::parseGitStyleDiff(const QString& sValue)
+    Parses unified git-style diff text into owned diff lines, shared by Git and Mercurial with --git.
+    Hunk headers are kept so callers can rebuild applicable patches for partial staging.
+*/
+QList<CDiffLine*> CCommands::parseGitStyleDiff(const QString& sValue)
+{
+    QList<CDiffLine*> lReturnValue;
+    QStringList lLines = sValue.split(NEW_LINE);
+    bool bAtLeastOneLineOK = false;
+
+    const int iInvalidHunkId = CDiffConstants::iInvalidHunkId;
+    const int iNoLineNumber = CDiffConstants::iNoLineNumber;
+    const QString sFilePattern = "diff\\s+(.*)\\s+a/(.*)\\s+b/(.*)";
+    QString sCurrentFileName;
+    int iHunkId = iInvalidHunkId;
+    int iOldLineNumber = iNoLineNumber;
+    int iNewLineNumber = iNoLineNumber;
+
+    QRegularExpression tFileRegExp(sFilePattern);
+    QRegularExpression tHunkRegExp(CDiffConstants::sHunkHeaderPattern);
+
+    for (QString sLine : lLines)
+    {
+        // Keep context lines holding an empty file line (" "): only the
+        // trailing split artifact (truly empty) is skipped
+        if (not sLine.isEmpty())
+        {
+            bAtLeastOneLineOK = true;
+
+            if (sLine.startsWith(CDiffConstants::sDiffIndexPrefix) || sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffNewFilePrefix) || sLine.startsWith(CDiffConstants::sDiffDeletedFilePrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffOldModePrefix) || sLine.startsWith(CDiffConstants::sDiffNewModePrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffSimilarityPrefix) || sLine.startsWith(CDiffConstants::sDiffDissimilarityPrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffRenameFromPrefix) || sLine.startsWith(CDiffConstants::sDiffRenameToPrefix)
+                    || sLine.startsWith(CDiffConstants::sDiffCopyFromPrefix) || sLine.startsWith(CDiffConstants::sDiffCopyToPrefix))
+            {
+                continue;
+            }
+
+            CDiffLine* pDiffLine = new CDiffLine();
+
+            if (sLine.startsWith(CDiffConstants::sDiffFilePrefix))
+            {
+                QString sNewText = sLine;
+
+                QRegularExpressionMatch tMatch = tFileRegExp.match(sLine);
+
+                if (tMatch.hasMatch())
+                    sNewText = tMatch.captured(CDiffConstants::iDiffFilePathCapture).trimmed();
+
+                sCurrentFileName = sNewText;
+                pDiffLine->setOperation(CEnums::DiffFileName);
+                pDiffLine->setText(sNewText);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iInvalidHunkId);
+                pDiffLine->setOldLineNumber(iNoLineNumber);
+                pDiffLine->setNewLineNumber(iNoLineNumber);
+            }
+            else if (sLine.startsWith(CDiffConstants::sDiffHunkPrefix))
+            {
+                QRegularExpressionMatch tMatch = tHunkRegExp.match(sLine);
+
+                if (tMatch.hasMatch())
+                {
+                    iOldLineNumber = tMatch.captured(CDiffConstants::iHunkOldStartCapture).toInt();
+                    iNewLineNumber = tMatch.captured(CDiffConstants::iHunkNewStartCapture).toInt();
+                }
+
+                // Keep hunk identifiers unique across files: patch grouping
+                // by hunk alone stays correct on multi-file diffs
+                iHunkId++;
+                pDiffLine->setOperation(CEnums::DiffHunk);
+                pDiffLine->setText(sLine);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(iNoLineNumber);
+                pDiffLine->setNewLineNumber(iNoLineNumber);
+            }
+            else if (sLine.startsWith(CDiffConstants::sDiffAddedPrefix) && not sLine.startsWith(CDiffConstants::sDiffAddedHeaderPrefix))
+            {
+                pDiffLine->setOperation(CEnums::DiffAdd);
+                pDiffLine->setText(sLine);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(iNoLineNumber);
+                pDiffLine->setNewLineNumber(iNewLineNumber);
+                iNewLineNumber++;
+            }
+            else if (sLine.startsWith(CDiffConstants::sDiffDeletedPrefix) && not sLine.startsWith(CDiffConstants::sDiffDeletedHeaderPrefix))
+            {
+                pDiffLine->setOperation(CEnums::DiffDelete);
+                pDiffLine->setText(sLine);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(iOldLineNumber);
+                pDiffLine->setNewLineNumber(iNoLineNumber);
+                iOldLineNumber++;
+            }
+            else if (sLine.startsWith(CDiffConstants::sDiffNoNewlinePrefix))
+            {
+                pDiffLine->setOperation(CEnums::None);
+                pDiffLine->setText(sLine);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(iNoLineNumber);
+                pDiffLine->setNewLineNumber(iNoLineNumber);
+            }
+            else
+            {
+                pDiffLine->setOperation(CEnums::None);
+                pDiffLine->setText(sLine);
+                pDiffLine->setFileName(sCurrentFileName);
+                pDiffLine->setHunkId(iHunkId);
+                pDiffLine->setOldLineNumber(iOldLineNumber);
+                pDiffLine->setNewLineNumber(iNewLineNumber);
+                iOldLineNumber++;
+                iNewLineNumber++;
+            }
+
+            lReturnValue << pDiffLine;
+        }
+    }
+
+    if (not bAtLeastOneLineOK)
+    {
+        qDeleteAll(lReturnValue);
+        lReturnValue.clear();
+    }
+
+    return lReturnValue;
 }

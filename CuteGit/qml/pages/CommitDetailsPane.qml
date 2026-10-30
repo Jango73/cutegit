@@ -14,6 +14,7 @@ Item {
     property int addedCount: root.repository ? root.repository.commitDetailsAddedCount : 0
     property int removedCount: root.repository ? root.repository.commitDetailsRemovedCount : 0
     property string commitMessage: root.repository ? root.repository.commitDetailsMessage : ""
+    readonly property bool isWorkingTree: root.repository !== null && root.commitId !== "" && root.commitId === root.repository.workingTreeCommitId
 
     StandardLabel {
         anchors.fill: parent
@@ -39,7 +40,7 @@ Item {
             }
             StandardText {
                 Layout.fillWidth: true
-                text: root.commitId
+                text: root.isWorkingTree ? Const.workingTreeText : root.commitId
                 wrapMode: Text.WrapAnywhere
             }
 
