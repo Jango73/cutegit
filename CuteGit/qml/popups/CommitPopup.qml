@@ -44,7 +44,7 @@ StandardPopup {
                        : undefined
 
                 delegate: StandardListViewItem {
-                    width: parent.width
+                    width: ListView.view.width
                     listView: fileList
                     symbolText: model.status
                     primaryText: model.fileName
