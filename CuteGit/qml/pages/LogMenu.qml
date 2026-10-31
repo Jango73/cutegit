@@ -16,6 +16,9 @@ Menu {
     /*! The currently selected commit's message */
     property string commitMessage: ""
 
+    /*! True when the menu was opened from the ref log: history rewriting actions do not apply */
+    property bool fromRefLog: false
+
     signal requestCopyText(var text)
     signal requestCommitDiffPrevious(var commitId)
     signal requestCommitTagOn(var commitId)
@@ -90,7 +93,7 @@ Menu {
 
     Action {
         text: Const.logRebaseMenuText
-        enabled: !root.isWorkingTree && (root.repository ? (root.repository.can(CEnums.RebaseOnCommit) && !root.repository.hasTrackedModifiedFiles) : false)
+        enabled: !root.isWorkingTree && !root.fromRefLog && (root.repository ? (root.repository.can(CEnums.RebaseOnCommit) && !root.repository.hasTrackedModifiedFiles) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -101,7 +104,7 @@ Menu {
 
     Action {
         text: Const.logSquashMenuText
-        enabled: !root.isWorkingTree && (root.repository ? (root.repository.can(CEnums.SquashCommit) && !root.repository.hasTrackedModifiedFiles) : false)
+        enabled: !root.isWorkingTree && !root.fromRefLog && (root.repository ? (root.repository.can(CEnums.SquashCommit) && !root.repository.hasTrackedModifiedFiles) : false)
 
         onTriggered: {
             if (root.commitId !== "") {
@@ -112,7 +115,7 @@ Menu {
 
     Action {
         text: Const.logChangeMessageMenuText
-        enabled: !root.isWorkingTree && (root.repository ? (root.repository.can(CEnums.ChangeCommitMessage) && !root.repository.hasTrackedModifiedFiles) : false)
+        enabled: !root.isWorkingTree && !root.fromRefLog && (root.repository ? (root.repository.can(CEnums.ChangeCommitMessage) && !root.repository.hasTrackedModifiedFiles) : false)
 
         onTriggered: {
             if (root.commitId !== "") {

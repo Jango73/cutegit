@@ -531,9 +531,10 @@ Pane {
         diffMenu.popup()
     }
 
-    function showLogMenu(commitId, message) {
+    function showLogMenu(commitId, message, fromRefLog) {
         logMenu.commitId = commitId
         logMenu.commitMessage = message
+        logMenu.fromRefLog = fromRefLog === true
         logMenu.popup()
     }
 

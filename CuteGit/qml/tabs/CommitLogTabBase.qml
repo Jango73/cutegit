@@ -10,8 +10,8 @@ BaseTab {
         root.viewRoot.showCommitDiffPrevious(commitId)
     }
 
-    function showCommitMenu(commitId, message) {
-        root.viewRoot.showLogMenu(commitId, message)
+    function showCommitMenu(commitId, message, fromRefLog) {
+        root.viewRoot.showLogMenu(commitId, message, fromRefLog === true)
     }
 
     function requestCommitDiffPrevious(commitId) {
