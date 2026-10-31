@@ -138,6 +138,7 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
         lIncomingLines << pGraphLine;
     }
 
+    int iOriginalStartIndex = tCollection.startIndex();
     int iStartIndex = tCollection.startIndex();
     int iPotentialCount = tCollection.potentialCount();
 
@@ -168,7 +169,20 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
         iStartIndex += 1;
     }
 
+    int iIncomingCount = lIncomingLines.count();
+
     reconcileLines(lIncomingLines, iStartIndex, iPotentialCount);
+
+    // A refresh loads from row 0 but shifts to 1 with the working tree line:
+    // reconcileLines only trims the stale tail on start 0, so a shrinking
+    // history (squash, rebase, reset) keeps dead rows without this trim.
+    // Selecting a dead row then diffs an unknown revision.
+    if (iOriginalStartIndex == 0 && m_bWorkingTreePresent)
+    {
+        trimTailToCount(iStartIndex + iIncomingCount);
+        refreshWorkingTreeParent();
+        layoutLoadedLines();
+    }
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -11,6 +11,8 @@
 #include "CRepository.h"
 #include "CLogModel.h"
 #include "CGraphModel.h"
+#include "CGraphLine.h"
+#include "CGraphLineCollection.h"
 #include "CLabelModel.h"
 #include "CPatchBuilder.h"
 #include "CDiffModel.h"
@@ -464,7 +466,64 @@ private slots:
         QVERIFY(modelContains(m_pRepository->fileDiffModel(), "line-B2"));
     }
 
+    // A shrinking history (squash, rebase, reset) drops dead rows on refresh:
+    // without the tail trim the graph keeps unknown revisions and the commit
+    // diff fails with "revision inconnue" when one is selected
+    void graphRefresh_shrinkingHistory_dropsStaleRows()
+    {
+        CGraphModel tModel(nullptr);
+
+        tModel.setWorkingTreePresent(true);
+
+        QCOMPARE(tModel.rowCount(), 1);
+
+        CGraphLineCollection tFull;
+        tFull.setStartIndex(0);
+        tFull.setPotentialCount(4);
+        tFull.add(makeGraphLine("commit-A", QStringList() << "commit-B", "feat A"));
+        tFull.add(makeGraphLine("commit-B", QStringList() << "commit-C", "feat B"));
+        tFull.add(makeGraphLine("commit-C", QStringList() << "commit-D", "feat C"));
+        tFull.add(makeGraphLine("commit-D", QStringList(), "feat D"));
+
+        tModel.setLines(tFull);
+
+        QCOMPARE(tModel.rowCount(), 5);
+        QVERIFY(tModel.findLine("commit-D") != nullptr);
+
+        CGraphLineCollection tShrunk;
+        tShrunk.setStartIndex(0);
+        tShrunk.setPotentialCount(2);
+        tShrunk.add(makeGraphLine("squashed-A", QStringList() << "squashed-B", "squashed"));
+        tShrunk.add(makeGraphLine("squashed-B", QStringList(), "feat D"));
+
+        tModel.setLines(tShrunk);
+
+        QCOMPARE(tModel.rowCount(), 3);
+        QVERIFY(tModel.findLine("commit-A") == nullptr);
+        QVERIFY(tModel.findLine("commit-B") == nullptr);
+        QVERIFY(tModel.findLine("commit-C") == nullptr);
+        QVERIFY(tModel.findLine("squashed-A") != nullptr);
+        QVERIFY(tModel.findLine("squashed-B") != nullptr);
+        QCOMPARE(tModel.data(tModel.index(0, 0), CGraphModel::eIsWorkingTreeRole).toBool(), true);
+    }
+
  private:
+
+    // Builds an owned graph line for the synthetic shrinking-history test
+    static CGraphLine* makeGraphLine(const QString& sId, const QStringList& lParents, const QString& sMessage)
+    {
+        CGraphLine* pLine = new CGraphLine();
+
+        pLine->setCommitId(sId);
+        pLine->setParents(lParents);
+        pLine->setDecorations(QStringList());
+        pLine->setAuthor("tester");
+        pLine->setDate(QDateTime::fromString("2026-10-31T09:00:00+01:00", Qt::ISODate));
+        pLine->setMessage(sMessage);
+        pLine->setMessageIsComplete(true);
+
+        return pLine;
+    }
 
     // True when any loaded graph row carries at least one label
     bool graphHasLabeledRow() const
