@@ -321,6 +321,7 @@ protected:
     static const QString sCommandRevert;
     static const QString sCommandSetCurrentBranch;
     static const QString sCommandSquashCommit;
+    static const QString sCommandSquashCommitRoot;
     static const QString sCommandStage;
     static const QString sCommandStageAll;
     static const QString sCommandStashPop;
@@ -344,6 +345,7 @@ protected:
     static const QString sCommandWorkingTreeDiff;
     static const QString sCommandWorkingTreeDiffEmpty;
     static const QString sCommandVerifyHead;
+    static const QString sCommandVerifyRevision;
     static const QString sCommandApplyPatchCached;
     static const QString sCommandApplyPatchCachedReverse;
     static const QString sCommandApplyPatch;

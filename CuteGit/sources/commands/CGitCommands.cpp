@@ -79,6 +79,7 @@ const QString CGitCommands::sCommandResetOnCommit       = "git reset %1";
 const QString CGitCommands::sCommandRevert              = "git checkout \"%1\"";
 const QString CGitCommands::sCommandSetCurrentBranch    = "git checkout \"%1\"";
 const QString CGitCommands::sCommandSquashCommit        = "git rebase --interactive %1~2";
+const QString CGitCommands::sCommandSquashCommitRoot   = "git rebase --interactive --root";
 const QString CGitCommands::sCommandStage               = "git add -f \"%1\"";
 const QString CGitCommands::sCommandStageAll            = "git add -u";
 const QString CGitCommands::sCommandStashPop            = "git stash pop";
@@ -106,6 +107,7 @@ const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --n
 const QString CGitCommands::sCommandWorkingTreeDiff        = "git diff --no-color -U3 HEAD";
 const QString CGitCommands::sCommandWorkingTreeDiffEmpty  = "git diff --no-color -U3 4b825dc642cb6eb9a060e54bf8d69288fbee4904";
 const QString CGitCommands::sCommandVerifyHead             = "git rev-parse --verify HEAD";
+const QString CGitCommands::sCommandVerifyRevision        = "git rev-parse --verify %1";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
 const QString CGitCommands::sCommandApplyPatchCachedReverse = "git apply --cached --reverse --unidiff-zero \"%1\"";
 const QString CGitCommands::sCommandApplyPatch         = "git apply --unidiff-zero \"%1\"";
@@ -684,6 +686,14 @@ void CGitCommands::commitRebase(const QString& sPath, const QString& sCommitId)
 
 void CGitCommands::commitSquash(const QString& sPath, const QString& sCommitId)
 {
+    int iExitCode = 0;
+    execNow(sPath, QString(sCommandVerifyRevision).arg(sCommitId + "~1"), QMap<QString, QString>(), &iExitCode);
+    if (iExitCode != 0)
+    {
+        emit newOutputString(CEnums::eNotification, QString(tr("Cannot squash %1: root commit has no parent to squash into")).arg(sCommitId));
+        return;
+    }
+
     emit newOutputString(CEnums::eNotification, QString(tr("Squashing %1...")).arg(sCommitId));
 
     m_eRebaseType = eRTSquash;
@@ -695,7 +705,8 @@ void CGitCommands::commitSquash(const QString& sPath, const QString& sCommitId)
     mEnvironment[sSequenceEditorToken] = m_pController->stubFileName();
     mEnvironment[sTextEditorToken] = m_pController->stubFileName();
 
-    QString sCommand = QString(sCommandSquashCommit).arg(sCommitId);
+    execNow(sPath, QString(sCommandVerifyRevision).arg(sCommitId + "~2"), QMap<QString, QString>(), &iExitCode);
+    QString sCommand = (iExitCode == 0) ? QString(sCommandSquashCommit).arg(sCommitId) : sCommandSquashCommitRoot;
 
     exec(new CProcessCommand(CEnums::eSquashCommit, sPath, sCommand, true, mEnvironment));
 }
