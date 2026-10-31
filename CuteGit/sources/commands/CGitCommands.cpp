@@ -63,7 +63,7 @@ const QString CGitCommands::sCommandGetRebaseApplyPath  = "git rev-parse --git-p
 const QString CGitCommands::sCommandGetRebaseMergePath  = "git rev-parse --git-path rebase-merge";
 const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"%x1e&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2";
 const QString CGitCommands::sCommandGraphCount         = "git rev-list --count --all";
-const QString CGitCommands::sCommandHeadCommits         = "git for-each-ref --format=\"%(refname:short) %(objectname:short)\" refs/heads refs/remotes";
+const QString CGitCommands::sCommandHeadCommits         = "git for-each-ref --format=\"%(refname:short) %(objectname)\" refs/heads refs/remotes";
 const QString CGitCommands::sCommandIgnoredFiles        = "git ls-files --others --ignored --exclude-standard";
 const QString CGitCommands::sCommandMergeBranch         = "git merge \"%1\"";
 const QString CGitCommands::sCommandPatchApply          = "git apply \"%1\"";
@@ -89,7 +89,7 @@ const QString CGitCommands::sCommandStashSecondParent   = "git rev-parse --verif
 const QString CGitCommands::sCommandStashThirdParent    = "git rev-parse --verify refs/stash^3";
 const QString CGitCommands::sCommandStatus              = "git status --porcelain --untracked-files=all";
 const QString CGitCommands::sCommandTags                = "git tag";
-const QString CGitCommands::sCommandTagCommits           = "git for-each-ref --format=\"%(refname:short) %(*objectname:short) %(objectname:short)\" refs/tags";
+const QString CGitCommands::sCommandTagCommits           = "git for-each-ref --format=\"%(refname:short) %(*objectname) %(objectname)\" refs/tags";
 const QString CGitCommands::sCommandTrackedFiles        = "git ls-files --cached";
 const QString CGitCommands::sCommandTwoCommitDiff       = "git diff --no-color --ignore-all-space \"%1\" \"%2\"";
 const QString CGitCommands::sCommandUnstage             = "git reset HEAD \"%1\"";

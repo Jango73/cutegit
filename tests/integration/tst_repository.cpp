@@ -368,6 +368,67 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(not branchCommitId(pTags, "v-batch-annotated").isEmpty(), s_iAsyncTimeoutMs);
     }
 
+    // A push moves the remote tracking label onto the pushed commit: after
+    // pushing, origin/<branch> points at the local head and the graph shows
+    // it there instead of leaving it stuck on the previous commit
+    void push_movesRemoteLabel()
+    {
+        QTemporaryDir tOriginDir;
+
+        QVERIFY(tOriginDir.isValid());
+
+        QString sOriginPath = tOriginDir.path() + "/origin.git";
+
+        QCOMPARE(QProcess::execute("git", {"init", "--bare", "--quiet", sOriginPath}), 0);
+
+        QString sUnused;
+
+        {
+            QString sIgnored;
+
+            gitOutput({"remote", "remove", "origin"}, sIgnored);
+        }
+
+        QVERIFY(gitOutput({"remote", "add", "origin", sOriginPath}, sUnused));
+
+        QString sCurrent;
+
+        QTRY_VERIFY_WITH_TIMEOUT(not m_pRepository->currentBranch().isEmpty(), s_iAsyncTimeoutMs);
+
+        sCurrent = m_pRepository->currentBranch();
+
+        // Publish the current head so origin/<branch> exists, through the
+        // same push path the QML action uses
+        m_pRepository->push();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitCountAhead() == 0 || not m_pRepository->hasUpstreamBranch(), s_iAsyncTimeoutMs);
+
+        // Wait until the remote tracking head matches the local head
+        QTRY_VERIFY_WITH_TIMEOUT(branchCommitId(m_pRepository->remoteBranchModel(), "origin/" + sCurrent) == branchCommitId(m_pRepository->localBranchModel(), sCurrent) && not branchCommitId(m_pRepository->localBranchModel(), sCurrent).isEmpty(), s_iAsyncTimeoutMs);
+
+        QVERIFY(gitOutput({"-c", "user.name=probe", "-c", "user.email=probe@local", "commit", "-qam", "push-probe"}, sUnused));
+
+        QString sNewHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sNewHead));
+
+        sNewHead = sNewHead.trimmed();
+
+        QVERIFY(not sNewHead.isEmpty());
+
+        m_pRepository->push();
+
+        // The remote head follows the push: exact match, not a short prefix
+        QTRY_VERIFY_WITH_TIMEOUT(branchCommitId(m_pRepository->remoteBranchModel(), "origin/" + sCurrent) == sNewHead, s_iAsyncTimeoutMs);
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        // The pushed commit carries the remote label, the previous one lost it
+        QTRY_VERIFY_WITH_TIMEOUT(graphRowHasLabel(sNewHead, "origin/" + sCurrent), s_iAsyncTimeoutMs);
+    }
+
     // A local branch without upstream reports no upstream and no ahead count,
     // so the QML push action stays enabled through hasUpstreamBranch
     void branchWithoutUpstream_reportsMissingUpstream()
@@ -523,6 +584,39 @@ private slots:
         pLine->setMessageIsComplete(true);
 
         return pLine;
+    }
+
+    // True when the graph row for a commit carries a label with the name
+    static bool graphRowHasLabelStatic(CGraphModel* pModel, const QString& sCommitId, const QString& sLabelName)
+    {
+        for (int iRow = 0; iRow < pModel->rowCount(); iRow++)
+        {
+            QModelIndex tIndex = pModel->index(iRow, 0);
+
+            if (pModel->data(tIndex, CGraphModel::eCommitIdRole).toString() != sCommitId)
+                continue;
+
+            QVariant vLabels = pModel->data(tIndex, CGraphModel::eLabelsRole);
+            CLabelModel* pLabels = vLabels.value<CLabelModel*>();
+
+            if (pLabels == nullptr)
+                return false;
+
+            for (int iLabel = 0; iLabel < pLabels->rowCount(); iLabel++)
+            {
+                if (pLabels->data(pLabels->index(iLabel, 0), CLabelModel::eNameRole).toString() == sLabelName)
+                    return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    bool graphRowHasLabel(const QString& sCommitId, const QString& sLabelName) const
+    {
+        return graphRowHasLabelStatic(m_pRepository->graphModel(), sCommitId, sLabelName);
     }
 
     // True when any loaded graph row carries at least one label
