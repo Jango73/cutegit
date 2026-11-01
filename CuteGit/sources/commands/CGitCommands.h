@@ -290,6 +290,7 @@ protected:
     static const QString sCommandClone;
     static const QString sCommandCommit;
     static const QString sCommandCommitDiffPrevious;
+    static const QString sCommandCommitDiffRoot;
     static const QString sCommandContinueMerge;
     static const QString sCommandContinueRebase;
     static const QString sCommandCreateTagOnCommit;
@@ -344,6 +345,7 @@ protected:
     static const QString sCommandStagedDiff;
     static const QString sCommandWorkingTreeDiff;
     static const QString sCommandWorkingTreeDiffEmpty;
+    static const QString sEmptyTreeId;
     static const QString sCommandVerifyHead;
     static const QString sCommandVerifyRevision;
     static const QString sCommandApplyPatchCached;

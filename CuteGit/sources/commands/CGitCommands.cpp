@@ -38,6 +38,8 @@ const int CGitCommands::iLogFieldCount                   = 5;
 const int CGitCommands::iGraphFieldCount                 = 8;
 const int CGitCommands::iRefLogFormatValueCount         = 3;
 
+const QString CGitCommands::sEmptyTreeId                = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+
 const QString CGitCommands::sCommandAbortMerge          = "git merge --abort";
 const QString CGitCommands::sCommandAbortRebase         = "git rebase --abort";
 const QString CGitCommands::sCommandAmend               = "git commit --amend --reset-author --no-edit";
@@ -48,6 +50,7 @@ const QString CGitCommands::sCommandBranchFromCommit    = "git checkout -b \"%1\
 const QString CGitCommands::sCommandClone               = "git clone --progress \"%1\" \"%2\"";
 const QString CGitCommands::sCommandCommit              = "git commit -m \"%1\"";
 const QString CGitCommands::sCommandCommitDiffPrevious  = "git diff %1~1 %1";
+const QString CGitCommands::sCommandCommitDiffRoot      = "git diff " + CGitCommands::sEmptyTreeId + " %1";
 const QString CGitCommands::sCommandContinueMerge       = "git merge --continue";
 const QString CGitCommands::sCommandContinueRebase      = "git rebase --continue";
 const QString CGitCommands::sCommandCreateTagOnCommit   = "git tag -m \"%1\" \"%2\" \"%3\"";
@@ -105,7 +108,7 @@ const QString CGitCommands::sCommandSubmoduleStatus        = "git submodule stat
 const QString CGitCommands::sCommandIsTracked            = "git ls-files --error-unmatch -- \"%1\"";
 const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandWorkingTreeDiff        = "git diff --no-color -U3 HEAD";
-const QString CGitCommands::sCommandWorkingTreeDiffEmpty  = "git diff --no-color -U3 4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+const QString CGitCommands::sCommandWorkingTreeDiffEmpty  = "git diff --no-color -U3 " + CGitCommands::sEmptyTreeId;
 const QString CGitCommands::sCommandVerifyHead             = "git rev-parse --verify HEAD";
 const QString CGitCommands::sCommandVerifyRevision        = "git rev-parse --verify %1";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
@@ -611,7 +614,11 @@ void CGitCommands::blame(const QString& sPath, const QString& sFullName)
 
 void CGitCommands::commitDiffPrevious(const QString& sPath, const QString& sCommitId)
 {
-    QString sCommand = QString(sCommandCommitDiffPrevious).arg(sCommitId);
+    int iExitCode = 0;
+
+    execNow(sPath, QString(sCommandVerifyRevision).arg(sCommitId + "~1"), QMap<QString, QString>(), &iExitCode);
+
+    QString sCommand = (iExitCode == 0) ? QString(sCommandCommitDiffPrevious).arg(sCommitId) : QString(sCommandCommitDiffRoot).arg(sCommitId);
     exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand));
 }
 

@@ -52,6 +52,16 @@ ListView {
         onTriggered: root.positionViewAtIndex(root.count - 1, ListView.Beginning)
     }
 
+    /*! Deferred clamp: setting contentY synchronously inside onCountChanged/onContentHeightChanged
+        interrupts the ListView layout during model resets and filter invalidations, leaving a blank view.
+        Coalescing through a zero-interval timer lets the layout settle first */
+    Timer {
+        id: clampTimer
+        interval: 0
+        repeat: false
+        onTriggered: root.clampContentYToBounds()
+    }
+
     FocusIndicator {
         id: focusIndicator
         anchors.fill: parent
@@ -71,7 +81,11 @@ ListView {
 
     onCountChanged: {
         modelChanged()
+        scheduleClampContentY()
     }
+
+    onContentHeightChanged: scheduleClampContentY()
+    onHeightChanged: scheduleClampContentY()
 
     /*! Cached model indexes dangle after a layout change or a reset: drop them, delegates repopulate on demand */
     // Only QObject models expose modelReset/layoutChanged: keep detached for plain JS values (arrays)
@@ -161,6 +175,26 @@ ListView {
             } else {
                 resyncSelectionToCurrentIndex()
             }
+        }
+    }
+
+    /*! Schedules a contentY clamp after the ListView layout settles */
+    function scheduleClampContentY() {
+        clampTimer.restart()
+    }
+
+    /*! Keeps the view out of empty space after rows shrink (collapse, filter): clamps contentY into its valid range */
+    function clampContentYToBounds() {
+        if (contentHeight <= height) {
+            if (contentY !== originY)
+                contentY = originY
+        } else {
+            var maxContentY = contentHeight - height + originY
+
+            if (contentY > maxContentY)
+                contentY = maxContentY
+            else if (contentY < originY)
+                contentY = originY
         }
     }
 
