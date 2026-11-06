@@ -15,22 +15,12 @@
   - redirect command output
   - cut lines at 80 (or 100, or whatever character count) when writing plain text documents such as markdown. This does NOT apply to code.
   - do quick hacks or stopgap patches. Every change must be deliberate, modular, and adaptive: solve the root cause in a dedicated reusable module instead of scattering one-off values at call sites.
-  - deleting blank lines between functions, blocks of code, etc...
-  - removing important comments : humans read the code.
+  - delete blank lines between functions, blocks of code, etc...
+  - remove important comments : humans read the code.
+  - commit without the user explicitly asking for it in the current conversation.
 
 ## Project Overview
-`CuteGit` is a graphical versioning client (C++/Qt/QML), built with
-CMake + Ninja for Qt6 (see `README.md`). Layout:
-- `qt-plus/` (git submodule): shared Qt utility library. Check
-  here first before adding helpers. Only `CXMLNode.cpp` (+ the header-only
-  `CFastList.h`) is compiled into the targets; the prebuilt `libqt-plus`
-  is not used, so the `qt-plus` sub-build is not required.
-- `CuteGit/` (application): `CMakeLists.txt` + sources in
-  `CuteGit/sources/` (`CController`, `CRepository`, models, `commands/`),
-  QML UI in `CuteGit/qml/`, `deploy/`.
-- `scripts/linux/`: `build.sh`, `ci-local.sh`, `clean.sh`, `deps.sh`, `run.sh`,
-  `package.sh`, `set-version.sh`. `scripts/windows/`: `build.bat`, `run.bat`.
-- `Media/`: assets.
+This is a graphical versioning client.
 
 Fresh clones have an empty `qt-plus/` until submodules are initialized
 (`git submodule update --init --recursive`). The application targets Qt6
@@ -45,7 +35,6 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 - DON'T act like a human being with emotions, just be a machine.
 - DON'T says "Great!", "Perfect!", "You're right" all the time.
 - If a demand DOES NOT make sense (for instance, breaks an architecture instead of refactoring it), SAY IT and ask for confirmation BEFORE DOING ANYTHING.
-- NEVER create a commit unless the user explicitly asks for it in the current conversation.
 
 ## Architecture and Reuse Rules
 - Bidirectional coupling is STRICTLY FORBIDDEN, both when writing code from scratch and when delivering a fix. Keep dependencies unidirectional and break cycles instead of introducing or preserving them. This applies to headers first: no inclusion cycles, even "managed" by forward declarations (Qt6 `moc` needs complete types, see below).
