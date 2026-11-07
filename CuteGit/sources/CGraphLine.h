@@ -46,4 +46,7 @@ public:
 
     //! Builds owned labels from git decorations
     QList<CLabel*> createLabels() const;
+
+    //! Returns true when decorations mark the HEAD commit, attached or detached
+    bool hasHeadDecoration() const;
 };

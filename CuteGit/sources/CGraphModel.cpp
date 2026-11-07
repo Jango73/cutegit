@@ -25,6 +25,21 @@ static void layoutIncomingLines(const QList<CGraphLine*>& lLoadedLines, QList<CG
     }
 }
 
+// Returns the commit identifier carrying a HEAD decoration in the given lines, empty when none
+static QString headCommitIdInLines(const QList<CLogLine*>& lLines)
+{
+    for (const CLogLine* pLine : lLines)
+    {
+        const CGraphLine* pGraphLine = qobject_cast<const CGraphLine*>(pLine);
+
+        if (pGraphLine != nullptr && pGraphLine->hasHeadDecoration()
+                && not pGraphLine->commitId().isEmpty() && pGraphLine->commitId() != CGraphModel::workingTreeCommitId())
+            return pGraphLine->commitId();
+    }
+
+    return QString();
+}
+
 //-------------------------------------------------------------------------------------------------
 
 QString CGraphModel::workingTreeCommitId()
@@ -62,7 +77,7 @@ void CGraphModel::setWorkingTreePresent(bool bPresent)
         // The flag may survive a clear without its row: restore the row then
         if (bPresent && (m_lLines.isEmpty() || m_lLines.first() == nullptr || m_lLines.first()->commitId() != workingTreeCommitId()))
         {
-            CGraphLine* pLine = createWorkingTreeLine(firstRealCommitId());
+            CGraphLine* pLine = createWorkingTreeLine(workingTreeParentId());
 
             beginInsertRows(QModelIndex(), 0, 0);
             m_lLines.prepend(pLine);
@@ -79,7 +94,7 @@ void CGraphModel::setWorkingTreePresent(bool bPresent)
 
     if (bPresent)
     {
-        CGraphLine* pLine = createWorkingTreeLine(firstRealCommitId());
+        CGraphLine* pLine = createWorkingTreeLine(workingTreeParentId());
 
         beginInsertRows(QModelIndex(), 0, 0);
         m_lLines.prepend(pLine);
@@ -146,7 +161,12 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
     {
         if (m_lLines.isEmpty() || m_lLines.first() == nullptr || m_lLines.first()->commitId() != workingTreeCommitId())
         {
-            CGraphLine* pLine = createWorkingTreeLine(lIncomingLines.isEmpty() ? firstRealCommitId() : static_cast<CGraphLine*>(lIncomingLines.first())->commitId());
+            QString sParentId = headCommitIdInLines(lIncomingLines);
+
+            if (sParentId.isEmpty())
+                sParentId = lIncomingLines.isEmpty() ? workingTreeParentId() : static_cast<CGraphLine*>(lIncomingLines.first())->commitId();
+
+            CGraphLine* pLine = createWorkingTreeLine(sParentId);
 
             beginInsertRows(QModelIndex(), 0, 0);
             m_lLines.prepend(pLine);
@@ -155,10 +175,13 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
         else if (iStartIndex == 0 && not lIncomingLines.isEmpty())
         {
             CGraphLine* pWorkingTreeLine = static_cast<CGraphLine*>(m_lLines.first());
-            CGraphLine* pFirstIncomingLine = static_cast<CGraphLine*>(lIncomingLines.first());
+            QString sParentId = headCommitIdInLines(lIncomingLines);
 
-            if (pWorkingTreeLine != nullptr && pFirstIncomingLine != nullptr)
-                pWorkingTreeLine->setParents(QStringList() << pFirstIncomingLine->commitId());
+            if (sParentId.isEmpty())
+                sParentId = static_cast<CGraphLine*>(lIncomingLines.first())->commitId();
+
+            if (pWorkingTreeLine != nullptr && not sParentId.isEmpty())
+                pWorkingTreeLine->setParents(QStringList() << sParentId);
         }
 
         if (iPotentialCount == 0)
@@ -402,6 +425,25 @@ QString CGraphModel::firstRealCommitId() const
 
 //-------------------------------------------------------------------------------------------------
 
+QString CGraphModel::headCommitId() const
+{
+    return headCommitIdInLines(m_lLines);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+QString CGraphModel::workingTreeParentId() const
+{
+    QString sHeadId = headCommitId();
+
+    if (not sHeadId.isEmpty())
+        return sHeadId;
+
+    return firstRealCommitId();
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CGraphModel::refreshWorkingTreeParent()
 {
     if (not m_bWorkingTreePresent || m_lLines.isEmpty())
@@ -412,18 +454,7 @@ void CGraphModel::refreshWorkingTreeParent()
     if (pWorkingTreeLine == nullptr)
         return;
 
-    QString sParentId = QString();
-
-    for (int iRow = 1; iRow < m_lLines.count(); iRow++)
-    {
-        const CLogLine* pLine = m_lLines[iRow];
-
-        if (pLine != nullptr && not pLine->commitId().isEmpty() && pLine->commitId() != workingTreeCommitId())
-        {
-            sParentId = pLine->commitId();
-            break;
-        }
-    }
+    QString sParentId = workingTreeParentId();
 
     if (sParentId.isEmpty())
         pWorkingTreeLine->setParents(QStringList());

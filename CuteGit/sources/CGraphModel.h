@@ -100,7 +100,13 @@ protected:
     //! Returns the commit identifier of the first real commit, empty when none is loaded
     QString firstRealCommitId() const;
 
-    //! Updates the parent of the working tree line to the first real commit
+    //! Returns the commit identifier carrying a HEAD decoration, empty when none is loaded
+    QString headCommitId() const;
+
+    //! Returns the parent for the working tree line, HEAD commit preferred, first real commit fallback
+    QString workingTreeParentId() const;
+
+    //! Updates the parent of the working tree line to the HEAD commit, first real commit fallback
     void refreshWorkingTreeParent();
 
     //! Lays out every loaded line, working tree line included

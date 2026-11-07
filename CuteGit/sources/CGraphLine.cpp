@@ -78,3 +78,22 @@ QList<CLabel*> CGraphLine::createLabels() const
 
     return lReturnValue;
 }
+
+//-------------------------------------------------------------------------------------------------
+
+// Returns true when decorations mark the HEAD commit, attached or detached
+bool CGraphLine::hasHeadDecoration() const
+{
+    static const QString sHeadToken = "HEAD";
+    static const QString sHeadPointsToPrefix = "HEAD -> ";
+
+    for (const QString& sToken : m_lDecorations)
+    {
+        QString sTrimmedToken = sToken.trimmed();
+
+        if (sTrimmedToken == sHeadToken || sTrimmedToken.startsWith(sHeadPointsToPrefix))
+            return true;
+    }
+
+    return false;
+}

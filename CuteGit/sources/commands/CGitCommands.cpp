@@ -332,7 +332,18 @@ void CGitCommands::tagCommits(const QString& sPath, QStringList lTags)
 
 void CGitCommands::graph(const QString& sPath, int iFrom, int iCount)
 {
-    int iPotentialCount = execNow(sPath, sCommandGraphCount).trimmed().toInt();
+    // HEAD must be listed explicitly: --all alone misses detached commits
+    // reachable only through HEAD, while an unborn HEAD must not break empty repositories
+    int iHeadExitCode = 0;
+    execNow(sPath, sCommandVerifyHead, QMap<QString, QString>(), &iHeadExitCode);
+    bool bHasHead = (iHeadExitCode == 0);
+
+    QString sCountCommand = sCommandGraphCount;
+
+    if (bHasHead)
+        sCountCommand += " HEAD";
+
+    int iPotentialCount = execNow(sPath, sCountCommand).trimmed().toInt();
 
     // Stash internals (index and untracked commits) are reachable through --all:
     // resolve them so the graph output keeps a single stash row like other clients
@@ -356,6 +367,10 @@ void CGitCommands::graph(const QString& sPath, int iFrom, int iCount)
     }
 
     QString sCommand = QString(sCommandGraph).arg(iFrom).arg(iCount);
+
+    if (bHasHead)
+        sCommand.replace("--all", "--all HEAD");
+
     QString sUserData = QString("%1,%2").arg(iPotentialCount).arg(iFrom);
 
     for (const QString& sHiddenId : lHiddenIds)
