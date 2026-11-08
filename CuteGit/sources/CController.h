@@ -187,6 +187,11 @@ public:
     // Slots
     //-------------------------------------------------------------------------------------------------
 
+signals:
+
+    //! Emitted when a clone operation finishes. On success the error string is empty.
+    void cloneFinished(bool bSuccess, const QString& sError);
+
 protected slots:
 
     //!

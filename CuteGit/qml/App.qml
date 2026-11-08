@@ -325,6 +325,18 @@ ApplicationWindow {
         onCloneBegins: statusTextHistory.open()
     }
 
+    Connections {
+        target: root.ctrl
+
+        function onCloneFinished(bSuccess, sError) {
+            if (bSuccess) {
+                statusTextHistory.close()
+            } else if (!statusTextHistory.visible) {
+                statusTextHistory.open()
+            }
+        }
+    }
+
     HelpPopup {
         id: helpDialog
         anchors.centerIn: parent

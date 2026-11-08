@@ -991,6 +991,7 @@ void CController::cloneRepository(QString sRepositoryURL, QString sRepositoryPat
         {
             setStatusText(tr("Destination already holds a repository, opening it."));
             openRepository(sDestinationPath);
+            emit cloneFinished(true, QString());
             return;
         }
 
@@ -1188,6 +1189,7 @@ void CController::onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOu
         if (iExitCode == 0)
         {
             openRepository(m_sCloneCommandsRepositoryPath);
+            emit cloneFinished(true, QString());
         }
         else
         {
@@ -1228,6 +1230,8 @@ void CController::onNewCloneOutput(CEnums::EProcessCommand eCommand, QString sOu
             while (lHistory.count() > 50)
                 lHistory.takeFirst();
             m_pStatusTextHistory->setStringList(lHistory);
+
+            emit cloneFinished(false, sSummary);
         }
 
         break;
