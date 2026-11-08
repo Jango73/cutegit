@@ -161,20 +161,24 @@ ApplicationWindow {
         objectName: "clientZone"
         anchors.fill: parent
 
-        TabBar {
+        Action {
+            id: tabCloseAction
+
+            onTriggered: {
+                root.ctrl.removeRepository(source.tabIndex)
+            }
+        }
+
+        HorizontalOverflow {
             id: mainTabBar
             objectName: "mainTabBar"
             anchors.top: parent.top
-
-            Action {
-                id: tabCloseAction
-
-                onTriggered: {
-                    root.ctrl.removeRepository(source.tabIndex)
-                }
-            }
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Const.toolButtonHeight
 
             Repeater {
+                id: tabRepeater
                 model: root.ctrl.openRepositoryModel
 
                 ClosableTabButton {
@@ -182,19 +186,26 @@ ApplicationWindow {
                     text: model.repository.repositoryName
                     closeAction: tabCloseAction
                     tabIndex: index
+                    checked: index === mainTabBar.currentIndex
+                    onClicked: mainTabBar.currentIndex = index
                 }
-            }
-
-            onCountChanged: {
-                var indexToSet = root.ctrl.currentRepositoryIndexToSet()
-                if (indexToSet !== -1)
-                    currentIndex = indexToSet
-
-                root.ctrl.currentRepositoryIndex = currentIndex
             }
 
             onCurrentIndexChanged: {
                 root.ctrl.currentRepositoryIndex = currentIndex
+            }
+        }
+
+        // React to tab count changes (replacement for TabBar.onCountChanged)
+        Connections {
+            target: tabRepeater
+
+            function onCountChanged() {
+                var indexToSet = root.ctrl.currentRepositoryIndexToSet()
+                if (indexToSet !== -1)
+                    mainTabBar.currentIndex = indexToSet
+
+                root.ctrl.currentRepositoryIndex = mainTabBar.currentIndex
             }
         }
 
