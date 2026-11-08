@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-11-08
+
+### Added
+- Horizontal overflow strip with scroll buttons for the tab bar.
+- Reset and diff actions reused from LogMenu in the ref log.
+
+### Changed
+- Copyright split out of translatable strings, extended to 2019-2026.
+- README updated.
+
+### Fixed
+- Clone dialog output closed on success.
+- Working-tree line parented on HEAD so detached checkouts draw as a branch.
+- Root commit diff against empty tree and clamped list view contentY.
+- Stuck origin label after push with full hashes for branch and tag heads.
+- Squash of second commit on shallow history via rebase --root fallback.
+- Refresh bug with outdated items in the graph view.
+- CommitPopup delegate width null parent using ListView.view.width.
+
 ## [2.1.0] - 2026-10-30
 
 ### Added
