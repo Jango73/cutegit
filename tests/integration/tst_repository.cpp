@@ -14,6 +14,7 @@
 #include "CGraphLine.h"
 #include "CGraphLineCollection.h"
 #include "CLabelModel.h"
+#include "commands/CGitCommands.h"
 #include "CPatchBuilder.h"
 #include "CDiffModel.h"
 #include "CDiffModelProxy.h"
@@ -568,6 +569,74 @@ private slots:
         QCOMPARE(tModel.data(tModel.index(0, 0), CGraphModel::eIsWorkingTreeRole).toBool(), true);
     }
 
+    // Linked worktree heads carry no branch or tag decoration, so their lane
+    // would show with no label: the graph marks them with a worktree label
+    // carrying the worktree folder name
+    void worktreeHead_showsWorktreeLabel()
+    {
+        QString sUnused;
+        QString sOldHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sOldHead));
+
+        sOldHead = sOldHead.trimmed();
+
+        QVERIFY(not sOldHead.isEmpty());
+
+        // Move HEAD forward so the worktree commit keeps no branch label
+        QVERIFY(gitOutput({"-c", "user.name=probe", "-c", "user.email=probe@local",
+                           "commit", "--allow-empty", "-qam", "worktree-probe"}, sUnused));
+
+        // The clone keeps origin/main on the old head: drop the remote so the
+        // worktree commit carries no decoration at all, like a void lane tip
+        {
+            QString sIgnored;
+
+            gitOutput({"remote", "remove", "origin"}, sIgnored);
+        }
+
+        QString sWorktreePath = m_pWorkDir->path() + "/probe-wt";
+
+        QVERIFY(gitOutput({"worktree", "add", "--detach", sWorktreePath, sOldHead}, sUnused));
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(graphRowHasWorktreeLabel(sOldHead, "probe-wt"), s_iAsyncTimeoutMs);
+
+        QVERIFY(gitOutput({"worktree", "remove", "--force", sWorktreePath}, sUnused));
+    }
+
+    // Porcelain worktree listing maps head commits to folder names, skipping
+    // bare repositories while keeping prunable entries labeled
+    void worktreeHeads_parsesPorcelain()
+    {
+        QString sOutput =
+            "worktree /tmp/main\n"
+            "HEAD aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+            "branch refs/heads/main\n"
+            "\n"
+            "worktree /tmp/opencode/baseline\n"
+            "HEAD bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+            "detached\n"
+            "\n"
+            "worktree /tmp/bare.git\n"
+            "HEAD cccccccccccccccccccccccccccccccccccccccc\n"
+            "bare\n"
+            "\n"
+            "worktree /tmp/gone\n"
+            "HEAD dddddddddddddddddddddddddddddddddddddddd\n"
+            "detached\n"
+            "prunable gitdir file points to non-existent location\n";
+
+        QMap<QString, QString> hHeads = CGitCommands::parseWorktreeHeads(sOutput);
+
+        QCOMPARE(hHeads.count(), 3);
+        QCOMPARE(hHeads.value("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), QString("main"));
+        QCOMPARE(hHeads.value("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"), QString("baseline"));
+        QCOMPARE(hHeads.value("dddddddddddddddddddddddddddddddddddddddd"), QString("gone"));
+        QVERIFY(not hHeads.contains("cccccccccccccccccccccccccccccccccccccccc"));
+    }
+
  private:
 
     // Builds an owned graph line for the synthetic shrinking-history test
@@ -617,6 +686,40 @@ private slots:
     bool graphRowHasLabel(const QString& sCommitId, const QString& sLabelName) const
     {
         return graphRowHasLabelStatic(m_pRepository->graphModel(), sCommitId, sLabelName);
+    }
+
+    // True when the graph row for a commit carries a worktree label with the name
+    static bool graphRowHasWorktreeLabelStatic(CGraphModel* pModel, const QString& sCommitId, const QString& sLabelName)
+    {
+        for (int iRow = 0; iRow < pModel->rowCount(); iRow++)
+        {
+            QModelIndex tIndex = pModel->index(iRow, 0);
+
+            if (pModel->data(tIndex, CGraphModel::eCommitIdRole).toString() != sCommitId)
+                continue;
+
+            QVariant vLabels = pModel->data(tIndex, CGraphModel::eLabelsRole);
+            CLabelModel* pLabels = vLabels.value<CLabelModel*>();
+
+            if (pLabels == nullptr)
+                return false;
+
+            for (int iLabel = 0; iLabel < pLabels->rowCount(); iLabel++)
+            {
+                if (pLabels->data(pLabels->index(iLabel, 0), CLabelModel::eNameRole).toString() == sLabelName
+                        && pLabels->data(pLabels->index(iLabel, 0), CLabelModel::eTypeRole).toInt() == CEnums::WorktreeLabel)
+                    return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    bool graphRowHasWorktreeLabel(const QString& sCommitId, const QString& sLabelName) const
+    {
+        return graphRowHasWorktreeLabelStatic(m_pRepository->graphModel(), sCommitId, sLabelName);
     }
 
     // True when any loaded graph row carries at least one label

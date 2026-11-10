@@ -41,6 +41,7 @@ Item {
     readonly property color labelLocalColor: "aquamarine"
     readonly property color labelRemoteColor: "lightsalmon"
     readonly property color labelTagColor: "deepskyblue"
+    readonly property color labelWorktreeColor: "plum"
     readonly property color labelUpToDateColor: Material.color(Material.Green)
     readonly property color labelUnsyncedColor: Material.color(Material.Orange)
     readonly property color labelDivergedColor: Material.color(Material.Red)

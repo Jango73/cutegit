@@ -8,6 +8,7 @@
 
 // Application
 #include "CGitCommands.h"
+#include "../CGraphLine.h"
 #include "../CUtils.h"
 #include "../CController.h"
 #include "../CRepository.h"
@@ -64,7 +65,7 @@ const QString CGitCommands::sCommandFileLogCount        = "git rev-list --count 
 const QString CGitCommands::sCommandFileStatus          = "git status --porcelain --ignored --untracked-files=all \"%1\"";
 const QString CGitCommands::sCommandGetRebaseApplyPath  = "git rev-parse --git-path rebase-apply";
 const QString CGitCommands::sCommandGetRebaseMergePath  = "git rev-parse --git-path rebase-merge";
-const QString CGitCommands::sCommandGraph               = "git log --topo-order --all --decorate --pretty=format:\"%x1e&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2";
+const QString CGitCommands::sCommandGraph               = "git log --date-order --all --decorate --pretty=format:\"%x1e&&& %H &&& %P &&& %D &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2";
 const QString CGitCommands::sCommandGraphCount         = "git rev-list --count --all";
 const QString CGitCommands::sCommandHeadCommits         = "git for-each-ref --format=\"%(refname:short) %(objectname)\" refs/heads refs/remotes";
 const QString CGitCommands::sCommandIgnoredFiles        = "git ls-files --others --ignored --exclude-standard";
@@ -109,6 +110,7 @@ const QString CGitCommands::sCommandIsTracked            = "git ls-files --error
 const QString CGitCommands::sCommandStagedDiff          = "git diff --cached --no-color -U3 -- \"%1\"";
 const QString CGitCommands::sCommandWorkingTreeDiff        = "git diff --no-color -U3 HEAD";
 const QString CGitCommands::sCommandWorkingTreeDiffEmpty  = "git diff --no-color -U3 " + CGitCommands::sEmptyTreeId;
+const QString CGitCommands::sCommandWorktreeList          = "git worktree list --porcelain";
 const QString CGitCommands::sCommandVerifyHead             = "git rev-parse --verify HEAD";
 const QString CGitCommands::sCommandVerifyRevision        = "git rev-parse --verify %1";
 const QString CGitCommands::sCommandApplyPatchCached   = "git apply --cached --unidiff-zero \"%1\"";
@@ -1518,6 +1520,72 @@ static QStringList splitDecorations(const QString& sValue)
 /***************************************************************************/
 
 /*!
+    \fn QMap<QString, QString> CGitCommands::parseWorktreeHeads(const QString& sWorktreeListOutput)
+    Maps head commit ids to worktree folder names from porcelain output.
+    Bare repositories hold no checkout and are skipped, prunable entries are
+    kept so their lane stays labeled until the admin folder is pruned.
+*/
+QMap<QString, QString> CGitCommands::parseWorktreeHeads(const QString& sWorktreeListOutput)
+{
+    static const QString sWorktreePrefix = "worktree ";
+    static const QString sHeadPrefix = "HEAD ";
+    static const QString sBareMarker = "bare";
+
+    QMap<QString, QString> hReturnValue;
+    QString sPath;
+    QString sHeadId;
+    bool bBare = false;
+
+    auto flushWorktree = [&]()
+    {
+        if (!sPath.isEmpty() && !sHeadId.isEmpty() && !bBare)
+        {
+            QString sName = QDir(sPath).dirName();
+
+            if (sName.isEmpty())
+                sName = sPath;
+
+            hReturnValue[sHeadId] = sName;
+        }
+
+        sPath.clear();
+        sHeadId.clear();
+        bBare = false;
+    };
+
+    for (const QString& sLine : sWorktreeListOutput.split("\n"))
+    {
+        QString sTrimmedLine = sLine.trimmed();
+
+        if (sTrimmedLine.isEmpty())
+        {
+            flushWorktree();
+            continue;
+        }
+
+        if (sTrimmedLine.startsWith(sWorktreePrefix))
+        {
+            flushWorktree();
+            sPath = sTrimmedLine.mid(sWorktreePrefix.size()).trimmed();
+        }
+        else if (sTrimmedLine.startsWith(sHeadPrefix))
+        {
+            sHeadId = sTrimmedLine.mid(sHeadPrefix.size()).trimmed();
+        }
+        else if (sTrimmedLine == sBareMarker)
+        {
+            bBare = true;
+        }
+    }
+
+    flushWorktree();
+
+    return hReturnValue;
+}
+
+/***************************************************************************/
+
+/*!
     \fn static bool isStashDecoration(const QStringList& lDecorations)
     Returns true when git decorations mark a stash commit.
 */
@@ -1556,6 +1624,12 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
             sHiddenIds << sHiddenId;
     }
 
+    // Linked worktree heads carry no branch or tag decoration, so their lane
+    // would show with no label: resolve them for this repository and mark the
+    // matching lines. Only undecorated lines are marked, decorated ones keep
+    // their branch or tag label.
+    QMap<QString, QString> hWorktreeHeads = parseWorktreeHeads(execNow(tResult.m_sPath, sCommandWorktreeList));
+
     for (QString sLine : lStrings)
     {
         if (sLine.trimmed().isEmpty())
@@ -1580,6 +1654,10 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
             pLine->setCommitId(sCommitId);
             pLine->setParents(splitParentIds(sValues[2]));
             pLine->setDecorations(splitDecorations(sValues[3]));
+
+            if (pLine->decorations().isEmpty() && hWorktreeHeads.contains(sCommitId))
+                pLine->setDecorations(QStringList() << CGraphLine::sWorktreeDecorationPrefix + hWorktreeHeads.value(sCommitId));
+
             pLine->setMessage(messageFromLogField(sValues[7]));
             pLine->setMessageIsComplete(true);
             pLine->setAuthor(sValues[5].trimmed());

@@ -3,11 +3,14 @@
 #include "CGraphLine.h"
 #include "CLabel.h"
 
+const QString CGraphLine::sWorktreeDecorationPrefix = "worktree: ";
+
 //-------------------------------------------------------------------------------------------------
 
 //! Builds one owned label from a single git decoration token, or null when empty
 // Type mapping: "HEAD -> <branch>" and bare names are local branches,
-// "tag: <name>" are tags, "origin/..." and "remotes/..." are remote branches.
+// "tag: <name>" are tags, "origin/..." and "remotes/..." are remote branches,
+// "worktree: <name>" are linked worktree heads.
 // A bare "HEAD" means a detached head with no branch name: it shows as a
 // local-branch chip carrying the "HEAD" name. The "remotes/" prefix is
 // stripped so the name matches the branch models, which store short names.
@@ -25,7 +28,12 @@ static CLabel* labelFromToken(const QString& sToken)
 
     CLabel* pLabel = new CLabel();
 
-    if (sTrimmedToken.startsWith(sHeadPointsToPrefix))
+    if (sTrimmedToken.startsWith(CGraphLine::sWorktreeDecorationPrefix))
+    {
+        pLabel->setName(sTrimmedToken.mid(CGraphLine::sWorktreeDecorationPrefix.size()).trimmed());
+        pLabel->setType(CEnums::WorktreeLabel);
+    }
+    else if (sTrimmedToken.startsWith(sHeadPointsToPrefix))
     {
         pLabel->setName(sTrimmedToken.mid(sHeadPointsToPrefix.size()).trimmed());
         pLabel->setType(CEnums::LocalBranchLabel);

@@ -36,5 +36,6 @@ class CGraphLayout
 public:
 
     //! Computes the lane data of all lines in display order (parents below children)
-    static void layoutLines(const QList<CGraphLine*>& lLines);
+    //! Reserves lane 0 for the head commit when it is part of the lines
+    static void layoutLines(const QList<CGraphLine*>& lLines, const QString& sHeadCommitId = QString());
 };

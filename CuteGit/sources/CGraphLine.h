@@ -49,4 +49,11 @@ public:
 
     //! Returns true when decorations mark the HEAD commit, attached or detached
     bool hasHeadDecoration() const;
+
+    //-------------------------------------------------------------------------------------------------
+    // Shared constants
+    //-------------------------------------------------------------------------------------------------
+
+    //! Decoration prefix marking the head commit of a linked worktree
+    static const QString sWorktreeDecorationPrefix;
 };

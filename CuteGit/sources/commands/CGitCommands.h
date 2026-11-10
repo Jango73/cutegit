@@ -2,6 +2,7 @@
 #pragma once
 
 // Qt
+#include <QMap>
 #include <QObject>
 
 // Application
@@ -214,6 +215,13 @@ public:
     virtual void editSequenceFile(const QString& sFileName) override;
 
     //-------------------------------------------------------------------------------------------------
+    // Static control methods
+    //-------------------------------------------------------------------------------------------------
+
+    //! Maps head commit ids to worktree folder names from porcelain output
+    static QMap<QString, QString> parseWorktreeHeads(const QString& sWorktreeListOutput);
+
+    //-------------------------------------------------------------------------------------------------
     // Protected control methods
     //-------------------------------------------------------------------------------------------------
 
@@ -345,6 +353,7 @@ protected:
     static const QString sCommandStagedDiff;
     static const QString sCommandWorkingTreeDiff;
     static const QString sCommandWorkingTreeDiffEmpty;
+    static const QString sCommandWorktreeList;
     static const QString sEmptyTreeId;
     static const QString sCommandVerifyHead;
     static const QString sCommandVerifyRevision;

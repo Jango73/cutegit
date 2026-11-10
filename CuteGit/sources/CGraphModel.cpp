@@ -9,22 +9,6 @@
 
 /***************************************************************************/
 
-/*! Lays out incoming lines in the context of already loaded lines */
-// Layout is sequential: lanes of loaded rows never change when rows are appended.
-// A refresh lays out its page alone, an append lays out loaded rows plus the tail.
-static void layoutIncomingLines(const QList<CGraphLine*>& lLoadedLines, QList<CGraphLine*>& lIncomingLines, int iStartIndex)
-{
-    if (iStartIndex == 0)
-    {
-        CGraphLayout::layoutLines(lIncomingLines);
-    }
-    else
-    {
-        QList<CGraphLine*> lCombined = lLoadedLines + lIncomingLines;
-        CGraphLayout::layoutLines(lCombined);
-    }
-}
-
 // Returns the commit identifier carrying a HEAD decoration in the given lines, empty when none
 static QString headCommitIdInLines(const QList<CLogLine*>& lLines)
 {
@@ -38,6 +22,41 @@ static QString headCommitIdInLines(const QList<CLogLine*>& lLines)
     }
 
     return QString();
+}
+
+/***************************************************************************/
+
+/*! Returns the head commit reserving lane 0, empty when the working tree line already reserves it */
+static QString headLaneSeed(const QList<CGraphLine*>& lCombinedLines, bool bWorkingTreePresent)
+{
+    if (bWorkingTreePresent || lCombinedLines.isEmpty())
+        return QString();
+
+    QList<CLogLine*> lLogLines;
+    lLogLines.reserve(lCombinedLines.count());
+
+    for (CGraphLine* pLine : lCombinedLines)
+        lLogLines << pLine;
+
+    return headCommitIdInLines(lLogLines);
+}
+
+/***************************************************************************/
+
+/*! Lays out incoming lines in the context of already loaded lines */
+// Layout is sequential: lanes of loaded rows never change when rows are appended.
+// A refresh lays out its page alone, an append lays out loaded rows plus the tail.
+static void layoutIncomingLines(const QList<CGraphLine*>& lLoadedLines, QList<CGraphLine*>& lIncomingLines, int iStartIndex, bool bWorkingTreePresent)
+{
+    if (iStartIndex == 0)
+    {
+        CGraphLayout::layoutLines(lIncomingLines, headLaneSeed(lIncomingLines, bWorkingTreePresent));
+    }
+    else
+    {
+        QList<CGraphLine*> lCombined = lLoadedLines + lIncomingLines;
+        CGraphLayout::layoutLines(lCombined, headLaneSeed(lCombined, bWorkingTreePresent));
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -306,7 +325,7 @@ void CGraphModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>&
         }
     }
 
-    layoutIncomingLines(lLoadedGraphLines, lIncomingGraphLines, iStartIndex);
+    layoutIncomingLines(lLoadedGraphLines, lIncomingGraphLines, iStartIndex, m_bWorkingTreePresent);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -484,7 +503,13 @@ void CGraphModel::layoutLoadedLines()
     if (lGraphLines.isEmpty())
         return;
 
-    CGraphLayout::layoutLines(lGraphLines);
+    // The working tree line already reserves lane 0 for its head parent
+    QString sHeadSeed;
+
+    if (not m_bWorkingTreePresent)
+        sHeadSeed = headCommitId();
+
+    CGraphLayout::layoutLines(lGraphLines, sHeadSeed);
 
     if (m_lLines.count() > 0)
         emit dataChanged(index(0), index(m_lLines.count() - 1), {eGraphCommitLaneRole, eGraphVerticalsRole, eGraphConnectionsRole});

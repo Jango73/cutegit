@@ -98,7 +98,8 @@ public:
         TagLabel,
         UpToDateLabel,
         UnsyncedLabel,
-        DivergedLabel
+        DivergedLabel,
+        WorktreeLabel
     };
 
     // Diff operations

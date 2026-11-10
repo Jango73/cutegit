@@ -196,10 +196,29 @@ static void layoutSingleLine(QStringList& lExpectedCommits, CGraphLine* pLine)
 
 /***************************************************************************/
 
+/*! Returns true when the lines hold the commit */
+static bool containsCommit(const QList<CGraphLine*>& lLines, const QString& sCommitId)
+{
+    for (const CGraphLine* pLine : lLines)
+    {
+        if (pLine != nullptr && pLine->commitId() == sCommitId)
+            return true;
+    }
+
+    return false;
+}
+
+/***************************************************************************/
+
 /*! Computes the lane data of all lines in display order (parents below children) */
-void CGraphLayout::layoutLines(const QList<CGraphLine*>& lLines)
+void CGraphLayout::layoutLines(const QList<CGraphLine*>& lLines, const QString& sHeadCommitId)
 {
     QStringList lExpectedCommits;
+
+    // The head lane stays first like other clients: awaiting the head commit
+    // in lane 0 pushes unrelated newer commits to the next lanes
+    if (!sHeadCommitId.isEmpty() && containsCommit(lLines, sHeadCommitId))
+        lExpectedCommits << sHeadCommitId;
 
     for (CGraphLine* pLine : lLines)
     {

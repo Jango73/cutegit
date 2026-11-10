@@ -24,7 +24,9 @@ Item {
                      ? Const.labelUnsyncedColor
                      : root.type === CEnums.DivergedLabel
                        ? Const.labelDivergedColor
-                       : Const.labelTagColor
+                       : root.type === CEnums.WorktreeLabel
+                         ? Const.labelWorktreeColor
+                         : Const.labelTagColor
         show: true
     }
 
