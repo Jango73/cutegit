@@ -948,6 +948,22 @@ The first line of an item contains the action done, the second line contains the
         <translation>布局</translation>
     </message>
     <message>
+        <source>Tab position</source>
+        <translation>标签位置</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>顶部</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>左侧</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>右侧</translation>
+    </message>
+    <message>
         <source>Classic</source>
         <translation>经典</translation>
     </message>

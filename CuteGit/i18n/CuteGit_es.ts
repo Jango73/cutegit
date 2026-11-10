@@ -1138,6 +1138,22 @@ La primera línea de un elemento contiene la acción realizada, la segunda líne
         <translation>Diseño</translation>
     </message>
     <message>
+        <source>Tab position</source>
+        <translation>Posición de pestañas</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>Arriba</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Izquierda</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Derecha</translation>
+    </message>
+    <message>
         <source>Classic</source>
         <translation>Clásico</translation>
     </message>

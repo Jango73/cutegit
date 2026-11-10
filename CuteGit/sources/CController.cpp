@@ -82,6 +82,10 @@ const QString sParameterSettings = "Settings";
 const QString sParameterMaxLoadedRepositories = "MaxLoadedRepositories";
 const QString sThemeMaterialDark = "MaterialDark";
 const QString sThemeMaterialLight = "MaterialLight";
+const QString sParameterTabPosition = "TabPosition";
+const QString sTabPositionTop = "Top";
+const QString sTabPositionLeft = "Left";
+const QString sTabPositionRight = "Right";
 
 const QString CController::m_sSharedKey = "CuteGitSharedMemory";
 
@@ -97,6 +101,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_pLangModel(new QStringListModel(this))
     , m_sLanguage("en")
     , m_sTheme(sThemeMaterialDark)
+    , m_sTabPosition(sTabPositionTop)
     , m_sStubFileName(sStubFileName)
     , m_lLayoutNames()
     , m_iCurrentLayoutIndex(0)
@@ -175,6 +180,7 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_pLangModel(nullptr)
     , m_sLanguage("en")
     , m_sTheme(sThemeMaterialDark)
+    , m_sTabPosition(sTabPositionTop)
     , m_sStubFileName(sStubFileName)
     , m_lLayoutNames()
     , m_iCurrentLayoutIndex(0)
@@ -649,6 +655,43 @@ void CController::setSequenceFileName(const QString& sSequenceFileName)
 
 //-------------------------------------------------------------------------------------------------
 
+QString CController::tabPosition() const
+{
+    return m_sTabPosition;
+}
+
+QString CController::tabsPosition() const
+{
+    return m_sTabPosition;
+}
+
+QString CController::tabBarPosition() const
+{
+    return m_sTabPosition;
+}
+
+void CController::setTabPosition(const QString& sTabPosition)
+{
+    if (m_sTabPosition == sTabPosition)
+        return;
+    m_sTabPosition = sTabPosition;
+    emit tabPositionChanged();
+    emit tabsPositionChanged();
+    emit tabBarPositionChanged();
+}
+
+void CController::setTabsPosition(const QString& sTabPosition)
+{
+    setTabPosition(sTabPosition);
+}
+
+void CController::setTabBarPosition(const QString& sTabPosition)
+{
+    setTabPosition(sTabPosition);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 QString CController::appDataPath() const
 {
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -743,6 +786,11 @@ void CController::saveConfiguration()
     CXMLNode xTheme(sParameterTheme);
     xTheme.attributes()[sParameterName] = m_sTheme;
     xConfig << xTheme;
+
+    // Save tab position
+    CXMLNode xTabPosition(sParameterTabPosition);
+    xTabPosition.attributes()[sParameterName] = m_sTabPosition;
+    xConfig << xTabPosition;
 
     // Save layout index
     CXMLNode xLayout(sParameterLayoutIndex);
@@ -878,6 +926,12 @@ void CController::loadConfiguration()
     m_sTheme = xTheme.attributes()[sParameterName];
     if (m_sTheme != sThemeMaterialDark && m_sTheme != sThemeMaterialLight)
         m_sTheme = sThemeMaterialDark;
+
+    // Load tab position
+    CXMLNode xTabPosition = xConfig.getNodeByTagName(sParameterTabPosition);
+    m_sTabPosition = xTabPosition.attributes()[sParameterName];
+    if (m_sTabPosition != sTabPositionTop && m_sTabPosition != sTabPositionLeft && m_sTabPosition != sTabPositionRight)
+        m_sTabPosition = sTabPositionTop;
 
     // Load layout index
     CXMLNode xLayout = xConfig.getNodeByTagName(sParameterLayoutIndex);

@@ -172,10 +172,7 @@ ApplicationWindow {
         HorizontalOverflow {
             id: mainTabBar
             objectName: "mainTabBar"
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: Const.toolButtonHeight
+            // vertical is driven by the active state below
 
             Repeater {
                 id: tabRepeater
@@ -236,6 +233,98 @@ ApplicationWindow {
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
         }
+
+        states: [
+            State {
+                name: "tabsTop"
+                when: root.ctrl.tabPosition === "Top"
+
+                AnchorChanges {
+                    target: mainTabBar
+                    anchors.top: clientZone.top
+                    anchors.left: clientZone.left
+                    anchors.right: clientZone.right
+                    anchors.bottom: undefined
+                }
+                PropertyChanges {
+                    target: mainTabBar
+                    vertical: false
+                    height: Const.toolButtonHeight
+                    width: undefined
+                }
+                AnchorChanges {
+                    target: mainSwipeView
+                    anchors.top: mainTabBar.bottom
+                    anchors.bottom: clientZone.bottom
+                    anchors.left: clientZone.left
+                    anchors.right: clientZone.right
+                }
+                PropertyChanges {
+                    target: mainSwipeView
+                    anchors.topMargin: Const.smallPadding
+                }
+            },
+            State {
+                name: "tabsLeft"
+                when: root.ctrl.tabPosition === "Left"
+
+                AnchorChanges {
+                    target: mainTabBar
+                    anchors.top: clientZone.top
+                    anchors.left: clientZone.left
+                    anchors.right: undefined
+                    anchors.bottom: clientZone.bottom
+                }
+                PropertyChanges {
+                    target: mainTabBar
+                    vertical: true
+                    width: mainTabBar.implicitWidth
+                    height: undefined
+                }
+                AnchorChanges {
+                    target: mainSwipeView
+                    anchors.top: clientZone.top
+                    anchors.bottom: clientZone.bottom
+                    anchors.left: mainTabBar.right
+                    anchors.right: clientZone.right
+                }
+                PropertyChanges {
+                    target: mainSwipeView
+                    anchors.leftMargin: Const.smallPadding
+                    anchors.topMargin: 0
+                }
+            },
+            State {
+                name: "tabsRight"
+                when: root.ctrl.tabPosition === "Right"
+
+                AnchorChanges {
+                    target: mainTabBar
+                    anchors.top: clientZone.top
+                    anchors.left: undefined
+                    anchors.right: clientZone.right
+                    anchors.bottom: clientZone.bottom
+                }
+                PropertyChanges {
+                    target: mainTabBar
+                    vertical: true
+                    width: mainTabBar.implicitWidth
+                    height: undefined
+                }
+                AnchorChanges {
+                    target: mainSwipeView
+                    anchors.top: clientZone.top
+                    anchors.bottom: clientZone.bottom
+                    anchors.left: clientZone.left
+                    anchors.right: mainTabBar.left
+                }
+                PropertyChanges {
+                    target: mainSwipeView
+                    anchors.rightMargin: Const.smallPadding
+                    anchors.topMargin: 0
+                }
+            }
+        ]
 
         RoundButton {
             id: magicButton

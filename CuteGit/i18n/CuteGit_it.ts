@@ -729,6 +729,22 @@
         <translation>Layout</translation>
     </message>
     <message>
+        <source>Tab position</source>
+        <translation>Posizione schede</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>Alto</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Sinistra</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Destra</translation>
+    </message>
+    <message>
         <source>Classic</source>
         <translation>Classico</translation>
     </message>

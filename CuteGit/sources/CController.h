@@ -55,6 +55,9 @@ class CController : public QObject
     // Various information
     Q_FAST_PROPERTY(QString, s, statusText, StatusText)
     Q_FAST_PROPERTY(QString, s, theme, Theme)
+    Q_PROPERTY(QString tabPosition READ tabPosition WRITE setTabPosition NOTIFY tabPositionChanged)
+    Q_PROPERTY(QString tabsPosition READ tabsPosition WRITE setTabsPosition NOTIFY tabsPositionChanged)
+    Q_PROPERTY(QString tabBarPosition READ tabBarPosition WRITE setTabBarPosition NOTIFY tabBarPositionChanged)
     Q_FAST_PROPERTY(QString, s, stubFileName, StubFileName)
 
     //! Clone progress shown in the generic dialog bottom bar, hidden otherwise
@@ -120,6 +123,11 @@ public:
     //!
     void setSequenceFileName(const QString& sSequenceFileName);
 
+    //!
+    void setTabPosition(const QString& sTabPosition);
+    void setTabsPosition(const QString& sTabPosition);
+    void setTabBarPosition(const QString& sTabPosition);
+
     //-------------------------------------------------------------------------------------------------
     // Getters
     //-------------------------------------------------------------------------------------------------
@@ -135,6 +143,11 @@ public:
 
     //! Returns the name of the Git sequence file
     QString sequenceFileName();
+
+    //! Returns the tab position
+    QString tabPosition() const;
+    QString tabsPosition() const;
+    QString tabBarPosition() const;
 
     //-------------------------------------------------------------------------------------------------
     // Control methods
@@ -192,6 +205,11 @@ signals:
     //! Emitted when a clone operation finishes. On success the error string is empty.
     void cloneFinished(bool bSuccess, const QString& sError);
 
+    //! Emitted when the tab position changes.
+    void tabPositionChanged();
+    void tabsPositionChanged();
+    void tabBarPositionChanged();
+
 protected slots:
 
     //!
@@ -236,6 +254,8 @@ protected:
     QStringList             m_lRecentRepositoryPaths;       // Most recently visited first
 
     QVector<SLayoutDefinition> m_vLayouts;
+
+    QString                 m_sTabPosition;
 
     static const QString    m_sSharedKey;
 };

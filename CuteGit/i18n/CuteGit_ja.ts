@@ -948,6 +948,22 @@ The first line of an item contains the action done, the second line contains the
         <translation>レイアウト</translation>
     </message>
     <message>
+        <source>Tab position</source>
+        <translation>タブ位置</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>上</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>左</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>右</translation>
+    </message>
+    <message>
         <source>Classic</source>
         <translation>クラシック</translation>
     </message>

@@ -92,6 +92,21 @@ StandardPopup {
                 to: 99
                 editable: true
             }
+        },
+
+        RowLayout {
+            width: parent.width * Const.settingsControlsWidthFraction
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            StandardText {
+                Layout.fillWidth: true
+                text: Const.tabPositionText
+            }
+
+            ComboBox {
+                id: tabPositionCombo
+                model: [Const.tabPositionTopText, Const.tabPositionLeftText, Const.tabPositionRightText]
+            }
         }
     ]
 
@@ -115,6 +130,13 @@ StandardPopup {
 
                         if (layoutCombo.currentIndex >= 0)
                             root.controller.currentLayoutIndex = layoutCombo.currentIndex
+
+                        if (tabPositionCombo.currentIndex === 0)
+                            root.controller.tabPosition = "Top"
+                        else if (tabPositionCombo.currentIndex === 1)
+                            root.controller.tabPosition = "Left"
+                        else if (tabPositionCombo.currentIndex === 2)
+                            root.controller.tabPosition = "Right"
                     }
                     root.close()
                 }
@@ -137,6 +159,12 @@ StandardPopup {
             themeCombo.currentIndex = root.materialTheme === Material.Light ? 1 : 0
             languageCombo.currentIndex = languageIndexForCode(root.controller.language)
             layoutCombo.currentIndex = root.controller.currentLayoutIndex
+            if (root.controller.tabPosition === "Left")
+                tabPositionCombo.currentIndex = 1
+            else if (root.controller.tabPosition === "Right")
+                tabPositionCombo.currentIndex = 2
+            else
+                tabPositionCombo.currentIndex = 0
         }
     }
 

@@ -948,6 +948,22 @@ Die erste Zeile eines Eintrags enthält die ausgeführte Aktion, die zweite Zeil
             <translation>Layout</translation>
         </message>
         <message>
+            <source>Tab position</source>
+            <translation>Tab-Position</translation>
+        </message>
+        <message>
+            <source>Top</source>
+            <translation>Oben</translation>
+        </message>
+        <message>
+            <source>Left</source>
+            <translation>Links</translation>
+        </message>
+        <message>
+            <source>Right</source>
+            <translation>Rechts</translation>
+        </message>
+        <message>
             <source>Classic</source>
             <translation>Klassisch</translation>
         </message>

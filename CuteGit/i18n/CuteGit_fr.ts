@@ -949,6 +949,22 @@ La première ligne contient l&apos;action faite, la seconde contient l&apos;inde
         <translation>Disposition</translation>
     </message>
     <message>
+        <source>Tab position</source>
+        <translation>Position des onglets</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>Haut</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Gauche</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Droite</translation>
+    </message>
+    <message>
         <source>Classic</source>
         <translation>Classique</translation>
     </message>
