@@ -80,6 +80,7 @@ const QString sParameterShowUntracked = "ShowUntracked";
 const QString sParameterShowIgnored = "ShowIgnored";
 const QString sParameterSettings = "Settings";
 const QString sParameterMaxLoadedRepositories = "MaxLoadedRepositories";
+const QString sParameterFetchPrune = "FetchPrune";
 const QString sThemeMaterialDark = "MaterialDark";
 const QString sThemeMaterialLight = "MaterialLight";
 const QString sParameterTabPosition = "TabPosition";
@@ -116,6 +117,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_bShowMissing(true)
     , m_bShowUntracked(true)
     , m_bShowIgnored(false)
+    , m_bFetchPrune(false)
     , m_bMasterMode(true)
     , m_tShared(m_sSharedKey, this)
     , m_tSharedTimer(this)
@@ -195,6 +197,7 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_bShowMissing(true)
     , m_bShowUntracked(true)
     , m_bShowIgnored(false)
+    , m_bFetchPrune(false)
     , m_bMasterMode(false)
     , m_tShared(m_sSharedKey, this)
     , m_tSharedTimer(this)
@@ -812,6 +815,7 @@ void CController::saveConfiguration()
     // Save settings
     CXMLNode xSettings(sParameterSettings);
     xSettings.attributes()[sParameterMaxLoadedRepositories] = QString::number(m_iMaxLoadedRepositories);
+    xSettings.attributes()[sParameterFetchPrune] = QString::number(m_bFetchPrune ? 1 : 0);
     xConfig << xSettings;
 
     xConfig.saveXMLToFile(configFileName());
@@ -958,6 +962,7 @@ void CController::loadConfiguration()
     int iMaxLoadedRepositories = xSettings.attributes()[sParameterMaxLoadedRepositories].toInt(&bSettingsConversionSucceeded);
     if (bSettingsConversionSucceeded && iMaxLoadedRepositories >= MAX_LOADED_REPOSITORIES_MINIMUM)
         m_iMaxLoadedRepositories = iMaxLoadedRepositories;
+    setFetchPrune(readBoolAttribute(xSettings.attributes(), sParameterFetchPrune, m_bFetchPrune));
 }
 
 //-------------------------------------------------------------------------------------------------

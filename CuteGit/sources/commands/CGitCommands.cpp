@@ -529,10 +529,10 @@ void CGitCommands::pull(const QString& sPath)
 
 //-------------------------------------------------------------------------------------------------
 
-void CGitCommands::fetch(const QString& sPath)
+void CGitCommands::fetch(const QString& sPath, bool bPrune)
 {
     emit newOutputString(CEnums::eNotification, tr("Fetching..."));
-    QString sCommand = QString(sCommandFetch);
+    QString sCommand = QString(bPrune ? sCommandFetchAndPrune : sCommandFetch);
     exec(new CProcessCommand(CEnums::eFetch, sPath, sCommand, true));
 }
 

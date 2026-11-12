@@ -83,6 +83,21 @@ StandardPopup {
 
             StandardText {
                 Layout.fillWidth: true
+                text: Const.tabPositionText
+            }
+
+            ComboBox {
+                id: tabPositionCombo
+                model: [Const.tabPositionTopText, Const.tabPositionLeftText, Const.tabPositionRightText]
+            }
+        },
+
+        RowLayout {
+            width: parent.width * Const.settingsControlsWidthFraction
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            StandardText {
+                Layout.fillWidth: true
                 text: Const.maxLoadedRepositoriesText
             }
 
@@ -100,12 +115,11 @@ StandardPopup {
 
             StandardText {
                 Layout.fillWidth: true
-                text: Const.tabPositionText
+                text: Const.fetchPruneText
             }
 
-            ComboBox {
-                id: tabPositionCombo
-                model: [Const.tabPositionTopText, Const.tabPositionLeftText, Const.tabPositionRightText]
+            CheckBox {
+                id: fetchPrune
             }
         }
     ]
@@ -117,6 +131,7 @@ StandardPopup {
                 onTriggered: {
                     if (root.controller !== null) {
                         root.controller.maxLoadedRepositories = maxLoadedRepositories.value
+                        root.controller.fetchPrune = fetchPrune.checked
 
                         if (themeCombo.currentIndex === 0)
                             root.requestDarkTheme()
@@ -156,6 +171,7 @@ StandardPopup {
     onOpened: {
         if (root.controller !== null) {
             maxLoadedRepositories.value = root.controller.maxLoadedRepositories
+            fetchPrune.checked = root.controller.fetchPrune
             themeCombo.currentIndex = root.materialTheme === Material.Light ? 1 : 0
             languageCombo.currentIndex = languageIndexForCode(root.controller.language)
             layoutCombo.currentIndex = root.controller.currentLayoutIndex

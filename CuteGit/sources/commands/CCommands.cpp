@@ -289,9 +289,10 @@ void CCommands::pull(const QString& sPath)
 
 //-------------------------------------------------------------------------------------------------
 
-void CCommands::fetch(const QString& sPath)
+void CCommands::fetch(const QString& sPath, bool bPrune)
 {
     Q_UNUSED(sPath);
+    Q_UNUSED(bPrune);
 }
 
 //-------------------------------------------------------------------------------------------------

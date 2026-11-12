@@ -80,6 +80,7 @@ class CController : public QObject
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showMissing, ShowMissing)
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showUntracked, ShowUntracked)
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showIgnored, ShowIgnored)
+    Q_FAST_PROPERTY(bool, b, fetchPrune, FetchPrune)
 
 public:
 

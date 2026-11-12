@@ -134,7 +134,7 @@ public:
     virtual void pull(const QString& sPath) override;
 
     //!
-    virtual void fetch(const QString& sPath) override;
+    virtual void fetch(const QString& sPath, bool bPrune) override;
 
     //!
     virtual void stashSave(const QString& sPath) override;

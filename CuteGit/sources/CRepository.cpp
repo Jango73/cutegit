@@ -738,7 +738,8 @@ void CRepository::fetch()
 {
     setStatusText(Strings::fetchStarted());
 
-    m_pCommands->fetch(m_sRepositoryPath);
+    bool bPrune = m_pController != nullptr ? m_pController->fetchPrune() : false;
+    m_pCommands->fetch(m_sRepositoryPath, bPrune);
 }
 
 //-------------------------------------------------------------------------------------------------

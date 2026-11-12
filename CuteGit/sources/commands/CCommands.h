@@ -125,7 +125,7 @@ public:
     virtual void pull(const QString& sPath);
 
     //!
-    virtual void fetch(const QString& sPath);
+    virtual void fetch(const QString& sPath, bool bPrune);
 
     //!
     virtual void stashSave(const QString& sPath);
