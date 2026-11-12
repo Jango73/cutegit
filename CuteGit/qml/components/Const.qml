@@ -148,6 +148,7 @@ Item {
     readonly property string settingsTitleText: qsTr("Settings")
     readonly property string maxLoadedRepositoriesText: qsTr("Maximum repositories in memory")
     readonly property string fetchPruneText: qsTr("Prune remote branches on fetch")
+    readonly property string toolBarVisibleText: qsTr("Show toolbar")
     readonly property string themeText: qsTr("Theme")
     readonly property string languageText: qsTr("Language")
     readonly property string helpMenuText: qsTr("&Help")

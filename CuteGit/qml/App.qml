@@ -76,6 +76,7 @@ ApplicationWindow {
 
     header: StandardToolBar {
         id: toolBar
+        visible: root.ctrl !== null ? root.ctrl.toolBarVisible : true
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: menu.bottom

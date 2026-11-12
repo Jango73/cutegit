@@ -98,6 +98,20 @@ StandardPopup {
 
             StandardText {
                 Layout.fillWidth: true
+                text: Const.toolBarVisibleText
+            }
+
+            CheckBox {
+                id: toolBarVisible
+            }
+        },
+
+        RowLayout {
+            width: parent.width * Const.settingsControlsWidthFraction
+            anchors.horizontalCenter: parent.horizontalCenter
+
+            StandardText {
+                Layout.fillWidth: true
                 text: Const.maxLoadedRepositoriesText
             }
 
@@ -132,6 +146,7 @@ StandardPopup {
                     if (root.controller !== null) {
                         root.controller.maxLoadedRepositories = maxLoadedRepositories.value
                         root.controller.fetchPrune = fetchPrune.checked
+                        root.controller.toolBarVisible = toolBarVisible.checked
 
                         if (themeCombo.currentIndex === 0)
                             root.requestDarkTheme()
@@ -172,6 +187,7 @@ StandardPopup {
         if (root.controller !== null) {
             maxLoadedRepositories.value = root.controller.maxLoadedRepositories
             fetchPrune.checked = root.controller.fetchPrune
+            toolBarVisible.checked = root.controller.toolBarVisible
             themeCombo.currentIndex = root.materialTheme === Material.Light ? 1 : 0
             languageCombo.currentIndex = languageIndexForCode(root.controller.language)
             layoutCombo.currentIndex = root.controller.currentLayoutIndex
