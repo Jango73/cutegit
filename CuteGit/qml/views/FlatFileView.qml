@@ -22,7 +22,6 @@ StandardListView {
         objectName: "FlatFileView.delegate." + index
         width: ListView.view.width
         expanded: mustShowRelativeName
-        selectionFillsItem: false
         listView: root
         mouseEnabled: root.mouseEnabled
         symbolText: model.changing ? Const.statusChangeText : model.status

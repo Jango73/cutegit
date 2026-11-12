@@ -30,10 +30,4 @@ Rectangle {
             }
         }
     ]
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Const.componentFadingDuration
-        }
-    }
 }

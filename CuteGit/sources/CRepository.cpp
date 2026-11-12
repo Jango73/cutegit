@@ -111,6 +111,11 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_sCommitDetailsMessage("")
     , m_iCommitDetailsAddedCount(0)
     , m_iCommitDetailsRemovedCount(0)
+    , m_sPendingRewordOldId("")
+    , m_sPendingRewordNewMessage("")
+    , m_sPendingRewordDetailsId("")
+    , m_sPendingRewordDetailsMessage("")
+    , m_iPendingRewordDetailsRow(-1)
 {
     if (eType == CEnums::UnknownRepositoryType)
     {
@@ -500,6 +505,7 @@ void CRepository::unload()
     setCommitDetailsMessage("");
     setCommitDetailsAddedCount(0);
     setCommitDetailsRemovedCount(0);
+    clearPendingReword();
 
     // Status: back to the construction values, the next refresh redetects them
     setRepositoryStatus(CEnums::NoMerge);
@@ -795,6 +801,14 @@ void CRepository::changeCommitMessage(const QString& sCommitId, const QString& s
 {
     if (isWorkingTreeCommit(sCommitId))
         return;
+
+    // A message change rewrites the commit hash and every descendant hash:
+    // keep the shown details row so the new commit is adopted on reload
+    m_sPendingRewordOldId = sCommitId;
+    m_sPendingRewordNewMessage = sMessage;
+    m_sPendingRewordDetailsId = m_sCommitDetailsId;
+    m_sPendingRewordDetailsMessage = m_sCommitDetailsMessage;
+    m_iPendingRewordDetailsRow = m_pGraphModel != nullptr ? m_pGraphModel->rowForCommitId(m_sCommitDetailsId) : -1;
 
     m_pCommands->changeCommitMessage(m_sRepositoryPath, sCommitId, sMessage);
 }
@@ -1239,6 +1253,121 @@ const CLogLine* CRepository::findCommitLine(const QString& sCommitId) const
 
 /*************************************************************************/
 /*!
+    \fn const CLogLine* CRepository::findCommitLineByMessage(const QString& sMessage) const
+    Returns the first loaded line with a trimmed message match, nullptr when none.
+    Graph wins over file and ref logs.
+*/
+const CLogLine* CRepository::findCommitLineByMessage(const QString& sMessage) const
+{
+    if (sMessage.trimmed().isEmpty())
+        return nullptr;
+
+    const CLogLine* pLine = nullptr;
+
+    if (m_pGraphModel != nullptr)
+        pLine = m_pGraphModel->findLineByMessage(sMessage);
+
+    if (pLine == nullptr && m_pFileLogModel != nullptr)
+        pLine = m_pFileLogModel->findLineByMessage(sMessage);
+
+    if (pLine == nullptr && m_pRefLogModel != nullptr)
+        pLine = m_pRefLogModel->findLineByMessage(sMessage);
+
+    return pLine;
+}
+
+/*************************************************************************/
+/*!
+    \fn bool CRepository::isSameCommitId(const QString& sFirstId, const QString& sSecondId)
+    Returns true when two identifiers designate the same commit, short and long forms match.
+*/
+bool CRepository::isSameCommitId(const QString& sFirstId, const QString& sSecondId)
+{
+    if (sFirstId.isEmpty() || sSecondId.isEmpty())
+        return false;
+
+    return sFirstId == sSecondId || sFirstId.startsWith(sSecondId) || sSecondId.startsWith(sFirstId);
+}
+
+/*************************************************************************/
+/*!
+    \fn void CRepository::clearPendingReword()
+    Drops any pending commit message change tracking.
+*/
+void CRepository::clearPendingReword()
+{
+    m_sPendingRewordOldId.clear();
+    m_sPendingRewordNewMessage.clear();
+    m_sPendingRewordDetailsId.clear();
+    m_sPendingRewordDetailsMessage.clear();
+    m_iPendingRewordDetailsRow = -1;
+}
+
+/*************************************************************************/
+/*!
+    \fn bool CRepository::adoptRewordedCommit()
+    Follows a hash rewrite so details show the new commit, true when adopted.
+    A message change rewrites the target hash and every descendant hash: the
+    stored details identifier points at a dead commit once the graph reloads.
+    The rewritten commit keeps its row and either its new message (reworded
+    commit itself) or its unchanged message (rewritten descendant).
+*/
+bool CRepository::adoptRewordedCommit()
+{
+    if (m_sPendingRewordOldId.isEmpty() || m_sCommitDetailsId.isEmpty() || isWorkingTreeCommit(m_sCommitDetailsId))
+    {
+        if (isWorkingTreeCommit(m_sCommitDetailsId))
+            clearPendingReword();
+
+        return false;
+    }
+
+    bool bIsDirectTarget = isSameCommitId(m_sCommitDetailsId, m_sPendingRewordOldId);
+    bool bIsTrackedDetails = isSameCommitId(m_sCommitDetailsId, m_sPendingRewordDetailsId);
+
+    // The user moved to an unrelated commit since the rewrite started: abandon tracking
+    if (not bIsDirectTarget && not bIsTrackedDetails)
+    {
+        clearPendingReword();
+        return false;
+    }
+
+    QString sExpectedMessage = bIsDirectTarget ? m_sPendingRewordNewMessage : m_sPendingRewordDetailsMessage;
+
+    if (sExpectedMessage.trimmed().isEmpty())
+        return false;
+
+    // Position first: the rewrite keeps the commit count, the row is stable
+    // across the reload and disambiguates duplicate messages
+    if (m_pGraphModel != nullptr && m_iPendingRewordDetailsRow >= 0)
+    {
+        const CLogLine* pRowLine = m_pGraphModel->lineAt(m_iPendingRewordDetailsRow);
+
+        if (pRowLine != nullptr && not pRowLine->commitId().isEmpty()
+                && not isSameCommitId(pRowLine->commitId(), m_sCommitDetailsId)
+                && pRowLine->message().trimmed() == sExpectedMessage.trimmed())
+        {
+            setCommitDetailsId(pRowLine->commitId());
+            clearPendingReword();
+            return true;
+        }
+    }
+
+    // Message fallback: the old identifier is dead, the new one carries the expected message
+    const CLogLine* pNewLine = findCommitLineByMessage(sExpectedMessage);
+
+    if (pNewLine != nullptr && not isSameCommitId(pNewLine->commitId(), m_sCommitDetailsId))
+    {
+        setCommitDetailsId(pNewLine->commitId());
+        clearPendingReword();
+        return true;
+    }
+
+    return false;
+}
+
+/*************************************************************************/
+/*!
     \fn void CRepository::updateCommitDetails()
     Refreshes the commit details from the loaded logs and commit diff.
     Author, date and message come from the loaded logs, added and removed
@@ -1246,6 +1375,8 @@ const CLogLine* CRepository::findCommitLine(const QString& sCommitId) const
 */
 void CRepository::updateCommitDetails()
 {
+    adoptRewordedCommit();
+
     const CLogLine* pLine = findCommitLine(m_sCommitDetailsId);
 
     if (pLine != nullptr)
@@ -1254,12 +1385,15 @@ void CRepository::updateCommitDetails()
         setCommitDetailsDate(pLine->date());
         setCommitDetailsMessage(pLine->message());
     }
-    else
+    else if (m_sPendingRewordOldId.isEmpty())
     {
         setCommitDetailsAuthor("");
         setCommitDetailsDate(QDateTime());
         setCommitDetailsMessage("");
     }
+    // While a rewrite is pending, the old identifier is dead but its
+    // replacement is not loaded yet: keep the shown values instead of
+    // flashing an empty pane, the adoption above swaps them on reload
 
     int iAddedCount = 0;
     int iRemovedCount = 0;

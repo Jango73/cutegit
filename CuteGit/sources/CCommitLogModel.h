@@ -81,6 +81,15 @@ public:
     //! Returns the line showing a commit, nullptr when not loaded
     const CLogLine* findLine(const QString& sCommitId) const;
 
+    //! Returns the row showing a commit, -1 when not loaded
+    int rowForCommitId(const QString& sCommitId) const;
+
+    //! Returns the loaded line at a row, nullptr when out of range
+    const CLogLine* lineAt(int iRow) const;
+
+    //! Returns the first loaded line with a trimmed message match, nullptr when none
+    const CLogLine* findLineByMessage(const QString& sMessage) const;
+
     //! Refreshes the rows showing a commit after its diff markers changed
     void commitChanged(const QString& sCommitId);
 

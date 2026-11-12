@@ -312,6 +312,58 @@ const CLogLine* CCommitLogModel::findLine(const QString& sCommitId) const
     return nullptr;
 }
 
+/*************************************************************************/
+/*!
+    \fn int CCommitLogModel::rowForCommitId(const QString& sCommitId) const
+    Returns the row showing a commit, -1 when not loaded.
+*/
+int CCommitLogModel::rowForCommitId(const QString& sCommitId) const
+{
+    if (sCommitId.isEmpty())
+        return -1;
+
+    for (int iRow = 0; iRow < m_lLines.count(); iRow++)
+    {
+        const CLogLine* pLine = m_lLines[iRow];
+
+        if (pLine != nullptr && pLine->commitId() == sCommitId)
+            return iRow;
+    }
+
+    return -1;
+}
+
+/*************************************************************************/
+/*!
+    \fn const CLogLine* CCommitLogModel::lineAt(int iRow) const
+    Returns the loaded line at a row, nullptr when out of range.
+*/
+const CLogLine* CCommitLogModel::lineAt(int iRow) const
+{
+    return lineAtRow(iRow);
+}
+
+/*************************************************************************/
+/*!
+    \fn const CLogLine* CCommitLogModel::findLineByMessage(const QString& sMessage) const
+    Returns the first loaded line with a trimmed message match, nullptr when none.
+*/
+const CLogLine* CCommitLogModel::findLineByMessage(const QString& sMessage) const
+{
+    QString sTrimmed = sMessage.trimmed();
+
+    if (sTrimmed.isEmpty())
+        return nullptr;
+
+    for (const CLogLine* pLine : m_lLines)
+    {
+        if (pLine != nullptr && pLine->message().trimmed() == sTrimmed)
+            return pLine;
+    }
+
+    return nullptr;
+}
+
 //-------------------------------------------------------------------------------------------------
 
 void CCommitLogModel::refreshLabels()

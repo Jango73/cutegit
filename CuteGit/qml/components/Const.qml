@@ -86,7 +86,6 @@ Item {
     readonly property real graphDotFraction: 0.25
 
     // Durations
-    readonly property int componentFadingDuration: 200
     readonly property int toolTipDelay: 1000
     readonly property int toolTipTimeout: 5000
 

@@ -404,6 +404,13 @@ protected:
     //! Log domains that missed a refresh, reloaded on demand by shown views
     QSet<QString> m_sStaleLogDomains;
 
+    //! Pending commit message change, tracks the hash rewrite so details follow the new commit
+    QString m_sPendingRewordOldId;
+    QString m_sPendingRewordNewMessage;
+    QString m_sPendingRewordDetailsId;
+    QString m_sPendingRewordDetailsMessage;
+    int m_iPendingRewordDetailsRow;
+
     //-------------------------------------------------------------------------------------------------
     // Protected control methods
     //-------------------------------------------------------------------------------------------------
@@ -446,6 +453,18 @@ protected:
 
     //! Returns the loaded log line showing a commit, nullptr when not loaded
     const CLogLine* findCommitLine(const QString& sCommitId) const;
+
+    //! Returns the loaded line with a trimmed message match, graph first, nullptr when none
+    const CLogLine* findCommitLineByMessage(const QString& sMessage) const;
+
+    //! Returns true when two identifiers designate the same commit, short and long forms match
+    static bool isSameCommitId(const QString& sFirstId, const QString& sSecondId);
+
+    //! Drops any pending commit message change tracking
+    void clearPendingReword();
+
+    //! Follows a hash rewrite so details show the new commit, true when adopted
+    bool adoptRewordedCommit();
 
     //! Refreshes the commit details from the loaded logs and commit diff
     void updateCommitDetails();
