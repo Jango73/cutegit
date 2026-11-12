@@ -153,7 +153,7 @@ ListView {
         else if (event.key === Qt.Key_A) {
             if (event.modifiers & Qt.ControlModifier) {
                 if (selection)
-                    selectAll()
+                    toggleSelectAll()
                 // Consumed here: without this the event reaches other
                 // views, while a focused text field keeps its own handling
                 event.accepted = true
@@ -359,6 +359,28 @@ ListView {
     }
 
     function selectAll() {
+        if (!hasSelectionModel() || count === 0)
+            return
+
         selectRange(0, count - 1)
+    }
+
+    /*! Returns \c true when every row is selected */
+    function allSelected() {
+        if (!hasSelectionModel() || count === 0)
+            return false
+
+        return selection.selectedIndexes.length >= count
+    }
+
+    /*! Toggles between selecting all rows and selecting none */
+    function toggleSelectAll() {
+        if (!hasSelectionModel() || count === 0)
+            return
+
+        if (allSelected())
+            selection.clear()
+        else
+            selectAll()
     }
 }
