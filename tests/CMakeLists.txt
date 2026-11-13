@@ -125,6 +125,12 @@ target_link_libraries(diff-qmlsetup PRIVATE
 
 add_executable(tst_repository
   integration/tst_repository.cpp
+  "${CUTEGIT_SOURCES_DIR}/CController.h"
+  "${CUTEGIT_SOURCES_DIR}/CController.cpp"
+  "${CUTEGIT_SOURCES_DIR}/CLayout.h"
+  "${CUTEGIT_SOURCES_DIR}/CLayout.cpp"
+  "${CUTEGIT_SOURCES_DIR}/CRepositoryModel.h"
+  "${CUTEGIT_SOURCES_DIR}/CRepositoryModel.cpp"
   ${PATCHBUILDER_HEADERS}
   ${REPOSITORY_HEADERS}
   ${REPOSITORY_SOURCES}
@@ -132,6 +138,9 @@ add_executable(tst_repository
 target_include_directories(tst_repository PRIVATE
   "${CUTEGIT_SOURCES_DIR}"
   "${QTPLUS_CPP_DIR}"
+)
+target_compile_definitions(tst_repository PRIVATE
+  "VERSION_STRING=\"${PROJECT_VERSION}\""
 )
 target_link_libraries(tst_repository PRIVATE
   Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Test Qt6::Xml)

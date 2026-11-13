@@ -1,13 +1,17 @@
 
 // Qt
 #include <QtTest>
+#include <QCoreApplication>
+#include <QDir>
 #include <QTemporaryDir>
 #include <QScopedPointer>
 #include <QProcess>
 #include <QFile>
 #include <QTextStream>
+#include <QStandardPaths>
 
 // Application
+#include "CController.h"
 #include "CRepository.h"
 #include "CLogModel.h"
 #include "CGraphModel.h"
@@ -39,12 +43,24 @@ public:
     tst_Repository()
         : m_sFixtureRepo(qgetenv("DIFF_FIXTURE_REPO"))
     {
+        // No parameters needed to run the binary directly: fall back to the
+        // fixture shipped next to it (tests/bin -> tests/fixtures/diff/repo)
+        if (m_sFixtureRepo.isEmpty())
+        {
+            QString sFallback = QCoreApplication::applicationDirPath() + "/../fixtures/diff/repo";
+
+            if (QDir(sFallback).exists())
+                m_sFixtureRepo = QDir(sFallback).canonicalPath();
+        }
     }
 
 private slots:
 
     void initTestCase()
     {
+        // Isolate any controller created by a test from the real configuration
+        QStandardPaths::setTestModeEnabled(true);
+
         QVERIFY2(not m_sFixtureRepo.isEmpty(), "DIFF_FIXTURE_REPO is not set");
 
         QDir tFixture(m_sFixtureRepo);
@@ -569,6 +585,222 @@ private slots:
         QCOMPARE(tModel.data(tModel.index(0, 0), CGraphModel::eIsWorkingTreeRole).toBool(), true);
     }
 
+    // Rewording a commit rewrites its hash and every descendant hash: the
+    // details pane must follow the new commit instead of going empty on the
+    // dead identifier
+    void changeMessage_detailsFollowNewHash()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"config", "user.name", "probe"}, sUnused));
+        QVERIFY(gitOutput({"config", "user.email", "probe@local"}, sUnused));
+
+        // The dirty worktree blocks the rebase, like the disabled menu entry:
+        // commit it so the tree is clean
+        QVERIFY(gitOutput({"add", "-A"}, sUnused));
+        QVERIFY(gitOutput({"commit", "-qm", "probe-top-commit"}, sUnused));
+
+        QString sOldHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sOldHead));
+
+        sOldHead = sOldHead.trimmed();
+
+        QVERIFY(not sOldHead.isEmpty());
+
+        // Fake editors: the todo pick becomes a reword, the message file gets
+        // the new subject. Hermetic, no app slave binary needed.
+        QString sNewMessage = "Reworded probe commit subject";
+
+        QTemporaryDir tEditorDir;
+
+        QVERIFY(tEditorDir.isValid());
+
+        QString sScriptPath = tEditorDir.path() + "/fake-editor.sh";
+        QFile tScript(sScriptPath);
+
+        QVERIFY(tScript.open(QIODevice::WriteOnly | QIODevice::Text));
+
+        QTextStream(&tScript) << "#!/bin/sh\n"
+                              << "if grep -q '^pick ' \"$1\"; then\n"
+                              << "  sed -i 's/^pick /reword /' \"$1\"\n"
+                              << "else\n"
+                              << "  printf '%s\\n' '" << sNewMessage << "' > \"$1\"\n"
+                              << "fi\n";
+        tScript.close();
+
+        QVERIFY(QFile::setPermissions(sScriptPath,
+                                      QFile::permissions(sScriptPath)
+                                      | QFile::ExeOwner | QFile::ExeGroup | QFile::ExeOther));
+
+        CController tController(sScriptPath);
+        QScopedPointer<CRepository> pRepo(new CRepository(m_sClonePath, &tController));
+
+        pRepo->refresh();
+        pRepo->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(pRepo->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        pRepo->commitDiffPrevious(sOldHead);
+
+        QTRY_COMPARE_WITH_TIMEOUT(pRepo->commitDetailsId(), sOldHead, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(pRepo->commitDetailsMessage().contains("probe-top-commit"),
+                                 s_iAsyncTimeoutMs);
+
+        pRepo->changeCommitMessage(sOldHead, sNewMessage);
+
+        // The sequencer detaches HEAD while running: only a moved branch with
+        // no rebase directory left proves the rewrite finished
+        QTRY_VERIFY_WITH_TIMEOUT(rebaseFinished(sOldHead), s_iAsyncTimeoutMs);
+
+        QString sNewHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sNewHead));
+
+        sNewHead = sNewHead.trimmed();
+
+        QVERIFY(not sNewHead.isEmpty());
+        QVERIFY(sNewHead != sOldHead);
+
+        pRepo->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(pRepo->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+        QTRY_COMPARE_WITH_TIMEOUT(pRepo->commitDetailsId(), sNewHead, s_iAsyncTimeoutMs);
+        QTRY_COMPARE_WITH_TIMEOUT(pRepo->commitDetailsMessage().trimmed(), sNewMessage,
+                                  s_iAsyncTimeoutMs);
+    }
+
+    // Amending outside the application rewrites the hash with no pending
+    // tracking: after the poll refresh and a click on the reloaded row, the
+    // details pane must show the new commit instead of an empty pane that
+    // keeps the old added and removed counts
+    void externalAmend_detailsFollowNewHash()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"config", "user.name", "probe"}, sUnused));
+        QVERIFY(gitOutput({"config", "user.email", "probe@local"}, sUnused));
+
+        // A clean tree keeps the graph free of a working tree line, like the
+        // reported screenshots
+        QVERIFY(gitOutput({"add", "-A"}, sUnused));
+        QVERIFY(gitOutput({"commit", "-qm", "probe-top-commit"}, sUnused));
+
+        QString sOldHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sOldHead));
+
+        sOldHead = sOldHead.trimmed();
+
+        QVERIFY(not sOldHead.isEmpty());
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        // Baseline: details shown on the old head, like a click before the amend
+        m_pRepository->commitDiffPrevious(sOldHead);
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsAuthor() == "probe",
+                                 s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsMessage().contains("probe-top-commit"),
+                                 s_iAsyncTimeoutMs);
+
+        // External amend in a terminal: same tree, new message, new hash
+        QString sNewMessage = "Amended probe commit subject";
+
+        QVERIFY(gitOutput({"commit", "--amend", "-qm", sNewMessage}, sUnused));
+
+        QString sNewHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sNewHead));
+
+        sNewHead = sNewHead.trimmed();
+
+        QVERIFY(not sNewHead.isEmpty());
+        QVERIFY(sNewHead != sOldHead);
+
+        // Poll-style refresh, like the external change polling does
+        m_pRepository->refresh();
+        m_pRepository->refreshGraph();
+
+        // Wait until the reloaded graph carries the new head
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->findLine(sNewHead) != nullptr,
+                                 s_iAsyncTimeoutMs);
+
+        // Click on the reloaded row, like checking the amended commit
+        m_pRepository->commitDiffPrevious(sNewHead);
+
+        QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->commitDetailsId(), sNewHead, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsAuthor() == "probe",
+                                 s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsMessage().trimmed() == sNewMessage,
+                                 s_iAsyncTimeoutMs);
+    }
+
+    // Same external amend, but the graph view is hidden: no reload and no
+    // click happen at amend time. When the graph finally reloads, the shown
+    // details identifier is dead: the details must follow the rewritten
+    // commit instead of going empty
+    void externalAmend_hiddenGraph_detailsFollowNewHash()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"config", "user.name", "probe"}, sUnused));
+        QVERIFY(gitOutput({"config", "user.email", "probe@local"}, sUnused));
+
+        QVERIFY(gitOutput({"add", "-A"}, sUnused));
+        QVERIFY(gitOutput({"commit", "-qm", "probe-top-commit"}, sUnused));
+
+        QString sOldHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sOldHead));
+
+        sOldHead = sOldHead.trimmed();
+
+        QVERIFY(not sOldHead.isEmpty());
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        // Baseline: details shown on the old head, like a click before the amend
+        m_pRepository->commitDiffPrevious(sOldHead);
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsAuthor() == "probe",
+                                 s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsMessage().contains("probe-top-commit"),
+                                 s_iAsyncTimeoutMs);
+
+        QString sNewMessage = "Amended probe commit subject";
+
+        QVERIFY(gitOutput({"commit", "--amend", "-qm", sNewMessage}, sUnused));
+
+        QString sNewHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sNewHead));
+
+        sNewHead = sNewHead.trimmed();
+
+        QVERIFY(not sNewHead.isEmpty());
+        QVERIFY(sNewHead != sOldHead);
+
+        // The graph view is hidden: the poll marks the domain stale but
+        // nothing reloads yet, then the user shows the graph again
+        m_pRepository->refresh();
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->findLine(sNewHead) != nullptr,
+                                 s_iAsyncTimeoutMs);
+
+        // No click: the details must still follow the rewritten commit
+        QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->commitDetailsId(), sNewHead, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsAuthor() == "probe",
+                                 s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsMessage().trimmed() == sNewMessage,
+                                 s_iAsyncTimeoutMs);
+    }
+
     // Linked worktree heads carry no branch or tag decoration, so their lane
     // would show with no label: the graph marks them with a worktree label
     // carrying the worktree folder name
@@ -862,6 +1094,23 @@ private slots:
         }
 
         return false;
+    }
+
+    // True once the rewrite moved the branch and the sequencer left no
+    // rebase directory behind: HEAD alone is not enough, it detaches first
+    bool rebaseFinished(const QString& sOldHead)
+    {
+        QString sHead;
+
+        if (not gitOutput({"rev-parse", "HEAD"}, sHead))
+            return false;
+
+        if (sHead.trimmed().isEmpty() || sHead.trimmed() == sOldHead)
+            return false;
+
+        QDir tGitDir(m_sClonePath + "/.git");
+
+        return not tGitDir.exists("rebase-merge") && not tGitDir.exists("rebase-apply");
     }
 
     // Content of the output panel: surfaces git errors on failure

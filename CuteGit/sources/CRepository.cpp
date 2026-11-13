@@ -116,6 +116,9 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_sPendingRewordDetailsId("")
     , m_sPendingRewordDetailsMessage("")
     , m_iPendingRewordDetailsRow(-1)
+    , m_sLastShownDetailsId("")
+    , m_iLastShownDetailsRow(-1)
+    , m_lLastShownDetailsParents()
 {
     if (eType == CEnums::UnknownRepositoryType)
     {
@@ -506,6 +509,9 @@ void CRepository::unload()
     setCommitDetailsAddedCount(0);
     setCommitDetailsRemovedCount(0);
     clearPendingReword();
+    m_sLastShownDetailsId = "";
+    m_iLastShownDetailsRow = -1;
+    m_lLastShownDetailsParents = QStringList();
 
     // Status: back to the construction values, the next refresh redetects them
     setRepositoryStatus(CEnums::NoMerge);
@@ -1369,6 +1375,49 @@ bool CRepository::adoptRewordedCommit()
 
 /*************************************************************************/
 /*!
+    \fn bool CRepository::followRewrittenCommit()
+    Follows an external hash rewrite so details show the new commit, true when adopted.
+    A commit amended outside the application rewrites its hash with no pending
+    tracking: the shown identifier is dead but the rewritten commit keeps its
+    row and its parents across the reload. The position disambiguates
+    duplicates, the parents rule out rows shifted by pulled commits.
+*/
+bool CRepository::followRewrittenCommit()
+{
+    // Only the still shown commit follows a rewrite: an explicit move to
+    // another commit, dead or alive, ends the tracking
+    if (m_sLastShownDetailsId.isEmpty()
+            || not isSameCommitId(m_sCommitDetailsId, m_sLastShownDetailsId))
+        return false;
+
+    if (isWorkingTreeCommit(m_sCommitDetailsId))
+        return false;
+
+    // A commit loaded anywhere is alive, possibly on another log: only a
+    // commit gone from every log designates a hash rewrite
+    if (findCommitLine(m_sLastShownDetailsId) != nullptr)
+        return false;
+
+    if (m_pGraphModel == nullptr || m_iLastShownDetailsRow < 0)
+        return false;
+
+    const CLogLine* pRowLine = m_pGraphModel->lineAt(m_iLastShownDetailsRow);
+
+    if (pRowLine == nullptr || pRowLine->commitId().isEmpty()
+            || isSameCommitId(pRowLine->commitId(), m_sLastShownDetailsId))
+        return false;
+
+    const CGraphLine* pRowGraphLine = qobject_cast<const CGraphLine*>(pRowLine);
+
+    if (pRowGraphLine == nullptr || pRowGraphLine->parents() != m_lLastShownDetailsParents)
+        return false;
+
+    setCommitDetailsId(pRowLine->commitId());
+    return true;
+}
+
+/*************************************************************************/
+/*!
     \fn void CRepository::updateCommitDetails()
     Refreshes the commit details from the loaded logs and commit diff.
     Author, date and message come from the loaded logs, added and removed
@@ -1378,6 +1427,12 @@ void CRepository::updateCommitDetails()
 {
     adoptRewordedCommit();
 
+    // Without in-app tracking, a dead details identifier may still designate
+    // a commit rewritten outside the application: follow it by position and
+    // parents before giving up on the shown values
+    if (m_sPendingRewordOldId.isEmpty() && findCommitLine(m_sCommitDetailsId) == nullptr)
+        followRewrittenCommit();
+
     const CLogLine* pLine = findCommitLine(m_sCommitDetailsId);
 
     if (pLine != nullptr)
@@ -1385,6 +1440,14 @@ void CRepository::updateCommitDetails()
         setCommitDetailsAuthor(pLine->author());
         setCommitDetailsDate(pLine->date());
         setCommitDetailsMessage(pLine->message());
+
+        // Anchor for the rewrite follow: row and parents of the shown commit
+        m_sLastShownDetailsId = m_sCommitDetailsId;
+        m_iLastShownDetailsRow = m_pGraphModel != nullptr ? m_pGraphModel->rowForCommitId(m_sCommitDetailsId) : -1;
+
+        const CGraphLine* pGraphLine = qobject_cast<const CGraphLine*>(pLine);
+
+        m_lLastShownDetailsParents = pGraphLine != nullptr ? pGraphLine->parents() : QStringList();
     }
     else if (m_sPendingRewordOldId.isEmpty())
     {

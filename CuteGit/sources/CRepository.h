@@ -411,6 +411,11 @@ protected:
     QString m_sPendingRewordDetailsMessage;
     int m_iPendingRewordDetailsRow;
 
+    //! Last shown commit details, anchors the follow logic after an external hash rewrite
+    QString m_sLastShownDetailsId;
+    int m_iLastShownDetailsRow;
+    QStringList m_lLastShownDetailsParents;
+
     //-------------------------------------------------------------------------------------------------
     // Protected control methods
     //-------------------------------------------------------------------------------------------------
@@ -465,6 +470,9 @@ protected:
 
     //! Follows a hash rewrite so details show the new commit, true when adopted
     bool adoptRewordedCommit();
+
+    //! Follows an external hash rewrite so details show the new commit, true when adopted
+    bool followRewrittenCommit();
 
     //! Refreshes the commit details from the loaded logs and commit diff
     void updateCommitDetails();
