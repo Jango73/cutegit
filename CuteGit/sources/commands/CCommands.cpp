@@ -282,6 +282,14 @@ void CCommands::pushAsWIP(const QString& sPath)
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::pushTag(const QString& sPath, const QString& sTagName)
+{
+    Q_UNUSED(sPath);
+    Q_UNUSED(sTagName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::pull(const QString& sPath)
 {
     Q_UNUSED(sPath);

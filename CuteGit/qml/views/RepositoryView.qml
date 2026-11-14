@@ -16,6 +16,8 @@ Pane {
     property variant controller: null
     property variant repository: null
     property string menuBranchName: ""
+    property string menuTagName: ""
+
     property var activeTabIds: []
 
     //--------------------------------------------------------------------------------
@@ -211,6 +213,14 @@ Pane {
 
     //--------------------------------------------------------------------------------
     // Menus
+
+    TagMenu {
+        id: tagMenu
+        objectName: "tagMenu"
+        repository: root.repository
+
+        onRequestPushTag: root.requestPushTag(root.menuTagName)
+    }
 
     DiffMenu {
         id: diffMenu
@@ -545,6 +555,18 @@ Pane {
         branchMenu.canRebaseOn = (branchName !== root.repository.currentBranch)
         branchMenu.canMerge = (branchName !== root.repository.currentBranch)
         branchMenu.popup()
+    }
+
+    function showTagMenu(tagName) {
+        if (root.repository === null)
+            return
+        root.menuTagName = tagName
+        tagMenu.popup()
+    }
+
+    function requestPushTag(tagName) {
+        if (root.repository !== null && root.repository.can(CEnums.Push))
+            root.repository.pushTag(tagName)
     }
 
     function requestRebaseOnBranch(branchName) {

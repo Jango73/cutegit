@@ -76,6 +76,7 @@ const QString CGitCommands::sCommandPollRefs              = "git for-each-ref --
 const QString CGitCommands::sCommandPull                = "git pull --no-rebase";
 const QString CGitCommands::sCommandPush                = "git push -u %1 %2";
 const QString CGitCommands::sCommandPushForce           = "git push --force-with-lease -u %1 %2";
+const QString CGitCommands::sCommandPushTag             = "git push %1 %2";
 const QString CGitCommands::sCommandRebaseOnBranch      = "git rebase \"%1\"";
 const QString CGitCommands::sCommandRebaseOnCommit      = "git rebase --interactive %1~1";
 const QString CGitCommands::sCommandRefLog              = "git reflog show --pretty=format:\"%h &&& %gD &&& %gs\" --skip=%1 --max-count=%2";
@@ -499,6 +500,15 @@ void CGitCommands::push(const QString& sPath)
     {
         emit newOutputString(CEnums::eNotification, Strings::unableToGetBranch());
     }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::pushTag(const QString& sPath, const QString& sTagName)
+{
+    emit newOutputString(CEnums::eNotification, tr("Pushing..."));
+    QString sCommand = QString(sCommandPushTag).arg(sRemoteBranchPrefix).arg(sTagName);
+    exec(new CProcessCommand(CEnums::ePush, sPath, sCommand, true));
 }
 
 //-------------------------------------------------------------------------------------------------

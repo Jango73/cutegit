@@ -53,6 +53,7 @@
         <file>qml/pages/FilePane.qml</file>
         <file>qml/pages/LogMenu.qml</file>
         <file>qml/pages/MainMenu.qml</file>
+        <file>qml/pages/TagMenu.qml</file>
         <file>qml/pages/CommandsPane.qml</file>
         <file>qml/pages/RepoPane.qml</file>
         <file>qml/pages/ToolPane.qml</file>

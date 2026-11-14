@@ -446,6 +446,46 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(graphRowHasLabel(sNewHead, "origin/" + sCurrent), s_iAsyncTimeoutMs);
     }
 
+    // A tag push publishes its ref on the remote: the tag context menu action
+    // goes through the same path and origin ends up carrying refs/tags/<name>
+    void pushTag_publishesOnRemote()
+    {
+        QTemporaryDir tOriginDir;
+
+        QVERIFY(tOriginDir.isValid());
+
+        QString sOriginPath = tOriginDir.path() + "/origin.git";
+
+        QCOMPARE(QProcess::execute("git", {"init", "--bare", "--quiet", sOriginPath}), 0);
+
+        {
+            QString sIgnored;
+
+            gitOutput({"remote", "remove", "origin"}, sIgnored);
+        }
+
+        QString sUnused;
+
+        QVERIFY(gitOutput({"remote", "add", "origin", sOriginPath}, sUnused));
+
+        const QString sTagName = "v-push-probe";
+
+        QVERIFY(gitOutput({"tag", sTagName}, sUnused));
+
+        QString sExpectedCommit;
+
+        QVERIFY(gitOutput({"rev-parse", sTagName}, sExpectedCommit));
+
+        sExpectedCommit = sExpectedCommit.trimmed();
+
+        QVERIFY(not sExpectedCommit.isEmpty());
+
+        m_pRepository->pushTag(sTagName);
+
+        QTRY_COMPARE_WITH_TIMEOUT(remoteRefCommit(sOriginPath, "refs/tags/" + sTagName),
+                                  sExpectedCommit, s_iAsyncTimeoutMs);
+    }
+
     // A local branch without upstream reports no upstream and no ahead count,
     // so the QML push action stays enabled through hasUpstreamBranch
     void branchWithoutUpstream_reportsMissingUpstream()
@@ -1138,6 +1178,20 @@ private slots:
             lLines << pOutput->data(pOutput->index(iRow, 0)).toString();
 
         return lLines.join("\n");
+    }
+
+    // Commit id a remote repository holds for a ref, empty when missing
+    static QString remoteRefCommit(const QString& sRepositoryPath, const QString& sRefName)
+    {
+        QProcess tProcess;
+
+        tProcess.setWorkingDirectory(sRepositoryPath);
+        tProcess.start("git", {"rev-parse", "--verify", "--quiet", sRefName});
+
+        if (not tProcess.waitForFinished(10000))
+            return QString();
+
+        return QString::fromUtf8(tProcess.readAllStandardOutput()).trimmed();
     }
 
     // Commit id held by a branch or tag model for a name, empty when missing

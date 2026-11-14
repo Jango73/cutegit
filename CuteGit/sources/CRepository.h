@@ -267,6 +267,9 @@ public:
     //! Pushes local commits to remote, as work in progress
     Q_INVOKABLE void pushAsWIP();
 
+    //! Pushes a tag to remote
+    Q_INVOKABLE void pushTag(const QString& sTagName);
+
     //! Pulls remote commits
     Q_INVOKABLE void pull();
 

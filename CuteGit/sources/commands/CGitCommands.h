@@ -128,6 +128,9 @@ public:
     virtual void push(const QString& sPath) override;
 
     //!
+    virtual void pushTag(const QString& sPath, const QString& sTagName) override;
+
+    //!
     virtual void forcePush(const QString& sPath) override;
 
     //!
@@ -323,6 +326,7 @@ protected:
     static const QString sCommandPull;
     static const QString sCommandPush;
     static const QString sCommandPushForce;
+    static const QString sCommandPushTag;
     static const QString sCommandRebaseOnBranch;
     static const QString sCommandRebaseOnCommit;
     static const QString sCommandRefLog;

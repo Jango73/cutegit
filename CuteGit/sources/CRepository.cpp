@@ -731,6 +731,15 @@ void CRepository::pushAsWIP()
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::pushTag(const QString& sTagName)
+{
+    setStatusText(Strings::pushStarted());
+
+    m_pCommands->pushTag(m_sRepositoryPath, sTagName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::pull()
 {
     setStatusText(Strings::pullStarted());

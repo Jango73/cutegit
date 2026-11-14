@@ -122,6 +122,9 @@ public:
     virtual void pushAsWIP(const QString& sPath);
 
     //!
+    virtual void pushTag(const QString& sPath, const QString& sTagName);
+
+    //!
     virtual void pull(const QString& sPath);
 
     //!

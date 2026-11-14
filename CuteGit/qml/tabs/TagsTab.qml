@@ -16,7 +16,18 @@ BaseTab {
             listView: tagList
             selectionShown: false
             primaryText: model.name
+
+            onClicked: function(mouse) {
+                if (mouse.button === Qt.RightButton) {
+                    root.showTagMenuFor(model.name)
+                }
+            }
         }
+    }
+
+    function showTagMenuFor(tagName) {
+        if (root.viewRoot !== null)
+            root.viewRoot.showTagMenu(tagName)
     }
 
     function focusTab() {
