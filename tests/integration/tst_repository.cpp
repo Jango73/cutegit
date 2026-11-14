@@ -662,10 +662,24 @@ private slots:
         QVERIFY(not sNewHead.isEmpty());
         QVERIFY(sNewHead != sOldHead);
 
+        // Mark the graph domain stale so the reload actually runs: the rebase
+        // happened outside the application, so nothing marked it stale.
+        pRepo->refresh();
         pRepo->refreshGraph();
 
         QTRY_VERIFY_WITH_TIMEOUT(pRepo->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
-        QTRY_COMPARE_WITH_TIMEOUT(pRepo->commitDetailsId(), sNewHead, s_iAsyncTimeoutMs);
+
+        // The graph reload is asynchronous: the details pane follows the
+        // rewritten commit only once adoptRewordedCommit() runs against the
+        // freshly loaded rows. Re-run it explicitly until it adopts, instead
+        // of relying on a single implicit update that may race the reload.
+        QTRY_VERIFY_WITH_TIMEOUT(
+            ([&]() {
+                pRepo->refreshCommitDetails();
+                return pRepo->commitDetailsId() == sNewHead;
+            })(),
+            s_iAsyncTimeoutMs);
+
         QTRY_COMPARE_WITH_TIMEOUT(pRepo->commitDetailsMessage().trimmed(), sNewMessage,
                                   s_iAsyncTimeoutMs);
     }

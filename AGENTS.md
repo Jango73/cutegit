@@ -63,6 +63,7 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 - Clean code: No duplicate code. Create intermediate functions to avoid it. This also applies to data: create intermediate structures to avoid duplicating data.
 - Functions: Add a doxygen header to functions and separate all functions with a 75 character line such as : //
 - File size: Keep source files under 1000 lines; split by responsibility before crossing this limit.
+- Tests: when waiting for an event, never use an arbitrary fixed delay or sleep; poll the expected event (for example with QTRY_VERIFY/QTRY_COMPARE or an explicit condition loop) until it occurs or times out.
 - Vocabulary:
   - NEVER use abbreviations; ALWAYS use full words (acronyms are OK, `RegExp` is allowed as the standard short form of `RegularExpression`).
   - No figurative language: respect the repository vocabulary, use every word
