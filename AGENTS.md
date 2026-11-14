@@ -154,7 +154,7 @@ Never leave a blank line in the commit message: lines follow each other directly
   needs `sudo`, which prompts for a password here)
 - Build (shadow): `./scripts/linux/build.sh [--debug|--release]`
   (`cmake -S . -B build-<debug|release> -G Ninja` in `build-<debug|release>`,
-  then `cmake --build`). Builds `CuteGitApp[d]` in
+  then `cmake --build`). Builds `CuteGit[d]` in
   `build-<debug|release>/CuteGit/bin/` plus the test binaries in `tests/bin/`.
 - Clean: `./scripts/linux/clean.sh [--debug|--release|--all]`
 - Local CI: `./scripts/linux/ci-local.sh [--debug|--release]`

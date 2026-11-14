@@ -17,8 +17,8 @@ OFFSCREEN=0
 usage() {
   cat <<'USAGE'
 Usage: ./debug.sh [--debug|--release] [-d|-r] [-c Debug|Release] [--offscreen]
-  --debug,   -d  Debug binary CuteGitApp-dbg
-  --release, -r  Release binary CuteGitApp (default, matches the running build)
+  --debug,   -d  Debug binary CuteGit-dbg
+  --release, -r  Release binary CuteGit (default, matches the running build)
   --offscreen     QT_QPA_PLATFORM=offscreen (headless check, no window)
   -c              Build type (Debug or Release)
   -h, --help      Show this help
@@ -76,9 +76,9 @@ fi
 BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-  EXECUTABLE_NAME="CuteGitApp-dbg"
+  EXECUTABLE_NAME="CuteGit-dbg"
 else
-  EXECUTABLE_NAME="CuteGitApp"
+  EXECUTABLE_NAME="CuteGit"
 fi
 
 EXECUTABLE_PATH="${BUILD_FOLDER}/CuteGit/bin/${EXECUTABLE_NAME}"

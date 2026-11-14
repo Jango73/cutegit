@@ -2,6 +2,10 @@
 // Qt
 #include <QApplication>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
+#include <QIcon>
+#include <QStandardPaths>
 
 // Application
 #include "CuteGit.h"
@@ -24,6 +28,36 @@ int main(int argc, char *argv[])
     qInfo() << QString("CuteGit %1 built %2").arg(VERSION_STRING).arg(BUILD_TIMESTAMP);
 
     QApplication app(argc, argv);
+
+    // Keep the application identity stable regardless of the executable file
+    // name, so settings and data survive a rename of the binary.
+    app.setApplicationName("CuteGit");
+
+    // Migrate settings saved under previous executable names (CuteGitApp,
+    // CuteGitApp-dbg) to the new stable location, if they have not been
+    // migrated yet.
+    const QString sNewDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QDir().mkpath(sNewDataPath);
+    const QString sNewConfigPath = sNewDataPath + "/configuration.xml";
+    if (!QFile::exists(sNewConfigPath))
+    {
+        const QStringList lOldApplicationNames = {"CuteGitApp", "CuteGitApp-dbg"};
+        for (const QString& sOldApplicationName : lOldApplicationNames)
+        {
+            app.setApplicationName(sOldApplicationName);
+            const QString sOldConfigPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/configuration.xml";
+            app.setApplicationName("CuteGit");
+            if (QFile::exists(sOldConfigPath))
+            {
+                QFile::copy(sOldConfigPath, sNewConfigPath);
+                break;
+            }
+        }
+    }
+
+    // Embed the application icon so the running window shows it in the dock
+    // (GNOME/Pop!_OS) instead of relying on the desktop file's Icon entry.
+    app.setWindowIcon(QIcon(":/cutegit-icon.svg"));
     QStringList lArgList;
     QString sSequenceFile;
     QString sStubFileName;

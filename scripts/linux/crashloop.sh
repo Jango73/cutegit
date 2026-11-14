@@ -30,9 +30,9 @@ done
 BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-  BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGitApp-dbg"
+  BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGit-dbg"
 else
-  BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGitApp"
+  BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGit"
 fi
 
 if [ ! -f "${BINARY}" ]; then

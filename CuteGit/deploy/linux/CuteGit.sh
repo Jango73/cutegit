@@ -9,4 +9,4 @@ cd $base
 export LD_LIBRARY_PATH=.
 #export QT_DEBUG_PLUGINS=1
 # Launch CuteGit specifying this file as a stub
-./CuteGitApp --stub "$base_full" $@
+./CuteGit --stub "$base_full" $@

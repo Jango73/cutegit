@@ -24,7 +24,7 @@ Usage: ./install-desktop.sh [--release|--debug] [--name NAME] [--icon PATH] [--n
   --debug,   -d  Point at the Debug binary
   -c             Build type (Debug or Release)
   --name         Desktop file base name and app name suffix (default: cutegit)
-  --icon         Absolute path to an icon file (default: Media/cutegit-icon.svg)
+  --icon         Absolute path to an icon file (default: CuteGit/resources/cutegit-icon.svg)
   --no-icon      Omit the Icon entry
   --uninstall    Remove the installed shortcut instead of creating it
 USAGE
@@ -111,7 +111,7 @@ fi
 if [[ "${NO_ICON}" == "1" ]]; then
   ICON_PATH=""
 elif [[ -z "${ICON_PATH}" ]]; then
-  DEFAULT_ICON="${PROJECT_ROOT_FOLDER}/Media/cutegit-icon.svg"
+  DEFAULT_ICON="${PROJECT_ROOT_FOLDER}/CuteGit/resources/cutegit-icon.svg"
   if [[ -f "${DEFAULT_ICON}" ]]; then
     ICON_PATH="${DEFAULT_ICON}"
   fi
@@ -120,10 +120,10 @@ fi
 BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-  EXECUTABLE_NAME="CuteGitApp-dbg"
+  EXECUTABLE_NAME="CuteGit-dbg"
   DISPLAY_NAME="${APP_NAME} (Debug)"
 else
-  EXECUTABLE_NAME="CuteGitApp"
+  EXECUTABLE_NAME="CuteGit"
   DISPLAY_NAME="${APP_NAME}"
 fi
 
@@ -148,6 +148,7 @@ mkdir -p "$(dirname "${DESKTOP_FILE}")"
   if [[ -n "${ICON_PATH}" ]]; then
     echo "Icon=${ICON_PATH}"
   fi
+  echo "StartupWMClass=CuteGit"
   echo "Terminal=false"
   echo "Categories=Development;RevisionControl;"
 } > "${DESKTOP_FILE}"

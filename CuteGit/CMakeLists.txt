@@ -7,7 +7,7 @@
 
 set(QTPLUS_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../qt-plus/source/cpp")
 
-add_executable(CuteGitApp
+add_executable(CuteGit
   sources/CBranch.h
   sources/CBranchModel.h
   sources/CCommitLogModel.h
@@ -86,7 +86,7 @@ add_executable(CuteGitApp
   resources.qrc
 )
 
-target_include_directories(CuteGitApp PRIVATE
+target_include_directories(CuteGit PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/sources"
   "${CMAKE_CURRENT_SOURCE_DIR}/sources/commands"
   "${QTPLUS_CPP_DIR}"
@@ -94,12 +94,12 @@ target_include_directories(CuteGitApp PRIVATE
   "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-target_compile_definitions(CuteGitApp PRIVATE
+target_compile_definitions(CuteGit PRIVATE
   "VERSION_STRING=\"${PROJECT_VERSION}\""
   QTPLUS_LIBRARY
 )
 
-target_link_libraries(CuteGitApp PRIVATE
+target_link_libraries(CuteGit PRIVATE
   Qt6::Core
   Qt6::Gui
   Qt6::Widgets
@@ -115,7 +115,7 @@ target_link_libraries(CuteGitApp PRIVATE
 # Translations: compile .ts to .qm and embed them as :/i18n/CuteGit_<lang>.qm
 # so CController::setLanguage() can load them with QTranslator. Only lrelease
 # runs here (no lupdate), source .ts files are never modified by the build.
-qt_add_lrelease(CuteGitApp
+qt_add_lrelease(CuteGit
   TS_FILES
     i18n/CuteGit_de.ts
     i18n/CuteGit_es.ts
@@ -125,16 +125,16 @@ qt_add_lrelease(CuteGitApp
     i18n/CuteGit_zh.ts
   QM_FILES_OUTPUT_VARIABLE QM_FILES
 )
-qt_add_resources(CuteGitApp "translations"
+qt_add_resources(CuteGit "translations"
   PREFIX "/i18n"
   BASE "${CMAKE_CURRENT_BINARY_DIR}"
   FILES ${QM_FILES}
 )
 
 # Binary layout matches the former qmake build: build-<type>/CuteGit/bin/,
-# CuteGitApp in Release, CuteGitApp-dbg in Debug.
-set_target_properties(CuteGitApp PROPERTIES
-  OUTPUT_NAME "CuteGitApp"
+# CuteGit in Release, CuteGit-dbg in Debug.
+set_target_properties(CuteGit PROPERTIES
+  OUTPUT_NAME "CuteGit"
   DEBUG_POSTFIX "-dbg"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/CuteGit/bin"
 )
@@ -144,7 +144,7 @@ include(GNUInstallDirs)
 # layouts.json is embedded as a :/deploy resource fallback; the installed copy
 # under share/cutegit documents the override the application picks up when
 # placed next to the binary.
-install(TARGETS CuteGitApp
+install(TARGETS CuteGit
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
 )
 

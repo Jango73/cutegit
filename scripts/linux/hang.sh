@@ -13,7 +13,7 @@ EXIT_SUCCESS=0
 EXIT_FAILURE=1
 
 FOUND=0
-for PROCESS_NAME in CuteGitApp CuteGitApp-dbg; do
+for PROCESS_NAME in CuteGit CuteGit-dbg; do
   while read -r PID; do
     [[ -z "${PID}" ]] && continue
     FOUND=1
@@ -32,7 +32,7 @@ for PROCESS_NAME in CuteGitApp CuteGitApp-dbg; do
 done
 
 if [[ "${FOUND}" -eq 0 ]]; then
-  echo "[hang] No CuteGitApp process found." >&2
+  echo "[hang] No CuteGit process found." >&2
   exit "${EXIT_FAILURE}"
 fi
 

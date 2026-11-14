@@ -61,7 +61,7 @@ jobs:
         with:
           name: cutegit-linux-release
           path: |
-            build-release/CuteGit/bin/CuteGitApp
+            build-release/CuteGit/bin/CuteGit
             build-release/CuteGit/bin/layouts.json
             qt-plus/bin/libqt-plus.so*
           if-no-files-found: error

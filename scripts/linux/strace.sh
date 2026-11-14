@@ -18,8 +18,8 @@ BUILD_TYPE="Release"
 usage() {
   cat <<'USAGE'
 Usage: ./strace.sh [--debug|--release] [-d|-r] [-c Debug|Release]
-  --debug,   -d  Trace the Debug binary CuteGitApp-dbg
-  --release, -r  Trace the Release binary CuteGitApp (default)
+  --debug,   -d  Trace the Debug binary CuteGit-dbg
+  --release, -r  Trace the Release binary CuteGit (default)
   -c              Build type (Debug or Release)
   -h, --help      Show this help
 Log:
@@ -71,9 +71,9 @@ fi
 BUILD_FOLDER="${PROJECT_ROOT_FOLDER}/build-${BUILD_TYPE,,}"
 
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-  EXECUTABLE_NAME="CuteGitApp-dbg"
+  EXECUTABLE_NAME="CuteGit-dbg"
 else
-  EXECUTABLE_NAME="CuteGitApp"
+  EXECUTABLE_NAME="CuteGit"
 fi
 
 EXECUTABLE_PATH="${BUILD_FOLDER}/CuteGit/bin/${EXECUTABLE_NAME}"

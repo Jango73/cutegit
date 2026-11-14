@@ -107,5 +107,7 @@
         <file>qml/images/star.svg</file>
         <file>qml/images/tag.svg</file>
         <file>qml/images/up-arrow.svg</file>
+
+        <file alias="cutegit-icon.svg">resources/cutegit-icon.svg</file>
     </qresource>
 </RCC>

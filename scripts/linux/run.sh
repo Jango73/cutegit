@@ -19,7 +19,7 @@ Usage: ./run.sh [--debug|--release] [-d|-r] [--verbose|-v] [-c Debug|Release] [-
   --release, -r  Build type Release (default)
   --verbose, -v  Verbose build output
   -c             Build type (Debug or Release)
-  Extra arguments after -- are forwarded to CuteGitApp (eg. -- --stub session.stub).
+  Extra arguments after -- are forwarded to CuteGit (eg. -- --stub session.stub).
 USAGE
 }
 
@@ -81,9 +81,9 @@ if [ ! -d "${BUILD_FOLDER}" ]; then
   fi
 fi
 
-BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGitApp"
+BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGit"
 if [[ "${BUILD_TYPE}" == "Debug" ]]; then
-  BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGitApp-dbg"
+  BINARY="${BUILD_FOLDER}/CuteGit/bin/CuteGit-dbg"
 fi
 
 if [ ! -f "${BINARY}" ]; then
