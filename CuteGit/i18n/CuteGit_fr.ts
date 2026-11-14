@@ -699,8 +699,8 @@ Etes-vous sûr(e) de vouloir faire cela?</translation>
         <translation>Créer une &amp;branche</translation>
     </message>
     <message>
-        <source>Reset &amp;to here</source>
-        <translation>Remise à &amp;zéro ici</translation>
+        <source>Reset &amp;to here (mixed)</source>
+        <translation>Remise à &amp;zéro ici (mixed)</translation>
     </message>
     <message>
         <source>&amp;Rebase here</source>

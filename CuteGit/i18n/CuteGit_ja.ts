@@ -699,8 +699,8 @@ Are you sure you want to do this?</source>
         <translation>&amp;ここから分岐</translation>
     </message>
     <message>
-        <source>Reset &amp;to here</source>
-        <translation>&amp;ここにリセット</translation>
+        <source>Reset &amp;to here (mixed)</source>
+        <translation>&amp;ここにリセット (mixed)</translation>
     </message>
     <message>
         <source>&amp;Rebase here</source>

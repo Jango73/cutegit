@@ -698,8 +698,8 @@ Sind Sie sicher?</translation>
             <translation>&amp;Branch von hier</translation>
         </message>
         <message>
-            <source>Reset &amp;to here</source>
-            <translation>Reset &amp;hierher</translation>
+            <source>Reset &amp;to here (mixed)</source>
+            <translation>Reset &amp;hierher (mixed)</translation>
         </message>
         <message>
             <source>&amp;Rebase here</source>

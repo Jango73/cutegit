@@ -538,8 +538,8 @@
     </message>
     <message>
         <location filename="../qml/components/Const.qml" line="119"/>
-        <source>Reset &amp;to here</source>
-        <translation>Restablecer &amp;aquí</translation>
+        <source>Reset &amp;to here (mixed)</source>
+        <translation>Restablecer &amp;aquí (mixed)</translation>
     </message>
     <message>
         <location filename="../qml/components/Const.qml" line="120"/>

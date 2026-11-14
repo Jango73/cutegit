@@ -481,8 +481,8 @@
         <translation>Crea &amp;ramo da qui</translation>
     </message>
     <message>
-        <source>Reset &amp;to here</source>
-        <translation>Reset &amp;qui</translation>
+        <source>Reset &amp;to here (mixed)</source>
+        <translation>Reset &amp;qui (mixed)</translation>
     </message>
     <message>
         <source>&amp;Rebase here</source>

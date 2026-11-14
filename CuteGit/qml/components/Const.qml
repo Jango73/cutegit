@@ -165,7 +165,7 @@ Item {
     readonly property string logCopyCommitMessageMenuText: qsTr("Copy commit m&essage")
     readonly property string logCreateTagMenuText: qsTr("Create ta&g here")
     readonly property string logCreateBranchMenuText: qsTr("&Branch from here")
-    readonly property string logResetMenuText: qsTr("Reset &to here")
+    readonly property string logResetMenuText: qsTr("Reset &to here (mixed)")
     readonly property string logRebaseMenuText: qsTr("&Rebase here")
     readonly property string logSquashMenuText: qsTr("&Squash")
     readonly property string logChangeMessageMenuText: qsTr("Change &message")

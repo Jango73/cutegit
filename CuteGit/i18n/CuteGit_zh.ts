@@ -699,8 +699,8 @@ Are you sure you want to do this?</source>
         <translation>&amp;从此创建分支</translation>
     </message>
     <message>
-        <source>Reset &amp;to here</source>
-        <translation>&amp;重置到此处</translation>
+        <source>Reset &amp;to here (mixed)</source>
+        <translation>&amp;重置到此处 (mixed)</translation>
     </message>
     <message>
         <source>&amp;Rebase here</source>
