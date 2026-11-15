@@ -20,6 +20,7 @@
 #include "CRepoFile.h"
 #include "CLogLineCollection.h"
 #include "CDiffLine.h"
+#include "CDiffStatistics.h"
 #include "CGraphLine.h"
 #include "CFlatFileModel.h"
 #include "CFlatFileModelProxy.h"
@@ -403,9 +404,17 @@ protected:
     //! True while a poll fingerprint command is waiting for its result
     bool m_bPollPending;
 
-    //! Last working tree diff counts, re-applied to the ghost line on language change
-    int m_iWorkingTreeAddedCount;
-    int m_iWorkingTreeRemovedCount;
+    //! Last working tree diff counters, re-applied to the ghost line on language change
+    CDiffStatistics m_tWorkingTreeDiffStatistics;
+
+    //! Number of untracked files, the part of the working tree a diff never shows
+    int m_iWorkingTreeUntrackedFileCount;
+
+    //! Identifier of the last working tree diff request, older results are stale
+    int m_iWorkingTreeDiffRequestId;
+
+    //! Commit whose diff the file diff model holds, empty when its content belongs to no commit
+    QString m_sFileDiffCommitId;
 
     //! Log domains that missed a refresh, reloaded on demand by shown views
     QSet<QString> m_sStaleLogDomains;
@@ -486,8 +495,11 @@ protected:
     //! Shows or hides the working tree line from the dirty state, clears its diff when hidden
     void updateWorkingTreeLine();
 
-    //! Refreshes the working tree line message from added and removed line counts
-    void refreshWorkingTreeMessage(int iAddedCount, int iRemovedCount);
+    //! Refreshes the working tree line message from the stored working tree state
+    void refreshWorkingTreeMessage();
+
+    //! Returns the number of untracked files in the repository
+    int untrackedFileCount() const;
 
     //! Refreshes branch/tag labels of every commit model from the repository
     void refreshCommitLabels();
@@ -497,6 +509,18 @@ protected:
 
     //! Returns true when a working tree diff result still belongs to the displayed file
     bool workingTreeDiffMatchesCurrentFile(CDiffModel* pModel, const QString& sUserData) const;
+
+    //! Returns true when a commit diff result still belongs to the displayed commit
+    bool commitDiffMatchesCurrentCommit(const QString& sDiffCommitId) const;
+
+    //! Returns true when a working tree diff result answers the last request
+    bool workingTreeDiffMatchesCurrentRequest(const QString& sUserData) const;
+
+    //! Drops every in-flight working tree diff result
+    void invalidateWorkingTreeDiffRequests();
+
+    //! Requests the working tree diff under a new request identifier
+    void requestWorkingTreeDiff();
 
     //! Builds a patch from selected diff rows and applies it on the index
     void applyDiffLines(CDiffModel* pModel, CDiffModelProxy* pProxy, const QVariantList& lProxyRows, bool bStage);

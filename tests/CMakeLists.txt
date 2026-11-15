@@ -27,6 +27,7 @@ set(PATCHBUILDER_HEADERS
   "${CUTEGIT_SOURCES_DIR}/CDiffConstants.h"
   "${CUTEGIT_SOURCES_DIR}/CDiffModel.h"
   "${CUTEGIT_SOURCES_DIR}/CDiffModelProxy.h"
+  "${CUTEGIT_SOURCES_DIR}/CDiffStatistics.h"
   "${CUTEGIT_SOURCES_DIR}/CEnums.h"
 )
 

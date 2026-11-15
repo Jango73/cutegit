@@ -99,7 +99,7 @@ public:
     virtual void twoCommitDiff(const QString& sPath, const QString& sFromCommitId, const QString& sToCommitId) override;
 
     //! Shows uncommitted working tree changes of the whole tree
-    virtual void workingTreeDiff(const QString& sPath) override;
+    virtual void workingTreeDiff(const QString& sPath, const QString& sUserData) override;
 
     //!
     virtual void setCurrentBranch(const QString& sPath, const QString& sBranch) override;

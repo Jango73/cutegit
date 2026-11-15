@@ -468,7 +468,7 @@ void CSvnCommands::blame(const QString& sPath, const QString& sFullName)
 void CSvnCommands::commitDiffPrevious(const QString& sPath, const QString& sCommitId)
 {
     QString sCommand = QString(sCommandDiffRevision).arg(sCommitId);
-    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand));
+    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand, false, QMap<QString, QString>(), sCommitId));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -476,7 +476,7 @@ void CSvnCommands::commitDiffPrevious(const QString& sPath, const QString& sComm
 void CSvnCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommitId, const QString& sToCommitId)
 {
     QString sCommand = QString(sCommandDiffTwoRevisions).arg(sFromCommitId).arg(sToCommitId);
-    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand));
+    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand, false, QMap<QString, QString>(), sToCommitId));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -485,9 +485,9 @@ void CSvnCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommi
     \fn CSvnCommands::workingTreeDiff
     Shows uncommitted working tree changes of the whole tree.
 */
-void CSvnCommands::workingTreeDiff(const QString& sPath)
+void CSvnCommands::workingTreeDiff(const QString& sPath, const QString& sUserData)
 {
-    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommandDiffWorkingTree));
+    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommandDiffWorkingTree, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -856,8 +856,8 @@ void CSvnCommands::handleDiffOutput(const CProcessResult& tResult)
         lReturnValue.clear();
     }
 
-    emit newOutputString(tResult.m_eCommand, tResult.m_sValue);
-    emit newOutputListOfCDiffLine(tResult.m_eCommand, lReturnValue);
+    emit newOutputString(tResult.m_eCommand, tResult.m_sValue, tResult.m_sUserData);
+    emit newOutputListOfCDiffLine(tResult.m_eCommand, lReturnValue, tResult.m_sUserData);
 }
 
 //-------------------------------------------------------------------------------------------------

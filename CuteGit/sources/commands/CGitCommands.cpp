@@ -645,7 +645,7 @@ void CGitCommands::commitDiffPrevious(const QString& sPath, const QString& sComm
     execNow(sPath, QString(sCommandVerifyRevision).arg(sCommitId + "~1"), QMap<QString, QString>(), &iExitCode);
 
     QString sCommand = (iExitCode == 0) ? QString(sCommandCommitDiffPrevious).arg(sCommitId) : QString(sCommandCommitDiffRoot).arg(sCommitId);
-    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand));
+    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand, false, QMap<QString, QString>(), sCommitId));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -653,7 +653,7 @@ void CGitCommands::commitDiffPrevious(const QString& sPath, const QString& sComm
 void CGitCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommitId, const QString& sToCommitId)
 {
     QString sCommand = QString(sCommandTwoCommitDiff).arg(sFromCommitId).arg(sToCommitId);
-    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand));
+    exec(new CProcessCommand(CEnums::eTwoCommitDiff, sPath, sCommand, false, QMap<QString, QString>(), sToCommitId));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -664,14 +664,14 @@ void CGitCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommi
     plus working tree versus index together). A repository without any commit
     diffs against the empty tree, so the first changes still show up.
 */
-void CGitCommands::workingTreeDiff(const QString& sPath)
+void CGitCommands::workingTreeDiff(const QString& sPath, const QString& sUserData)
 {
     int iExitCode = 0;
 
     execNow(sPath, sCommandVerifyHead, QMap<QString, QString>(), &iExitCode);
 
     QString sCommand = (iExitCode == 0) ? sCommandWorkingTreeDiff : sCommandWorkingTreeDiffEmpty;
-    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommand));
+    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommand, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------

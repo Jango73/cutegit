@@ -200,6 +200,20 @@
         <source>Changes: +%1 / -%2</source>
         <translation>Cambios: +%1 / -%2</translation>
     </message>
+    <message numerus="yes">
+        <source>Changes: %n untracked file(s)</source>
+        <translation>
+            <numerusform>Cambios: %n archivo no rastreado</numerusform>
+            <numerusform>Cambios: %n archivos no rastreados</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes: +%1 / -%2, %n untracked file(s)</source>
+        <translation>
+            <numerusform>Cambios: +%1 / -%2, %n archivo no rastreado</numerusform>
+            <numerusform>Cambios: +%1 / -%2, %n archivos no rastreados</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>CSvnCommands</name>

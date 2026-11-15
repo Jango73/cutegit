@@ -7,6 +7,9 @@
 // qt-plus
 #include "CDiffLine.h"
 
+// Application
+#include "CDiffStatistics.h"
+
 //-------------------------------------------------------------------------------------------------
 
 class CDiffModel : public QAbstractListModel
@@ -60,6 +63,9 @@ public:
 
     //! Returns all lines (borrowed pointers, owned by the model)
     const QList<CDiffLine*>& lines() const;
+
+    //! Returns the added and removed line counters of the loaded lines
+    CDiffStatistics statistics() const;
 
     //! Returns role names
     virtual QHash<int, QByteArray> roleNames() const;

@@ -214,12 +214,19 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
 
     case CEnums::eTwoCommitDiff:
     {
-        setFileDiffString(sOutput);
+        // Drop a diff tagged for a commit that is not displayed anymore
+        if (commitDiffMatchesCurrentCommit(sUserData))
+            setFileDiffString(sOutput);
         break;
     }
 
     case CEnums::eWorkingTreeDiff:
     {
+        // Drop a diff answering an older request: the counters it carries
+        // describe a tree state that is not the current one
+        if (not workingTreeDiffMatchesCurrentRequest(sUserData))
+            break;
+
         if (isWorkingTreeCommit(m_sCommitDetailsId))
             setFileDiffString(sOutput);
         break;
@@ -738,6 +745,16 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
 
     case CEnums::eTwoCommitDiff:
     {
+        // The result carries the commit it belongs to: a diff tagged for a
+        // commit that is not shown anymore must never replace the displayed
+        // one, otherwise its counters would be read as the shown commit's
+        if (not commitDiffMatchesCurrentCommit(sUserData))
+        {
+            qDeleteAll(lNewLines);
+            break;
+        }
+
+        m_sFileDiffCommitId = sUserData;
         m_pFileDiffModel->setLines(lNewLines);
         updateCommitDetails();
         break;
@@ -745,31 +762,29 @@ void CRepository::onNewOutputListOfCDiffLine(CEnums::EProcessCommand eCommand, Q
 
     case CEnums::eWorkingTreeDiff:
     {
-        int iAddedCount = 0;
-        int iRemovedCount = 0;
-
-        for (const CDiffLine* pLine : lNewLines)
+        if (not workingTreeDiffMatchesCurrentRequest(sUserData))
         {
-            if (pLine == nullptr)
-                continue;
-
-            if (pLine->operation() == CEnums::DiffAdd)
-                iAddedCount++;
-            else if (pLine->operation() == CEnums::DiffDelete)
-                iRemovedCount++;
+            qDeleteAll(lNewLines);
+            break;
         }
 
-        refreshWorkingTreeMessage(iAddedCount, iRemovedCount);
+        m_tWorkingTreeDiffStatistics.setLines(lNewLines);
 
         if (isWorkingTreeCommit(m_sCommitDetailsId))
         {
+            m_sFileDiffCommitId = workingTreeCommitId();
             m_pFileDiffModel->setLines(lNewLines);
             updateCommitDetails();
         }
         else
         {
+            // The file diff model keeps the shown commit diff: its tag stays
+            // untouched so its counters never pass for the working tree ones
             qDeleteAll(lNewLines);
         }
+
+        // The ghost line message follows the stored state whatever is shown
+        refreshWorkingTreeMessage();
         break;
     }
 
@@ -797,6 +812,11 @@ void CRepository::onNewOutputCGraphLineCollection(CEnums::EProcessCommand eComma
     case CEnums::eGraph:
     {
         m_pGraphModel->setLines(lNewLines);
+
+        // A rebuilt graph creates the working tree line with its default
+        // message: re-apply the stored state so it never reads as clean
+        refreshWorkingTreeMessage();
+
         updateCommitDetails();
         break;
     }

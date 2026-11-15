@@ -159,7 +159,7 @@ public:
     virtual void twoCommitDiff(const QString& sPath, const QString& sFromCommitId, const QString& sToCommitId);
 
     //! Shows uncommitted working tree changes of the whole tree, staged and unstaged together
-    virtual void workingTreeDiff(const QString& sPath);
+    virtual void workingTreeDiff(const QString& sPath, const QString& sUserData);
 
     //!
     virtual void setCurrentBranch(const QString& sPath, const QString& sBranch);

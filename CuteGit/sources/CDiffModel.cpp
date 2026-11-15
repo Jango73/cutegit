@@ -195,3 +195,10 @@ const QList<CDiffLine*>& CDiffModel::lines() const
 {
     return m_lLines;
 }
+
+//-------------------------------------------------------------------------------------------------
+
+CDiffStatistics CDiffModel::statistics() const
+{
+    return CDiffStatistics(m_lLines);
+}

@@ -389,9 +389,10 @@ void CCommands::twoCommitDiff(const QString& sPath, const QString& sFromCommitId
 
 //-------------------------------------------------------------------------------------------------
 
-void CCommands::workingTreeDiff(const QString& sPath)
+void CCommands::workingTreeDiff(const QString& sPath, const QString& sUserData)
 {
     Q_UNUSED(sPath);
+    Q_UNUSED(sUserData);
 }
 
 //-------------------------------------------------------------------------------------------------

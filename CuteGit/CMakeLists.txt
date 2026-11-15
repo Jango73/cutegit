@@ -16,6 +16,7 @@ add_executable(CuteGit
   sources/CDiffConstants.h
   sources/CDiffModel.h
   sources/CDiffModelProxy.h
+  sources/CDiffStatistics.h
   sources/CEnums.h
   sources/CFlatFileModel.h
   sources/CFlatFileModelProxy.h

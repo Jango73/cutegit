@@ -172,6 +172,18 @@
         <source>Changes: +%1 / -%2</source>
         <translation>変更: +%1 / -%2</translation>
     </message>
+    <message numerus="yes">
+        <source>Changes: %n untracked file(s)</source>
+        <translation>
+            <numerusform>変更: %n 個の未追跡ファイル</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes: +%1 / -%2, %n untracked file(s)</source>
+        <translation>
+            <numerusform>変更: +%1 / -%2、%n 個の未追跡ファイル</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>CSvnCommands</name>

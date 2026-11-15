@@ -553,6 +553,74 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(pModel->data(tGhostIndex, CGraphModel::eMessageRole).toString(), QString("No changes"), s_iAsyncTimeoutMs);
     }
 
+    // A working tree holding only untracked files reports them explicitly:
+    // no diff ever shows untracked content, so the file statuses are the only
+    // source for this count and the line must never stay on a blank state
+    void workingTreeLine_reportsUntrackedFiles()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"checkout", "--", m_sRelativeName}, sUnused));
+        QVERIFY(createUntrackedFile("untracked-probe.txt", "untracked content\n"));
+
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->hasModifiedFiles(), s_iAsyncTimeoutMs);
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        CGraphModel* pModel = m_pRepository->graphModel();
+        QModelIndex tGhostIndex = pModel->index(0, 0);
+
+        QCOMPARE(pModel->data(tGhostIndex, CGraphModel::eCommitIdRole).toString(), m_pRepository->workingTreeCommitId());
+        QTRY_COMPARE_WITH_TIMEOUT(pModel->data(tGhostIndex, CGraphModel::eMessageRole).toString(),
+                                  QString("Changes: 1 untracked file(s)"), s_iAsyncTimeoutMs);
+    }
+
+    // Switching from a commit diff to the working tree line replaces the
+    // counters at once: the shared file diff model still holds the commit
+    // diff, and reading it blindly reports that commit's numbers for the tree
+    void workingTreeLine_doesNotInheritCommitDiffCounters()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"checkout", "--", m_sRelativeName}, sUnused));
+        QVERIFY(createUntrackedFile("untracked-probe.txt", "untracked content\n"));
+
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->hasModifiedFiles(), s_iAsyncTimeoutMs);
+
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->graphModel()->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        CGraphModel* pModel = m_pRepository->graphModel();
+        QString sHeadId = pModel->data(pModel->index(1, 0), CGraphModel::eCommitIdRole).toString();
+
+        QVERIFY(not sHeadId.isEmpty());
+
+        // The root commit adds every line of the fixture: its counters are
+        // never zero, so any leak into the ghost line is visible
+        m_pRepository->commitDiffPrevious(sHeadId);
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->commitDetailsAddedCount() > 0, s_iAsyncTimeoutMs);
+        QCOMPARE(m_pRepository->commitDetailsId(), sHeadId);
+
+        m_pRepository->commitDiffPrevious(m_pRepository->workingTreeCommitId());
+
+        QCOMPARE(m_pRepository->commitDetailsId(), m_pRepository->workingTreeCommitId());
+        QCOMPARE(m_pRepository->commitDetailsAddedCount(), 0);
+        QCOMPARE(m_pRepository->commitDetailsRemovedCount(), 0);
+
+        // The pending working tree diff lands with no line: the counters stay zero
+        QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->fileDiffModel()->rowCount(), 0, s_iAsyncTimeoutMs);
+        QCOMPARE(m_pRepository->commitDetailsAddedCount(), 0);
+        QCOMPARE(m_pRepository->commitDetailsRemovedCount(), 0);
+    }
+
     // The working tree diff shows staged and unstaged changes together,
     // like the tree state the working tree line stands for
     void workingTreeDiff_showsStagedUnstaged()
@@ -1085,6 +1153,21 @@ private slots:
 
         tStream << "line-B1\nline-B2\nline-B3\n";
         tFile.close();
+    }
+
+    // Writes an untracked file in the clone work tree
+    bool createUntrackedFile(const QString& sRelativeName, const QString& sContent)
+    {
+        QFile tFile(m_sClonePath + "/" + sRelativeName);
+
+        if (not tFile.open(QIODevice::WriteOnly | QIODevice::Text))
+            return false;
+
+        QTextStream tStream(&tFile);
+
+        tStream << sContent;
+
+        return true;
     }
 
     // Runs git in the clone and returns standard output

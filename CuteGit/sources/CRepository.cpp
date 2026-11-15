@@ -104,8 +104,10 @@ CRepository::CRepository(const QString& sPath, CController* pController, QObject
     , m_bFileInventoryDone(false)
     , m_bShowIgnored(false)
     , m_bPollPending(false)
-    , m_iWorkingTreeAddedCount(0)
-    , m_iWorkingTreeRemovedCount(0)
+    , m_tWorkingTreeDiffStatistics()
+    , m_iWorkingTreeUntrackedFileCount(0)
+    , m_iWorkingTreeDiffRequestId(0)
+    , m_sFileDiffCommitId("")
     , m_sCommitDetailsId("")
     , m_sCommitDetailsAuthor("")
     , m_sCommitDetailsMessage("")
@@ -495,6 +497,10 @@ void CRepository::unload()
     m_pFileBlameModel->setFullSourceName("");
     m_pFileBlameModel->setRelativeSourceName("");
     m_pFileBlameModel->setLines(QList<CDiffLine*>());
+    m_sFileDiffCommitId = "";
+    m_tWorkingTreeDiffStatistics.reset();
+    m_iWorkingTreeUntrackedFileCount = 0;
+    invalidateWorkingTreeDiffRequests();
     setFileDiffString("");
     setStagedFileDiffString("");
     setUnstagedFileDiffString("");
@@ -879,7 +885,7 @@ void CRepository::commitDiffPrevious(const QString& sCommitId)
 
     if (isWorkingTreeCommit(sCommitId))
     {
-        m_pCommands->workingTreeDiff(m_sRepositoryPath);
+        requestWorkingTreeDiff();
         return;
     }
 
@@ -1440,7 +1446,9 @@ bool CRepository::followRewrittenCommit()
     \fn void CRepository::updateCommitDetails()
     Refreshes the commit details from the loaded logs and commit diff.
     Author, date and message come from the loaded logs, added and removed
-    counts come from the commit diff lines.
+    counts come from the diff of the shown commit only: the file diff model
+    may still hold the diff of a previously shown commit while the new one
+    loads, and its counters must never leak into the shown details.
 */
 void CRepository::updateCommitDetails()
 {
@@ -1478,35 +1486,32 @@ void CRepository::updateCommitDetails()
     // replacement is not loaded yet: keep the shown values instead of
     // flashing an empty pane, the adoption above swaps them on reload
 
-    int iAddedCount = 0;
-    int iRemovedCount = 0;
-
-    if (m_pFileDiffModel != nullptr)
+    // The working tree counters live in their own state: the shared file
+    // diff model holds a real commit diff most of the time
+    if (isWorkingTreeCommit(m_sCommitDetailsId))
     {
-        for (const CDiffLine* pDiffLine : m_pFileDiffModel->lines())
-        {
-            if (pDiffLine == nullptr)
-                continue;
+        setCommitDetailsAddedCount(m_tWorkingTreeDiffStatistics.addedLineCount());
+        setCommitDetailsRemovedCount(m_tWorkingTreeDiffStatistics.removedLineCount());
 
-            if (pDiffLine->operation() == CEnums::DiffAdd)
-                iAddedCount++;
-            else if (pDiffLine->operation() == CEnums::DiffDelete)
-                iRemovedCount++;
-        }
+        refreshWorkingTreeMessage();
+        return;
     }
 
-    setCommitDetailsAddedCount(iAddedCount);
-    setCommitDetailsRemovedCount(iRemovedCount);
+    const CDiffStatistics tStatistics = (m_pFileDiffModel != nullptr && m_sFileDiffCommitId == m_sCommitDetailsId)
+            ? m_pFileDiffModel->statistics()
+            : CDiffStatistics();
 
-    if (isWorkingTreeCommit(m_sCommitDetailsId))
-        refreshWorkingTreeMessage(iAddedCount, iRemovedCount);
+    setCommitDetailsAddedCount(tStatistics.addedLineCount());
+    setCommitDetailsRemovedCount(tStatistics.removedLineCount());
 }
 
 //-------------------------------------------------------------------------------------------------
 
 /*!
     \fn void CRepository::updateWorkingTreeLine()
-    Keeps the working tree line on top of the graph, its message shows the diff state.
+    Keeps the working tree line on top of the graph and refreshes its message.
+    The file statuses already know every changed file: the message reports
+    them immediately, then the working tree diff refines the line counters.
 */
 void CRepository::updateWorkingTreeLine()
 {
@@ -1516,73 +1521,116 @@ void CRepository::updateWorkingTreeLine()
     if (not m_pGraphModel->hasWorkingTreePresent())
         m_pGraphModel->setWorkingTreePresent(true);
 
+    m_iWorkingTreeUntrackedFileCount = untrackedFileCount();
+
     if (not m_bHasModifiedFiles)
     {
-        refreshWorkingTreeMessage(0, 0);
+        m_tWorkingTreeDiffStatistics.reset();
+
+        // In-flight diffs describe a tree that is clean now: drop them
+        invalidateWorkingTreeDiffRequests();
+
+        refreshWorkingTreeMessage();
 
         if (isWorkingTreeCommit(m_sCommitDetailsId))
         {
             setCommitDetailsAddedCount(0);
             setCommitDetailsRemovedCount(0);
 
-            if (m_pFileDiffModel != nullptr && m_pFileDiffModel->rowCount() > 0)
+            if (m_pFileDiffModel != nullptr && m_pFileDiffModel->rowCount() > 0
+                    && m_sFileDiffCommitId == m_sCommitDetailsId)
+            {
                 m_pFileDiffModel->setLines(QList<CDiffLine*>());
+            }
         }
 
         return;
     }
 
-    const CLogLine* pLine = m_pGraphModel->findLine(m_pGraphModel->workingTreeCommitId());
+    refreshWorkingTreeMessage();
 
-    if (pLine != nullptr && pLine->message() == tr("No changes"))
-        m_pGraphModel->setWorkingTreeMessage(tr("Working tree changes"));
-
-    m_pCommands->workingTreeDiff(m_sRepositoryPath);
+    requestWorkingTreeDiff();
 }
 
 //-------------------------------------------------------------------------------------------------
 
 /*!
-    \fn void CRepository::refreshWorkingTreeMessage(int iAddedCount, int iRemovedCount)
-    Shows the diff state on the working tree line: clean, counted changes or pending.
+    \fn void CRepository::refreshWorkingTreeMessage()
+    Shows the stored working tree state on the working tree line: clean,
+    counted diff lines, untracked files or pending.
 */
-void CRepository::refreshWorkingTreeMessage(int iAddedCount, int iRemovedCount)
+void CRepository::refreshWorkingTreeMessage()
 {
     if (m_pGraphModel == nullptr || not m_pGraphModel->hasWorkingTreePresent())
         return;
 
-    m_iWorkingTreeAddedCount = iAddedCount;
-    m_iWorkingTreeRemovedCount = iRemovedCount;
+    const int iAddedCount = m_tWorkingTreeDiffStatistics.addedLineCount();
+    const int iRemovedCount = m_tWorkingTreeDiffStatistics.removedLineCount();
+    const int iUntrackedFileCount = m_iWorkingTreeUntrackedFileCount;
+    const bool bHasDiffLines = not m_tWorkingTreeDiffStatistics.isEmpty();
 
-    if (not m_bHasModifiedFiles && iAddedCount == 0 && iRemovedCount == 0)
+    if (not m_bHasModifiedFiles && not bHasDiffLines && iUntrackedFileCount == 0)
     {
         m_pGraphModel->setWorkingTreeMessage(tr("No changes"));
         return;
     }
 
-    if (iAddedCount > 0 || iRemovedCount > 0)
+    if (bHasDiffLines && iUntrackedFileCount > 0)
+    {
+        m_pGraphModel->setWorkingTreeMessage(
+                    tr("Changes: +%1 / -%2, %n untracked file(s)", "", iUntrackedFileCount)
+                    .arg(iAddedCount)
+                    .arg(iRemovedCount));
+        return;
+    }
+
+    if (bHasDiffLines)
     {
         m_pGraphModel->setWorkingTreeMessage(tr("Changes: +%1 / -%2").arg(iAddedCount).arg(iRemovedCount));
         return;
     }
 
-    const CLogLine* pLine = m_pGraphModel->findLine(m_pGraphModel->workingTreeCommitId());
+    if (iUntrackedFileCount > 0)
+    {
+        m_pGraphModel->setWorkingTreeMessage(tr("Changes: %n untracked file(s)", "", iUntrackedFileCount));
+        return;
+    }
 
-    if (pLine == nullptr || pLine->message() == tr("No changes"))
-        m_pGraphModel->setWorkingTreeMessage(tr("Working tree changes"));
+    // Modified files without diff lines (mode change, binary content, pending
+    // diff): the statuses are the only available information
+    m_pGraphModel->setWorkingTreeMessage(tr("Working tree changes"));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn int CRepository::untrackedFileCount() const
+    Returns the number of untracked files known by the last status batch.
+*/
+int CRepository::untrackedFileCount() const
+{
+    int iUntrackedFileCount = 0;
+
+    for (const CRepoFile* pFile : m_lRepoFiles)
+    {
+        if (pFile != nullptr && pFile->status() == CEnums::eUntracked)
+            iUntrackedFileCount++;
+    }
+
+    return iUntrackedFileCount;
 }
 
 //-------------------------------------------------------------------------------------------------
 
 /*!
     \fn void CRepository::onLanguageChanged()
-    Re-translates the working tree line with the stored counts, like the QML
+    Re-translates the working tree line with the stored state, like the QML
     engine does for the views. Real commit messages come from the version
     control and never translate.
 */
 void CRepository::onLanguageChanged()
 {
-    refreshWorkingTreeMessage(m_iWorkingTreeAddedCount, m_iWorkingTreeRemovedCount);
+    refreshWorkingTreeMessage();
 
     if (isWorkingTreeCommit(m_sCommitDetailsId))
         updateCommitDetails();
@@ -1645,7 +1693,7 @@ void CRepository::onDiffCommitIdChanged()
             setCommitDetailsId(workingTreeCommitId());
             updateCommitDetails();
 
-            m_pCommands->workingTreeDiff(m_sRepositoryPath);
+            requestWorkingTreeDiff();
 
             setDiffFromCommitId("");
             setDiffToCommitId("");

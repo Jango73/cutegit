@@ -284,9 +284,9 @@ void CHgCommands::commitCheckout(const QString& sPath, const QString& sCommitId)
     \fn CHgCommands::workingTreeDiff
     Shows uncommitted working tree changes of the whole tree.
 */
-void CHgCommands::workingTreeDiff(const QString& sPath)
+void CHgCommands::workingTreeDiff(const QString& sPath, const QString& sUserData)
 {
-    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommandWorkingTreeDiff));
+    exec(new CProcessCommand(CEnums::eWorkingTreeDiff, sPath, sCommandWorkingTreeDiff, false, QMap<QString, QString>(), sUserData));
 }
 
 //-------------------------------------------------------------------------------------------------

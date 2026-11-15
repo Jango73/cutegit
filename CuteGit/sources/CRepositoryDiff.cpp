@@ -141,6 +141,57 @@ bool CRepository::workingTreeDiffMatchesCurrentFile(CDiffModel* pModel, const QS
 //-------------------------------------------------------------------------------------------------
 
 /*!
+    \fn CRepository::commitDiffMatchesCurrentCommit
+    Checks that an asynchronous commit diff result still belongs to the
+    displayed commit. Every commit diff command tags its result with the
+    commit it describes: an untagged result describes no displayed commit.
+*/
+bool CRepository::commitDiffMatchesCurrentCommit(const QString& sDiffCommitId) const
+{
+    return not sDiffCommitId.isEmpty() && sDiffCommitId == m_sCommitDetailsId;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::workingTreeDiffMatchesCurrentRequest
+    Checks that an asynchronous working tree diff result answers the last
+    request. A result computed before a status batch describes a tree that
+    may already have changed, so its counters must never be stored.
+*/
+bool CRepository::workingTreeDiffMatchesCurrentRequest(const QString& sUserData) const
+{
+    return not sUserData.isEmpty() && sUserData.toInt() == m_iWorkingTreeDiffRequestId;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::invalidateWorkingTreeDiffRequests
+    Makes every in-flight working tree diff result stale.
+*/
+void CRepository::invalidateWorkingTreeDiffRequests()
+{
+    m_iWorkingTreeDiffRequestId++;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    \fn CRepository::requestWorkingTreeDiff
+    Requests the working tree diff from the commands. The request identifier
+    is the result tag, so only the latest result reaches the stored state.
+*/
+void CRepository::requestWorkingTreeDiff()
+{
+    invalidateWorkingTreeDiffRequests();
+
+    m_pCommands->workingTreeDiff(m_sRepositoryPath, QString::number(m_iWorkingTreeDiffRequestId));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
     \fn CRepository::applyDiffLines
     Builds a patch from selected rows and applies it on the index.
     When bStage is true the patch comes from the unstaged model and is
