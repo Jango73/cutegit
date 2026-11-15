@@ -54,6 +54,7 @@ const QString CSvnCommands::sCommandTrackedFiles       = "svn info -R --xml";
 const QString CSvnCommands::sCommandSwitchBranch       = "svn switch \"^/branches/%1\"";
 const QString CSvnCommands::sCommandSwitchTrunk        = "svn switch \"^/trunk\"";
 const QString CSvnCommands::sCommandUpdate             = "svn update";
+const QString CSvnCommands::sCommandUpdateRevision     = "svn update -r %1";
 
 const QString CSvnCommands::sBlameLineRegExp           = "^\\s*(\\d+)\\s+(\\S+)\\s?(.*)$";
 
@@ -175,6 +176,7 @@ bool CSvnCommands::can(CEnums::ECapability eWhat) const
     case CEnums::Pull:
     case CEnums::BranchFromCommit:
     case CEnums::TagOnCommit:
+    case CEnums::CheckoutCommit:
     case CEnums::Blame:
     case CEnums::Stage:
     case CEnums::SwitchBranch:
@@ -497,6 +499,16 @@ void CSvnCommands::setCurrentBranch(const QString& sPath, const QString& sBranch
             : QString(sCommandSwitchBranch).arg(sBranch);
     emit newOutputString(CEnums::eNotification, QString(tr("Switching to %1...")).arg(sBranch));
     exec(new CProcessCommand(CEnums::eSetCurrentBranch, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CSvnCommands::commitCheckout(const QString& sPath, const QString& sCommitId)
+{
+    emit newOutputString(CEnums::eNotification, QString(tr("Checking out %1...")).arg(sCommitId));
+
+    QString sCommand = QString(sCommandUpdateRevision).arg(sCommitId);
+    exec(new CProcessCommand(CEnums::eCheckoutCommit, sPath, sCommand, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -911,6 +923,7 @@ void CSvnCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eCommit:
     case CEnums::ePull:
     case CEnums::eSetCurrentBranch:
+    case CEnums::eCheckoutCommit:
     case CEnums::eCreateBranchOnCommit:
     case CEnums::eCreateTagOnCommit:
     {

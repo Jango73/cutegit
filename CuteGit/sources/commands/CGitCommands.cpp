@@ -48,6 +48,7 @@ const QString CGitCommands::sCommandBlame               = "git annotate \"%1\"";
 const QString CGitCommands::sCommandBranchAheadBehind = "git for-each-ref --format=\"%(refname:short)%09%(upstream:short)%09%(upstream:track)\" refs/heads";
 const QString CGitCommands::sCommandBranches            = "git branch -a";
 const QString CGitCommands::sCommandBranchFromCommit    = "git checkout -b \"%1\" \"%2\"";
+const QString CGitCommands::sCommandCheckout            = "git checkout \"%1\"";
 const QString CGitCommands::sCommandClone               = "git clone --progress \"%1\" \"%2\"";
 const QString CGitCommands::sCommandCommit              = "git commit -m \"%1\"";
 const QString CGitCommands::sCommandCommitDiffPrevious  = "git diff %1~1 %1";
@@ -81,8 +82,6 @@ const QString CGitCommands::sCommandRebaseOnBranch      = "git rebase \"%1\"";
 const QString CGitCommands::sCommandRebaseOnCommit      = "git rebase --interactive %1~1";
 const QString CGitCommands::sCommandRefLog              = "git reflog show --pretty=format:\"%h &&& %gD &&& %gs\" --skip=%1 --max-count=%2";
 const QString CGitCommands::sCommandResetOnCommit       = "git reset %1";
-const QString CGitCommands::sCommandRevert              = "git checkout \"%1\"";
-const QString CGitCommands::sCommandSetCurrentBranch    = "git checkout \"%1\"";
 const QString CGitCommands::sCommandSquashCommit        = "git rebase --interactive %1~2";
 const QString CGitCommands::sCommandSquashCommitRoot   = "git rebase --interactive --root";
 const QString CGitCommands::sCommandStage               = "git add -f \"%1\"";
@@ -451,7 +450,7 @@ void CGitCommands::stageAll(const QString& sPath, bool bStage)
 void CGitCommands::revertFile(const QString& sPath, const QString& sFullName)
 {
     emit newOutputString(CEnums::eNotification, tr("Reverting..."));
-    QString sCommand = QString(sCommandRevert).arg(sFullName);
+    QString sCommand = QString(sCommandCheckout).arg(sFullName);
     exec(new CProcessCommand(CEnums::eRevertFile, sPath, sCommand, true));
 }
 
@@ -463,7 +462,7 @@ void CGitCommands::undeleteFile(const QString& sPath, const QString& sFullName)
     emit newOutputString(CEnums::eNotification, tr("Undeleting..."));
     sCommand = QString(sCommandUnstage).arg(sFullName);
     exec(new CProcessCommand(CEnums::eNotification, sPath, sCommand, true));
-    sCommand = QString(sCommandRevert).arg(sFullName);
+    sCommand = QString(sCommandCheckout).arg(sFullName);
     exec(new CProcessCommand(CEnums::eUndeleteFile, sPath, sCommand, true));
 }
 
@@ -682,7 +681,7 @@ void CGitCommands::setCurrentBranch(const QString& sPath, const QString& sBranch
     QString sFinalName = sBranch;
     sFinalName.replace(QString("%1/").arg(sRemoteBranchPrefix), "");
     emit newOutputString(CEnums::eNotification, QString(tr("Switching to %1...")).arg(sFinalName));
-    QString sCommand = QString(sCommandSetCurrentBranch).arg(sFinalName);
+    QString sCommand = QString(sCommandCheckout).arg(sFinalName);
     exec(new CProcessCommand(CEnums::eSetCurrentBranch, sPath, sCommand, true));
 }
 
@@ -694,6 +693,16 @@ void CGitCommands::commitReset(const QString& sPath, const QString& sCommitId)
 
     QString sCommand = QString(sCommandResetOnCommit).arg(sCommitId);
     exec(new CProcessCommand(CEnums::eResetToCommit, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::commitCheckout(const QString& sPath, const QString& sCommitId)
+{
+    emit newOutputString(CEnums::eNotification, QString(tr("Checking out %1...")).arg(sCommitId));
+
+    QString sCommand = QString(sCommandCheckout).arg(sCommitId);
+    exec(new CProcessCommand(CEnums::eCheckoutCommit, sPath, sCommand, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1281,6 +1290,14 @@ void CGitCommands::handleBranchOutput(const CProcessResult& tResult)
 
         if (not sLine.isEmpty())
         {
+            // A detached HEAD is described in parentheses instead of a branch
+            // name: report it as the current branch but keep it out of the list
+            if (sLine.startsWith("* ("))
+            {
+                emit newOutputString(CEnums::eCurrentBranch, sLine.mid(2));
+                continue;
+            }
+
             CBranch* pNewBranch = new CBranch();
             bool bIsCurrent = false;
 
@@ -1726,6 +1743,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eStashPop:
     case CEnums::eSetCurrentBranch:
     case CEnums::eResetToCommit:
+    case CEnums::eCheckoutCommit:
     case CEnums::eRebaseOnCommit:
     case CEnums::eSquashCommit:
     case CEnums::eCreateBranchOnCommit:

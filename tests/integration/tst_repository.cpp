@@ -923,6 +923,31 @@ private slots:
         QVERIFY(not hHeads.contains("cccccccccccccccccccccccccccccccccccccccc"));
     }
 
+    // The graph menu checkout leaves a detached HEAD: the current branch
+    // reports the detached description while no fake branch entry enters the
+    // branch list, and switching back restores the attached branch
+    void commitCheckout_detachesHead()
+    {
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(not m_pRepository->currentBranch().isEmpty(), s_iAsyncTimeoutMs);
+
+        QString sBranch = m_pRepository->currentBranch();
+        int iBranchCount = m_pRepository->localBranchModel()->rowCount();
+        QString sHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sHead));
+
+        m_pRepository->commitCheckout(sHead.trimmed());
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->currentBranch().startsWith("("), s_iAsyncTimeoutMs);
+        QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->localBranchModel()->rowCount(), iBranchCount, s_iAsyncTimeoutMs);
+
+        m_pRepository->setCurrentBranch(sBranch);
+
+        QTRY_COMPARE_WITH_TIMEOUT(m_pRepository->currentBranch(), sBranch, s_iAsyncTimeoutMs);
+    }
+
  private:
 
     // Builds an owned graph line for the synthetic shrinking-history test

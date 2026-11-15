@@ -176,6 +176,9 @@ public:
     virtual void commitReset(const QString& sPath, const QString& sCommitId) override;
 
     //!
+    virtual void commitCheckout(const QString& sPath, const QString& sCommitId) override;
+
+    //!
     virtual void commitRebase(const QString& sPath, const QString& sCommitId) override;
 
     //!
@@ -298,6 +301,7 @@ protected:
     static const QString sCommandBranchAheadBehind;
     static const QString sCommandBranches;
     static const QString sCommandBranchFromCommit;
+    static const QString sCommandCheckout;
     static const QString sCommandClone;
     static const QString sCommandCommit;
     static const QString sCommandCommitDiffPrevious;
@@ -331,8 +335,6 @@ protected:
     static const QString sCommandRebaseOnCommit;
     static const QString sCommandRefLog;
     static const QString sCommandResetOnCommit;
-    static const QString sCommandRevert;
-    static const QString sCommandSetCurrentBranch;
     static const QString sCommandSquashCommit;
     static const QString sCommandSquashCommitRoot;
     static const QString sCommandStage;

@@ -280,6 +280,7 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
         // Following commands need output and general refresh
     case CEnums::eSetCurrentBranch:
     case CEnums::eResetToCommit:
+    case CEnums::eCheckoutCommit:
     case CEnums::eRebaseOnCommit:
     case CEnums::eSquashCommit:
     case CEnums::eCreateBranchOnCommit:

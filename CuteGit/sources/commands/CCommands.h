@@ -168,6 +168,9 @@ public:
     virtual void commitReset(const QString& sPath, const QString& sCommitId);
 
     //!
+    virtual void commitCheckout(const QString& sPath, const QString& sCommitId);
+
+    //!
     virtual void commitRebase(const QString& sPath, const QString& sCommitId);
 
     //!

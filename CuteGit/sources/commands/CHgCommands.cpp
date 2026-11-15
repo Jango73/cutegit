@@ -54,7 +54,7 @@ static const char* sCommandStatusForFile      = "hg status \"%1\"";
 static const char* sCommandIgnoredStatus      = "hg status --ignored";
 static const char* sCommandTrackedFiles       = "hg manifest";
 static const char* sCommandParentNode         = "hg log -r . --template \"{node}\"";
-static const char* sCommandResetOnCommit      = "hg update \"%1\"";
+static const char* sCommandUpdate             = "hg update \"%1\"";
 static const char* sCommandWorkingTreeDiff    = "hg diff --git";
 
 //-------------------------------------------------------------------------------------------------
@@ -108,6 +108,7 @@ bool CHgCommands::can(CEnums::ECapability eWhat) const
     case CEnums::Push:
     case CEnums::ForcePush:
     case CEnums::BranchFromCommit:
+    case CEnums::CheckoutCommit:
     case CEnums::Stage:
     case CEnums::Unstage:
         return true;
@@ -261,10 +262,20 @@ void CHgCommands::createBranchOnCommit(const QString& sPath, const QString& sCom
 {
     emit newOutputString(CEnums::eNotification, QString(tr("Creating branch %1...")).arg(sBranchName));
     QString sCommand, sOutput;
-    sCommand = QString(sCommandResetOnCommit).arg(sCommitId);
+    sCommand = QString(sCommandUpdate).arg(sCommitId);
     sOutput = execNow(sPath, sCommand);
     sCommand = QString(sCommandCreateBranch).arg(sBranchName);
     exec(new CProcessCommand(CEnums::eCreateBranchOnCommit, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CHgCommands::commitCheckout(const QString& sPath, const QString& sCommitId)
+{
+    emit newOutputString(CEnums::eNotification, QString(tr("Checking out %1...")).arg(sCommitId));
+
+    QString sCommand = QString(sCommandUpdate).arg(sCommitId);
+    exec(new CProcessCommand(CEnums::eCheckoutCommit, sPath, sCommand, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -515,6 +526,7 @@ void CHgCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eForcePush:
     case CEnums::ePull:
     case CEnums::eCreateBranchOnCommit:
+    case CEnums::eCheckoutCommit:
     {
         // Throw the returned string of the process
         emit newOutputString(tResult.m_eCommand, tResult.m_sValue, QString(), tResult.m_iExitCode);

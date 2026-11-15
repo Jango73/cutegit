@@ -412,6 +412,14 @@ void CCommands::commitReset(const QString& sPath, const QString& sCommitId)
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::commitCheckout(const QString& sPath, const QString& sCommitId)
+{
+    Q_UNUSED(sPath);
+    Q_UNUSED(sCommitId);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::commitRebase(const QString& sPath, const QString& sCommitId)
 {
     Q_UNUSED(sPath);

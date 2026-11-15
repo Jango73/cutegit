@@ -294,6 +294,9 @@ public:
     //! Resets current branch to a commit
     Q_INVOKABLE void commitReset(const QString& sCommitId);
 
+    //! Checks out a commit, leaving the HEAD detached
+    Q_INVOKABLE void commitCheckout(const QString& sCommitId);
+
     //! Rebases current branch on a commit
     Q_INVOKABLE void commitRebase(const QString& sCommitId);
 

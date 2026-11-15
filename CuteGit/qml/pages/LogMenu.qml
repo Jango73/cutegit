@@ -23,6 +23,7 @@ Menu {
     signal requestCommitDiffPrevious(var commitId)
     signal requestCommitTagOn(var commitId)
     signal requestCommitBranchFrom(var commitId)
+    signal requestCommitCheckout(var commitId)
     signal requestCommitReset(var commitId)
     signal requestCommitRebase(var commitId)
     signal requestCommitSquash(var commitId)
@@ -74,6 +75,17 @@ Menu {
         onTriggered: {
             if (root.commitId !== "") {
                 root.requestCommitBranchFrom(root.commitId)
+            }
+        }
+    }
+
+    Action {
+        text: Const.logCheckoutMenuText
+        enabled: !root.isWorkingTree && (root.repository ? root.repository.can(CEnums.CheckoutCommit) : false)
+
+        onTriggered: {
+            if (root.commitId !== "") {
+                root.requestCommitCheckout(root.commitId)
             }
         }
     }

@@ -783,6 +783,16 @@ void CRepository::commitReset(const QString& sCommitId)
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::commitCheckout(const QString& sCommitId)
+{
+    if (isWorkingTreeCommit(sCommitId))
+        return;
+
+    m_pCommands->commitCheckout(m_sRepositoryPath, sCommitId);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::commitRebase(const QString& sCommitId)
 {
     if (isWorkingTreeCommit(sCommitId))

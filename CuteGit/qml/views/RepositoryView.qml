@@ -251,6 +251,10 @@ Pane {
             branchFrom.open()
         }
 
+        onRequestCommitCheckout: function(commitId) {
+            root.repository.commitCheckout(commitId)
+        }
+
         onRequestCommitReset: function(commitId) {
             root.repository.commitReset(commitId)
         }

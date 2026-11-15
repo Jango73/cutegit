@@ -105,6 +105,9 @@ public:
     virtual void setCurrentBranch(const QString& sPath, const QString& sBranch) override;
 
     //!
+    virtual void commitCheckout(const QString& sPath, const QString& sCommitId) override;
+
+    //!
     virtual void createBranchOnCommit(const QString& sPath, const QString& sCommitId, const QString& sBranchName) override;
 
     //!
@@ -182,6 +185,7 @@ protected:
     static const QString sCommandSwitchBranch;
     static const QString sCommandSwitchTrunk;
     static const QString sCommandUpdate;
+    static const QString sCommandUpdateRevision;
 
     // Regular expressions
 
