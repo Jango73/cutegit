@@ -206,6 +206,9 @@ public:
     virtual void deleteBranch(const QString& sPath, const QString& sBranchName) override;
 
     //!
+    virtual void deleteTag(const QString& sPath, const QString& sTagName) override;
+
+    //!
     virtual void createTagOnCommit(const QString& sPath, const QString& sCommitId, const QString& sTagName, const QString& sMessage) override;
 
     //!
@@ -312,6 +315,7 @@ protected:
     static const QString sCommandCurrentBranch;
     static const QString sCommandDeleteBranch;
     static const QString sCommandDeleteFile;
+    static const QString sCommandDeleteTag;
     static const QString sCommandFetch;
     static const QString sCommandFetchAndPrune;
     static const QString sCommandFileLog;

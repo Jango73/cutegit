@@ -83,6 +83,10 @@
         <source>Deleting branch %1...</source>
         <translation>Suppression de la branche %1...</translation>
     </message>
+            <message>
+                <source>Deleting tag %1...</source>
+                <translation>Suppression du tag %1...</translation>
+            </message>
     <message>
         <source>Creating tag %1...</source>
         <translation>Création de l&apos;étiquette %1...</translation>
@@ -418,6 +422,10 @@
         <source>Delete branch</source>
         <translation>Effacer branche</translation>
     </message>
+        <message>
+            <source>Delete tag</source>
+            <translation>Effacer tag</translation>
+        </message>
     <message>
         <source>Repositories</source>
         <translation>Dépôts</translation>
@@ -480,6 +488,14 @@ Are you sure you want to do this? It cannot be undone.</source>
 
 Etes-vous sûr(e) de vouloir faire cela? Cette action ne peut être annulée.</translation>
     </message>
+        <message>
+            <source>You are about to delete a tag.
+
+Are you sure you want to do this? It cannot be undone.</source>
+            <translation>Vous êtes sur le point de supprimer un tag.
+
+Etes-vous sûr(e) de vouloir faire cela? Cette action ne peut être annulée.</translation>
+        </message>
     <message>
         <source>Open a repository</source>
         <translation>Ouvrir un dépôt</translation>

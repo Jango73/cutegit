@@ -106,6 +106,10 @@
         <source>Deleting branch %1...</source>
         <translation>Eliminazione del ramo %1...</translation>
     </message>
+            <message>
+                <source>Deleting tag %1...</source>
+                <translation>Eliminazione del tag %1...</translation>
+            </message>
     <message>
         <source>Creating tag %1...</source>
         <translation>Creazione del tag %1...</translation>
@@ -842,6 +846,10 @@
         <source>Delete branch</source>
         <translation>Elimina ramo</translation>
     </message>
+        <message>
+            <source>Delete tag</source>
+            <translation>Elimina tag</translation>
+        </message>
     <message>
         <source>Repositories</source>
         <translation>Repository</translation>
@@ -944,6 +952,14 @@ Are you sure you want to do this? It cannot be undone.</source>
 
 Sei sicuro di voler continuare? L'operazione non può essere annullata.</translation>
     </message>
+        <message>
+            <source>You are about to delete a tag.
+
+Are you sure you want to do this? It cannot be undone.</source>
+            <translation>Stai per eliminare un tag.
+
+Sei sicuro di voler continuare? L'operazione non può essere annullata.</translation>
+        </message>
     <message>
         <source>Are you sure you want to delete this(ese) file(s)?
 

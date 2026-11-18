@@ -211,6 +211,12 @@ Pane {
         onTriggered: root.repository.deleteBranch(targetBranchName)
     }
 
+    Action {
+        id: deleteTagAction
+        property string targetTagName: ""
+        onTriggered: root.repository.deleteTag(targetTagName)
+    }
+
     //--------------------------------------------------------------------------------
     // Menus
 
@@ -220,6 +226,7 @@ Pane {
         repository: root.repository
 
         onRequestPushTag: root.requestPushTag(root.menuTagName)
+        onRequestDeleteTag: root.requestDeleteTag(root.menuTagName)
     }
 
     DiffMenu {
@@ -589,6 +596,15 @@ Pane {
         root.confirmBranchAction(Const.deleteBranchText + " " + branchName,
                                  Const.deleteBranchMessage,
                                  deleteBranchAction, branchName)
+    }
+
+    function requestDeleteTag(tagName) {
+        deleteTagAction.targetTagName = tagName
+        confirm.title = Const.deleteTagText + " " + tagName
+        confirm.messageText = Const.deleteTagMessage
+        confirm.actionOnAccept = deleteTagAction
+        confirm.actionOnReject = null
+        confirm.open()
     }
 
     function confirmBranchAction(title, message, action, targetBranchName) {

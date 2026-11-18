@@ -59,6 +59,7 @@ const QString CGitCommands::sCommandCreateTagOnCommit   = "git tag -m \"%1\" \"%
 const QString CGitCommands::sCommandCurrentBranch       = "git rev-parse --abbrev-ref HEAD";
 const QString CGitCommands::sCommandDeleteBranch        = "git branch --delete \"%1\"";
 const QString CGitCommands::sCommandDeleteFile          = "git rm \"%1\"";
+const QString CGitCommands::sCommandDeleteTag            = "git tag --delete \"%1\"";
 const QString CGitCommands::sCommandFetch               = "git fetch";
 const QString CGitCommands::sCommandFetchAndPrune       = "git fetch -p";
 const QString CGitCommands::sCommandFileLog              = "git log --pretty=format:\"%x1e%h &&& %s &&& %an &&& %aI &&& %B\" --skip=%1 --max-count=%2 \"%3\"";
@@ -826,6 +827,15 @@ void CGitCommands::deleteBranch(const QString& sPath, const QString& sBranchName
     emit newOutputString(CEnums::eNotification, QString(tr("Deleting branch %1...")).arg(sBranchName));
     QString sCommand = QString(sCommandDeleteBranch).arg(sBranchName);
     exec(new CProcessCommand(CEnums::eDeleteBranch, sPath, sCommand, true));
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CGitCommands::deleteTag(const QString& sPath, const QString& sTagName)
+{
+    emit newOutputString(CEnums::eNotification, QString(tr("Deleting tag %1...")).arg(sTagName));
+    QString sCommand = QString(sCommandDeleteTag).arg(sTagName);
+    exec(new CProcessCommand(CEnums::eDeleteTag, sPath, sCommand, true));
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1750,6 +1760,7 @@ void CGitCommands::onExecFinished(const CProcessResult& tResult)
     case CEnums::eRebaseOnBranch:
     case CEnums::eMergeBranch:
     case CEnums::eDeleteBranch:
+    case CEnums::eDeleteTag:
     case CEnums::eCreateTagOnCommit:
     case CEnums::eChangeCommitMessage:
     case CEnums::eContinueRebase:

@@ -319,6 +319,9 @@ public:
     //! Deletes a branch
     Q_INVOKABLE void deleteBranch(const QString& sName);
 
+    //! Deletes a tag
+    Q_INVOKABLE void deleteTag(const QString& sName);
+
     //! Creates a tag
     Q_INVOKABLE void createTagOnCommit(const QString& sCommitId, const QString& sTagName, const QString& sMessage);
 

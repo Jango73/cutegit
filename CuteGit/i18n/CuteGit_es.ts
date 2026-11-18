@@ -113,6 +113,10 @@
         <source>Deleting branch %1...</source>
         <translation>Eliminando la rama %1 ...</translation>
     </message>
+            <message>
+                <source>Deleting tag %1...</source>
+                <translation>Eliminando la etiqueta %1 ...</translation>
+            </message>
     <message>
         <location filename="../sources/CGitCommands.cpp" line="602"/>
         <source>Creating tag %1...</source>
@@ -840,6 +844,10 @@
         <source>Delete branch</source>
         <translation>Eliminar rama</translation>
     </message>
+        <message>
+            <source>Delete tag</source>
+            <translation>Eliminar etiqueta</translation>
+        </message>
     <message>
         <location filename="../qml/components/Const.qml" line="178"/>
         <source>Repositories</source>
@@ -935,6 +943,14 @@ Are you sure you want to do this? It cannot be undone.</source>
 
 ¿Seguro que quieres hacer esto? No se puede deshacer.</translation>
     </message>
+        <message>
+            <source>You are about to delete a tag.
+
+Are you sure you want to do this? It cannot be undone.</source>
+            <translation>Estás a punto de eliminar una etiqueta.
+
+¿Seguro que quieres hacer esto? No se puede deshacer.</translation>
+        </message>
     <message>
         <location filename="../qml/components/Const.qml" line="208"/>
         <source>Are you sure you want to delete this(ese) file(s)?

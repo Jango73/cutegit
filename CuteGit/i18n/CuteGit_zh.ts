@@ -83,6 +83,10 @@
         <source>Deleting branch %1...</source>
         <translation>正在删除分支 %1...</translation>
     </message>
+            <message>
+                <source>Deleting tag %1...</source>
+                <translation>正在删除标签 %1...</translation>
+            </message>
     <message>
         <source>Creating tag %1...</source>
         <translation>正在创建标签 %1...</translation>
@@ -416,6 +420,10 @@
         <source>Delete branch</source>
         <translation>删除分支</translation>
     </message>
+        <message>
+            <source>Delete tag</source>
+            <translation>删除标签</translation>
+        </message>
     <message>
         <source>Repositories</source>
         <translation>仓库</translation>
@@ -478,6 +486,14 @@ Are you sure you want to do this? It cannot be undone.</source>
 
 确定要继续吗？此操作无法撤销。</translation>
     </message>
+        <message>
+            <source>You are about to delete a tag.
+
+Are you sure you want to do this? It cannot be undone.</source>
+            <translation>您即将删除一个标签。
+
+确定要继续吗？此操作无法撤销。</translation>
+        </message>
     <message>
         <source>Open a repository</source>
         <translation>打开仓库</translation>

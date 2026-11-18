@@ -260,6 +260,7 @@ void CRepository::onNewOutputString(CEnums::EProcessCommand eCommand, QString sO
 
         // Following commands need output and tag refresh
     case CEnums::eCreateTagOnCommit:
+    case CEnums::eDeleteTag:
     {
         onNewOutput(sOutput, false);
 

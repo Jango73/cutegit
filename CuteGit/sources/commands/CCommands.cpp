@@ -493,6 +493,14 @@ void CCommands::deleteBranch(const QString& sPath, const QString& sBranchName)
 
 //-------------------------------------------------------------------------------------------------
 
+void CCommands::deleteTag(const QString& sPath, const QString& sTagName)
+{
+    Q_UNUSED(sPath);
+    Q_UNUSED(sTagName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CCommands::createTagOnCommit(const QString& sPath, const QString& sCommitId, const QString& sTagName, const QString& sMessage)
 {
     Q_UNUSED(sPath);

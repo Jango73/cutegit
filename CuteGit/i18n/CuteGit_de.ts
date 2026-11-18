@@ -82,6 +82,10 @@
             <source>Deleting branch %1...</source>
             <translation>Branch %1 löschen...</translation>
         </message>
+            <message>
+                <source>Deleting tag %1...</source>
+                <translation>Tag %1 löschen...</translation>
+            </message>
         <message>
             <source>Creating tag %1...</source>
             <translation>Tag %1 erstellen...</translation>
@@ -418,6 +422,10 @@
             <translation>Branch löschen</translation>
         </message>
         <message>
+            <source>Delete tag</source>
+            <translation>Tag löschen</translation>
+        </message>
+        <message>
             <source>Repositories</source>
             <translation>Repositories</translation>
         </message>
@@ -476,6 +484,14 @@ Bitte ein Repository öffnen oder klonen, um diese Ansicht zu füllen.</translat
 
 Are you sure you want to do this? It cannot be undone.</source>
             <translation>Sie sind dabei, einen Branch zu löschen.
+
+Sind Sie sicher? Dies kann nicht rückgängig gemacht werden.</translation>
+        </message>
+        <message>
+            <source>You are about to delete a tag.
+
+Are you sure you want to do this? It cannot be undone.</source>
+            <translation>Sie sind dabei, einen Tag zu löschen.
 
 Sind Sie sicher? Dies kann nicht rückgängig gemacht werden.</translation>
         </message>

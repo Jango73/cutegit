@@ -868,6 +868,13 @@ void CRepository::deleteBranch(const QString& sName)
 
 //-------------------------------------------------------------------------------------------------
 
+void CRepository::deleteTag(const QString& sName)
+{
+    m_pCommands->deleteTag(m_sRepositoryPath, sName);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::createTagOnCommit(const QString& sCommitId, const QString& sTagName, const QString& sMessage)
 {
     if (isWorkingTreeCommit(sCommitId))

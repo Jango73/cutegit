@@ -271,6 +271,7 @@ Item {
     readonly property string saveAsPatchText: qsTr("Save as patch")
     readonly property string statusChangeText: qsTr("...")
     readonly property string deleteBranchText: qsTr("Delete branch")
+    readonly property string deleteTagText: qsTr("Delete tag")
     readonly property string repositoriesText: qsTr("Repositories")
     readonly property string openRepositoryPlaceholderText: qsTr("Open a repository...")
     readonly property string repositoryURLText: qsTr("Repository URL")
@@ -309,6 +310,11 @@ Item {
                                              "You are about to delete a branch.\n\n" +
                                              "Are you sure you want to do this? It cannot be undone."
                                              )
+
+    readonly property string deleteTagMessage: qsTr(
+                                          "You are about to delete a tag.\n\n" +
+                                          "Are you sure you want to do this? It cannot be undone."
+                                          )
 
     readonly property string deleteFileMessage: qsTr(
                                            "Are you sure you want to delete this(ese) file(s)?\n\n" +

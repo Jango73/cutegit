@@ -10,6 +10,7 @@ Menu {
     property variant repository: null
 
     signal requestPushTag()
+    signal requestDeleteTag()
 
     Action {
         text: Const.pushText
@@ -17,6 +18,15 @@ Menu {
 
         onTriggered: {
             root.requestPushTag()
+        }
+    }
+
+    Action {
+        text: Const.deleteText
+        enabled: root.repository ? root.repository.can(CEnums.DeleteTag) : false
+
+        onTriggered: {
+            root.requestDeleteTag()
         }
     }
 }

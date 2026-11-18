@@ -83,6 +83,10 @@
         <source>Deleting branch %1...</source>
         <translation>ブランチ%1を削除しています...</translation>
     </message>
+            <message>
+                <source>Deleting tag %1...</source>
+                <translation>タグ%1を削除しています...</translation>
+            </message>
     <message>
         <source>Creating tag %1...</source>
         <translation>タグ%1を作成しています...</translation>
@@ -416,6 +420,10 @@
         <source>Delete branch</source>
         <translation>ブランチを削除する</translation>
     </message>
+        <message>
+            <source>Delete tag</source>
+            <translation>タグを削除する</translation>
+        </message>
     <message>
         <source>Repositories</source>
         <translation>リポジトリ</translation>
@@ -478,6 +486,14 @@ Are you sure you want to do this? It cannot be undone.</source>
 
 これを実行してもよろしいですか？ 元に戻すことはできません。</translation>
     </message>
+        <message>
+            <source>You are about to delete a tag.
+
+Are you sure you want to do this? It cannot be undone.</source>
+            <translation>タグを削除しようとしています。
+
+これを実行してもよろしいですか？ 元に戻すことはできません。</translation>
+        </message>
     <message>
         <source>Open a repository</source>
         <translation>リポジトリを開く</translation>

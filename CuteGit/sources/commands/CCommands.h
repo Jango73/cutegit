@@ -198,6 +198,9 @@ public:
     virtual void deleteBranch(const QString& sPath, const QString& sBranchName);
 
     //!
+    virtual void deleteTag(const QString& sPath, const QString& sTagName);
+
+    //!
     virtual void createTagOnCommit(const QString& sPath, const QString& sCommitId, const QString& sTagName, const QString& sMessage);
 
     //!
