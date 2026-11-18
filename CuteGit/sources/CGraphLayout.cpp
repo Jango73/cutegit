@@ -122,6 +122,8 @@ static void continueFirstParent(QStringList& lExpectedCommits, const QStringList
 /*! Forks new lanes for additional parents, or joins lanes already awaiting them */
 static void forkAdditionalParents(QStringList& lExpectedCommits, const QStringList& lParents, int iLane, QList<SGraphVertical>& lVerticals, QList<SGraphConnection>& lConnections)
 {
+    Q_UNUSED(lVerticals)
+
     for (int iParentIndex = 1; iParentIndex < lParents.count(); iParentIndex++)
     {
         QString sParentId = lParents[iParentIndex];
@@ -129,9 +131,11 @@ static void forkAdditionalParents(QStringList& lExpectedCommits, const QStringLi
 
         if (iParentLane != -1 && iParentLane != iLane)
         {
-            lVerticals << SGraphVertical{iParentLane, false, true};
-            lConnections << SGraphConnection{iParentLane, iLane, iParentLane};
-            lExpectedCommits[iParentLane] = QString();
+            // The parent is already followed in another lane: fork the edge
+            // without closing that lane. It keeps its full height vertical
+            // (added as pass-through below) until its commit row. Closing it
+            // here would cut the lane of the other child of that parent.
+            lConnections << SGraphConnection{iLane, iParentLane, iParentLane};
         }
         else if (iParentLane == -1)
         {
