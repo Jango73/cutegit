@@ -3,6 +3,7 @@
 #include <QtTest>
 #include <QCoreApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QTemporaryDir>
 #include <QScopedPointer>
 #include <QProcess>
@@ -693,6 +694,166 @@ private slots:
         QCOMPARE(tModel.data(tModel.index(0, 0), CGraphModel::eIsWorkingTreeRole).toBool(), true);
     }
 
+    // A pushed main rewritten locally (reword of an old pushed commit) then
+    // scrolled down without an intermediate refresh: the appended page is
+    // read from the shifted history on top of the stale first page and must
+    // neither duplicate rows nor cut lanes
+    void graphDivergedHistory_scrollingDown_keepsLanesContinuous()
+    {
+        // Dedicated pushed main with dozens of commits: the bare origin holds
+        // the published history, the clone below makes it diverge like after
+        // a series of change-message on pushed commits. No server needed, the
+        // origin is a local bare repository cloned through a file path
+        QTemporaryDir tSourceDir;
+        QVERIFY(tSourceDir.isValid());
+        QTemporaryDir tOriginDir;
+        QVERIFY(tOriginDir.isValid());
+        QTemporaryDir tWorkDir;
+        QVERIFY(tWorkDir.isValid());
+
+        QString sUnused;
+
+        QVERIFY(gitInDir(tSourceDir.path(), {"init", "-qb", "main"}, sUnused));
+        QVERIFY(gitInDir(tSourceDir.path(), {"config", "user.name", "probe"}, sUnused));
+        QVERIFY(gitInDir(tSourceDir.path(), {"config", "user.email", "probe@local"}, sUnused));
+
+        QFile tFile(tSourceDir.path() + "/probe.txt");
+
+        QVERIFY(tFile.open(QIODevice::WriteOnly | QIODevice::Text));
+
+        QTextStream tStream(&tFile);
+
+        const int iCommitCount = 55;
+
+        for (int iCommit = 0; iCommit < iCommitCount; iCommit++)
+        {
+            tStream << "probe-line-" << iCommit << "\n";
+            tStream.flush();
+
+            QVERIFY(gitInDir(tSourceDir.path(), {"add", "probe.txt"}, sUnused));
+            QVERIFY(gitInDir(tSourceDir.path(),
+                             {"commit", "-qm", QString("probe-commit-%1").arg(iCommit)}, sUnused));
+        }
+
+        tFile.close();
+
+        QVERIFY(gitInDir(tOriginDir.path(), {"init", "--quiet", "--bare"}, sUnused));
+        QVERIFY(gitInDir(tSourceDir.path(), {"remote", "add", "origin", tOriginDir.path()}, sUnused));
+        QVERIFY(gitInDir(tSourceDir.path(), {"push", "--quiet", "-u", "origin", "main"}, sUnused));
+
+        QString sClonePath = tWorkDir.path() + "/clone";
+
+        QCOMPARE(QProcess::execute("git", {"clone", "--quiet", tOriginDir.path(), sClonePath}), 0);
+        QVERIFY(gitInDir(sClonePath, {"config", "user.name", "probe"}, sUnused));
+        QVERIFY(gitInDir(sClonePath, {"config", "user.email", "probe@local"}, sUnused));
+
+        QScopedPointer<CRepository> pRepo(new CRepository(sClonePath, nullptr));
+        pRepo->refresh();
+
+        CGraphModel* pModel = pRepo->graphModel();
+
+        pRepo->refreshGraph();
+
+        // First page only: the file status always prepends its working tree
+        // line, so 50 git rows plus one working tree row. The remaining rows
+        // load through fetchMore below, like the view scrolling down
+        QTRY_COMPARE_WITH_TIMEOUT(pModel->rowCount(), 51, s_iAsyncTimeoutMs);
+
+        QString sBaselineCut = checkGraphLanesContinuous(pModel);
+
+        QVERIFY2(sBaselineCut.isEmpty(), qPrintable(sBaselineCut));
+
+        QString sOldHead;
+
+        QVERIFY(gitInDir(sClonePath, {"rev-parse", "HEAD"}, sOldHead));
+
+        sOldHead = sOldHead.trimmed();
+
+        QString sOriginHead;
+
+        QVERIFY(gitInDir(sClonePath, {"rev-parse", "origin/main"}, sOriginHead));
+
+        sOriginHead = sOriginHead.trimmed();
+
+        QCOMPARE(sOriginHead, sOldHead);
+
+        // Reword an old pushed commit outside the application: the local main
+        // deviates from origin/main and every descendant hash shifts, like a
+        // series of change-message on pushed commits. Fake editors, hermetic,
+        // no app slave binary needed
+        QTemporaryDir tEditorDir;
+
+        QVERIFY(tEditorDir.isValid());
+
+        QString sSeqPath = tEditorDir.path() + "/seq-editor.sh";
+        QFile tSeq(sSeqPath);
+
+        QVERIFY(tSeq.open(QIODevice::WriteOnly | QIODevice::Text));
+
+        QTextStream(&tSeq) << "#!/bin/sh\nsed -i '1s/^pick /reword /' \"$1\"\n";
+        tSeq.close();
+
+        QVERIFY(QFile::setPermissions(sSeqPath,
+                                      QFile::permissions(sSeqPath)
+                                      | QFile::ExeOwner | QFile::ExeGroup | QFile::ExeOther));
+
+        QString sMsgPath = tEditorDir.path() + "/msg-editor.sh";
+        QFile tMsg(sMsgPath);
+
+        QVERIFY(tMsg.open(QIODevice::WriteOnly | QIODevice::Text));
+
+        QTextStream(&tMsg) << "#!/bin/sh\nprintf '%s\\n' 'Reworded old probe commit' > \"$1\"\n";
+        tMsg.close();
+
+        QVERIFY(QFile::setPermissions(sMsgPath,
+                                      QFile::permissions(sMsgPath)
+                                      | QFile::ExeOwner | QFile::ExeGroup | QFile::ExeOther));
+
+        QVERIFY(gitInDir(sClonePath, {"-c", "sequence.editor=" + sSeqPath,
+                                      "-c", "core.editor=" + sMsgPath,
+                                      "rebase", "-i", "HEAD~41"}, sUnused));
+
+        QString sNewHead;
+
+        QVERIFY(gitInDir(sClonePath, {"rev-parse", "HEAD"}, sNewHead));
+
+        sNewHead = sNewHead.trimmed();
+
+        QVERIFY(not sNewHead.isEmpty());
+        QVERIFY(sNewHead != sOldHead);
+
+        QString sOriginAfter;
+
+        QVERIFY(gitInDir(sClonePath, {"rev-parse", "origin/main"}, sOriginAfter));
+
+        QCOMPARE(sOriginAfter.trimmed(), sOldHead);
+
+        // Scroll down without refreshing first: the next pages are read from
+        // the shifted history on top of the stale first page
+        scrollGraphToQuiescence(pModel);
+
+        QString sCut = checkGraphLanesContinuous(pModel);
+
+        QVERIFY2(sCut.isEmpty(),
+                 qPrintable(QString("%1 (rows=%2 potential=%3)")
+                            .arg(sCut).arg(pModel->rowCount()).arg(pModel->potentialCount())));
+
+        // A refresh heals the stale base: both the rewritten branch and the
+        // published one load fully, and their lanes converge without cuts
+        pRepo->refresh();
+        pRepo->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(pModel->findLine(sNewHead) != nullptr, s_iAsyncTimeoutMs);
+
+        scrollGraphToQuiescence(pModel);
+
+        QString sHealedCut = checkGraphLanesContinuous(pModel);
+
+        QVERIFY2(sHealedCut.isEmpty(),
+                 qPrintable(QString("%1 (rows=%2 potential=%3)")
+                            .arg(sHealedCut).arg(pModel->rowCount()).arg(pModel->potentialCount())));
+    }
+
     // Rewording a commit rewrites its hash and every descendant hash: the
     // details pane must follow the new commit instead of going empty on the
     // dead identifier
@@ -1017,6 +1178,196 @@ private slots:
     }
 
  private:
+
+    // Runs git in an arbitrary folder and returns standard output
+    static bool gitInDir(const QString& sWorkDir, const QStringList& lArguments, QString& sOutput)
+    {
+        QProcess tProcess;
+
+        tProcess.setWorkingDirectory(sWorkDir);
+        tProcess.start("git", lArguments);
+
+        if (not tProcess.waitForFinished(10000))
+            return false;
+
+        if (tProcess.exitCode() != 0)
+            return false;
+
+        sOutput = QString::fromUtf8(tProcess.readAllStandardOutput());
+
+        return true;
+    }
+
+    // True when a row draws a lane segment open toward the checked side
+    static bool rowCarriesLane(CGraphModel* pModel, int iRow, int iLane, bool bFromAbove)
+    {
+        QVariantList lVerticals = pModel->data(pModel->index(iRow, 0),
+                                               CGraphModel::eGraphVerticalsRole).toList();
+
+        for (const QVariant& vVertical : lVerticals)
+        {
+            QVariantList lVertical = vVertical.toList();
+
+            if (lVertical.count() != 3 || lVertical[0].toInt() != iLane)
+                continue;
+
+            bool bOpen = bFromAbove ? not lVertical[2].toBool() : not lVertical[1].toBool();
+
+            if (bOpen)
+                return true;
+        }
+
+        return false;
+    }
+
+    // Returns an empty string when every lane of the loaded graph rows is
+    // continuous, otherwise a description of the first cut found. A lane
+    // going past a row must reappear in the next one, a lane coming from
+    // above must come from the previous one, and a lane stopping mid-list
+    // needs a merge join: only root rows may end a lane bare. The last row
+    // may dangle while the model reports more rows to load. Duplicate
+    // commit rows always count as corruption
+    static QString checkGraphLanesContinuous(CGraphModel* pModel)
+    {
+        int iRows = pModel->rowCount();
+        QSet<QString> sSeenIds;
+
+        for (int iRow = 0; iRow < iRows; iRow++)
+        {
+            QString sCommitId = pModel->data(pModel->index(iRow, 0),
+                                             CGraphModel::eCommitIdRole).toString();
+
+            if (sCommitId.isEmpty())
+                return QString("row %1 has no commit id").arg(iRow);
+
+            if (sSeenIds.contains(sCommitId))
+                return QString("row %1 duplicates commit %2").arg(iRow).arg(sCommitId);
+
+            sSeenIds << sCommitId;
+        }
+
+        for (int iRow = 0; iRow < iRows; iRow++)
+        {
+            QModelIndex tIndex = pModel->index(iRow, 0);
+            QVariantList lVerticals = pModel->data(tIndex, CGraphModel::eGraphVerticalsRole).toList();
+            QVariantList lConnections = pModel->data(tIndex, CGraphModel::eGraphConnectionsRole).toList();
+
+            for (const QVariant& vVertical : lVerticals)
+            {
+                QVariantList lVertical = vVertical.toList();
+
+                if (lVertical.count() != 3)
+                    return QString("row %1 has a malformed lane segment").arg(iRow);
+
+                int iLane = lVertical[0].toInt();
+                bool bTop = lVertical[1].toBool();
+                bool bBottom = lVertical[2].toBool();
+
+                if (not bBottom)
+                {
+                    // The lane runs past this row: the next row must carry it
+                    if (iRow + 1 >= iRows)
+                    {
+                        if (pModel->canFetchMore(QModelIndex()))
+                            continue;
+
+                        return QString("row %1 leaves lane %2 hanging past the last row")
+                            .arg(iRow).arg(iLane);
+                    }
+
+                    if (not rowCarriesLane(pModel, iRow + 1, iLane, false))
+                    {
+                        return QString("row %1 cuts lane %2: missing below").arg(iRow).arg(iLane);
+                    }
+                }
+
+                if (not bTop && iRow > 0)
+                {
+                    // The lane comes from above: the previous row must carry it
+                    if (not rowCarriesLane(pModel, iRow - 1, iLane, true))
+                    {
+                        return QString("row %1 cuts lane %2: missing above").arg(iRow).arg(iLane);
+                    }
+                }
+
+                if (bBottom)
+                {
+                    bool bJoined = false;
+
+                    for (const QVariant& vConnection : lConnections)
+                    {
+                        QVariantList lConnection = vConnection.toList();
+
+                        if (lConnection.count() != 3)
+                            continue;
+
+                        if (lConnection[0].toInt() == iLane || lConnection[1].toInt() == iLane
+                                || lConnection[2].toInt() == iLane)
+                        {
+                            bJoined = true;
+                            break;
+                        }
+                    }
+
+                    if (not bJoined)
+                    {
+                        const CLogLine* pLine = pModel->lineAt(iRow);
+                        const CGraphLine* pGraphLine = qobject_cast<const CGraphLine*>(pLine);
+
+                        if (pGraphLine == nullptr)
+                        {
+                            return QString("row %1 stops lane %2 on a non-graph line")
+                                .arg(iRow).arg(iLane);
+                        }
+
+                        if (not pGraphLine->parents().isEmpty())
+                        {
+                            return QString("row %1 stops lane %2 mid-history").arg(iRow).arg(iLane);
+                        }
+                    }
+                }
+            }
+        }
+
+        return QString();
+    }
+
+    // Scrolls the graph model down like the view does, until no more rows
+    // arrive: a page may hold nothing but rows already loaded
+    static void scrollGraphToQuiescence(CGraphModel* pModel)
+    {
+        QElapsedTimer tScroll;
+        tScroll.start();
+
+        int iFetches = 0;
+
+        while (pModel->canFetchMore(QModelIndex()) && iFetches < 10)
+        {
+            QVERIFY2(tScroll.elapsed() < s_iAsyncTimeoutMs, "scrolling down stalled");
+            iFetches++;
+
+            int iBefore = pModel->rowCount();
+            pModel->fetchMore(QModelIndex());
+
+            bool bProgress = false;
+            QElapsedTimer tPage;
+            tPage.start();
+
+            while (tPage.elapsed() < 10000)
+            {
+                if (pModel->rowCount() != iBefore)
+                {
+                    bProgress = true;
+                    break;
+                }
+
+                QTest::qWait(50);
+            }
+
+            if (not bProgress)
+                break;
+        }
+    }
 
     // Builds an owned graph line for the synthetic shrinking-history test
     static CGraphLine* makeGraphLine(const QString& sId, const QStringList& lParents, const QString& sMessage)
