@@ -116,4 +116,7 @@ protected:
 
     //! True when the working tree line is shown on top of the graph
     bool m_bWorkingTreePresent;
+
+    //! Remembered head commit reserving lane 0 across pages
+    QString m_sHeadCommitId;
 };

@@ -228,7 +228,10 @@ public:
     //-------------------------------------------------------------------------------------------------
 
     //! Maps head commit ids to worktree folder names from porcelain output
-    static QMap<QString, QString> parseWorktreeHeads(const QString& sWorktreeListOutput);
+    static QMap<QString, QStringList> parseWorktreeHeads(const QString& sWorktreeListOutput);
+
+    //! Returns the cached worktree heads (commit id to folder names)
+    QMap<QString, QStringList> worktreeHeads() const;
 
     //-------------------------------------------------------------------------------------------------
     // Protected control methods
@@ -414,4 +417,7 @@ protected:
     QString         m_sCommitId;
     QString         m_sCommitMessage;
     QString         m_sPollStatusPart;
+
+    //! Cached worktree heads, refreshed on the first page of a graph load
+    QMap<QString, QStringList> m_mWorktreeHeads;
 };

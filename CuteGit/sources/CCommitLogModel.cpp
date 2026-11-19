@@ -37,12 +37,15 @@ void CCommitLogModel::clear()
 
 //-------------------------------------------------------------------------------------------------
 
-void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount)
+int CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount)
 {
     setPotentialCount(iPotentialCount);
 
     // Appended pages may overlap already loaded rows when history shifted:
-    // drop every incoming row already present so the combined sequence stays contiguous
+    // drop only the contiguous leading overlap so the combined sequence stays
+    // contiguous. Once a non-duplicate row is seen, the overlap ended and
+    // every later row is kept verbatim, even if it happens to repeat a loaded
+    // commit: deleting it would silently drop a commit from the chain.
     if (iStartIndex > 0 && not m_lLines.isEmpty() && not lIncomingLines.isEmpty())
     {
         QSet<QString> sLoadedIds;
@@ -56,14 +59,14 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
         QList<CLogLine*> lKeptLines;
         lKeptLines.reserve(lIncomingLines.count());
 
-        bool bCorruptTail = false;
+        bool bLeadingOverlap = true;
 
         for (CLogLine* pLine : lIncomingLines)
         {
-            if (bCorruptTail || pLine == nullptr)
+            if (not bLeadingOverlap || pLine == nullptr)
             {
                 lKeptLines << pLine;
-                bCorruptTail = true;
+                bLeadingOverlap = false;
                 continue;
             }
 
@@ -73,6 +76,7 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
                 continue;
             }
 
+            bLeadingOverlap = false;
             sLoadedIds << pLine->commitId();
             lKeptLines << pLine;
         }
@@ -100,7 +104,7 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
                 endRemoveRows();
             }
 
-            return;
+            return 0;
         }
 
         if (m_lLines.count() >= iIncomingCount)
@@ -125,7 +129,7 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
 
                 qDeleteAll(lIncomingLines);
 
-                return;
+                return iIncomingCount;
             }
         }
     }
@@ -179,6 +183,8 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
     // by branch arrivals ran over no rows then, so sync here. Unchanged
     // rows report no change and emit nothing
     refreshLabels();
+
+    return iIncomingCount;
 }
 
 //-------------------------------------------------------------------------------------------------

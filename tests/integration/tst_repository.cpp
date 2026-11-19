@@ -794,6 +794,7 @@ private slots:
         tFile.close();
 
         QVERIFY(gitInDir(tOriginDir.path(), {"init", "--quiet", "--bare"}, sUnused));
+        QVERIFY(gitInDir(tOriginDir.path(), {"symbolic-ref", "HEAD", "refs/heads/main"}, sUnused));
         QVERIFY(gitInDir(tSourceDir.path(), {"remote", "add", "origin", tOriginDir.path()}, sUnused));
         QVERIFY(gitInDir(tSourceDir.path(), {"push", "--quiet", "-u", "origin", "main"}, sUnused));
 
@@ -1199,12 +1200,12 @@ private slots:
             "detached\n"
             "prunable gitdir file points to non-existent location\n";
 
-        QMap<QString, QString> hHeads = CGitCommands::parseWorktreeHeads(sOutput);
+        QMap<QString, QStringList> hHeads = CGitCommands::parseWorktreeHeads(sOutput);
 
         QCOMPARE(hHeads.count(), 3);
-        QCOMPARE(hHeads.value("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), QString("main"));
-        QCOMPARE(hHeads.value("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"), QString("baseline"));
-        QCOMPARE(hHeads.value("dddddddddddddddddddddddddddddddddddddddd"), QString("gone"));
+        QCOMPARE(hHeads.value("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), QStringList() << "main");
+        QCOMPARE(hHeads.value("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"), QStringList() << "baseline");
+        QCOMPARE(hHeads.value("dddddddddddddddddddddddddddddddddddddddd"), QStringList() << "gone");
         QVERIFY(not hHeads.contains("cccccccccccccccccccccccccccccccccccccccc"));
     }
 

@@ -129,7 +129,7 @@ protected:
 
     //! Reconciles loaded rows with incoming lines without flicker
     //! Only typed subclass wrappers call it, so stored lines always match the subclass line type
-    void reconcileLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount);
+    int reconcileLines(QList<CLogLine*> lIncomingLines, int iStartIndex, int iPotentialCount);
 
     //! Returns the line at a row, nullptr when out of range
     const CLogLine* lineAtRow(int iRow) const;

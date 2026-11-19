@@ -27,10 +27,10 @@ static QString headCommitIdInLines(const QList<CLogLine*>& lLines)
 /***************************************************************************/
 
 /*! Returns the head commit reserving lane 0, empty when the working tree line already reserves it */
-static QString headLaneSeed(const QList<CGraphLine*>& lCombinedLines, bool bWorkingTreePresent)
+static QString headLaneSeed(const QList<CGraphLine*>& lCombinedLines, bool bWorkingTreePresent, const QString& sStoredHeadCommitId)
 {
     if (bWorkingTreePresent || lCombinedLines.isEmpty())
-        return QString();
+        return sStoredHeadCommitId;
 
     QList<CLogLine*> lLogLines;
     lLogLines.reserve(lCombinedLines.count());
@@ -38,7 +38,12 @@ static QString headLaneSeed(const QList<CGraphLine*>& lCombinedLines, bool bWork
     for (CGraphLine* pLine : lCombinedLines)
         lLogLines << pLine;
 
-    return headCommitIdInLines(lLogLines);
+    QString sHeadId = headCommitIdInLines(lLogLines);
+
+    if (sHeadId.isEmpty())
+        sHeadId = sStoredHeadCommitId;
+
+    return sHeadId;
 }
 
 /***************************************************************************/
@@ -46,16 +51,16 @@ static QString headLaneSeed(const QList<CGraphLine*>& lCombinedLines, bool bWork
 /*! Lays out incoming lines in the context of already loaded lines */
 // Layout is sequential: lanes of loaded rows never change when rows are appended.
 // A refresh lays out its page alone, an append lays out loaded rows plus the tail.
-static void layoutIncomingLines(const QList<CGraphLine*>& lLoadedLines, QList<CGraphLine*>& lIncomingLines, int iStartIndex, bool bWorkingTreePresent)
+static void layoutIncomingLines(const QList<CGraphLine*>& lLoadedLines, QList<CGraphLine*>& lIncomingLines, int iStartIndex, bool bWorkingTreePresent, const QString& sStoredHeadCommitId)
 {
     if (iStartIndex == 0)
     {
-        CGraphLayout::layoutLines(lIncomingLines, headLaneSeed(lIncomingLines, bWorkingTreePresent));
+        CGraphLayout::layoutLines(lIncomingLines, headLaneSeed(lIncomingLines, bWorkingTreePresent, sStoredHeadCommitId));
     }
     else
     {
         QList<CGraphLine*> lCombined = lLoadedLines + lIncomingLines;
-        CGraphLayout::layoutLines(lCombined, headLaneSeed(lCombined, bWorkingTreePresent));
+        CGraphLayout::layoutLines(lCombined, headLaneSeed(lCombined, bWorkingTreePresent, sStoredHeadCommitId));
     }
 }
 
@@ -71,6 +76,7 @@ QString CGraphModel::workingTreeCommitId()
 CGraphModel::CGraphModel(CRepository* pRepository, QObject* parent)
     : CCommitLogModel(pRepository, parent)
     , m_bWorkingTreePresent(false)
+    , m_sHeadCommitId(QString())
 {
 }
 
@@ -213,7 +219,7 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
 
     int iIncomingCount = lIncomingLines.count();
 
-    reconcileLines(lIncomingLines, iStartIndex, iPotentialCount);
+    iIncomingCount = reconcileLines(lIncomingLines, iStartIndex, iPotentialCount);
 
     // A refresh loads from row 0 but shifts to 1 with the working tree line:
     // reconcileLines only trims the stale tail on start 0, so a shrinking
@@ -311,6 +317,26 @@ void CGraphModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>&
         lIncomingGraphLines << pGraphLine;
     }
 
+    // Remember the head commit when it is visible so pages that do not carry
+    // it still reserve lane 0 consistently across refresh and append
+    QList<CLogLine*> lIncomingLogLines;
+
+    for (CGraphLine* pLine : lIncomingGraphLines)
+        lIncomingLogLines << pLine;
+
+    QList<CLogLine*> lLoadedLogLines;
+
+    for (CGraphLine* pLine : lLoadedGraphLines)
+        lLoadedLogLines << pLine;
+
+    QString sHeadId = headCommitIdInLines(lIncomingLogLines);
+
+    if (sHeadId.isEmpty() && not lLoadedGraphLines.isEmpty())
+        sHeadId = headCommitIdInLines(lLoadedLogLines);
+
+    if (not sHeadId.isEmpty())
+        m_sHeadCommitId = sHeadId;
+
     // A refresh with the working tree line lays out the working tree line plus
     // the incoming page alone: the loaded tail holds stale duplicates of the
     // incoming page and must stay out of the layout like the no-ghost refresh
@@ -320,12 +346,12 @@ void CGraphModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>&
         {
             QList<CGraphLine*> lRefreshLines;
             lRefreshLines << lLoadedGraphLines.first() << lIncomingGraphLines;
-            CGraphLayout::layoutLines(lRefreshLines);
+            CGraphLayout::layoutLines(lRefreshLines, m_sHeadCommitId);
             return;
         }
     }
 
-    layoutIncomingLines(lLoadedGraphLines, lIncomingGraphLines, iStartIndex, m_bWorkingTreePresent);
+    layoutIncomingLines(lLoadedGraphLines, lIncomingGraphLines, iStartIndex, m_bWorkingTreePresent, m_sHeadCommitId);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -507,7 +533,15 @@ void CGraphModel::layoutLoadedLines()
     QString sHeadSeed;
 
     if (not m_bWorkingTreePresent)
+    {
         sHeadSeed = headCommitId();
+
+        if (sHeadSeed.isEmpty())
+            sHeadSeed = m_sHeadCommitId;
+    }
+
+    if (not sHeadSeed.isEmpty())
+        m_sHeadCommitId = sHeadSeed;
 
     CGraphLayout::layoutLines(lGraphLines, sHeadSeed);
 

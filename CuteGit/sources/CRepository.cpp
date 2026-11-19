@@ -231,6 +231,22 @@ QList<CLabel*> CRepository::labelsForCommit(const QString& sCommitId) const
     lReturnValue << m_pLocalBranchModel->labelsForCommit(sCommitId);
     lReturnValue << m_pTagModel->labelsForCommit(sCommitId);
 
+    // Linked worktree heads are not part of the branch or tag models: add
+    // their labels from the cached worktree head map so syncLabelsForCommit
+    // treats them as authoritative and can drop stale ones on refresh
+    CGitCommands* pGitCommands = qobject_cast<CGitCommands*>(m_pCommands);
+
+    if (pGitCommands != nullptr)
+    {
+        for (const QString& sWorktreeName : pGitCommands->worktreeHeads().value(sCommitId))
+        {
+            CLabel* pLabel = new CLabel();
+            pLabel->setName(sWorktreeName);
+            pLabel->setType(CEnums::WorktreeLabel);
+            lReturnValue << pLabel;
+        }
+    }
+
     return lReturnValue;
 }
 
@@ -244,13 +260,17 @@ bool CRepository::isManagedLabel(const CLabel* pLabel) const
     switch (pLabel->type())
     {
     case CEnums::RemoteBranchLabel:
-        return m_pRemoteBranchModel->branchNames().contains(pLabel->name());
-
     case CEnums::LocalBranchLabel:
-        return m_pLocalBranchModel->branchNames().contains(pLabel->name());
-
     case CEnums::TagLabel:
-        return m_pTagModel->branchNames().contains(pLabel->name());
+        // Branch and tag labels are managed by their models: a moved or
+        // deleted ref must drop its stale line copy. A detached HEAD
+        // decoration ("HEAD") is not a managed ref and stays unmanaged.
+        return pLabel->name() != QString("HEAD");
+
+    case CEnums::WorktreeLabel:
+        // Worktree labels are managed by the cached worktree head map held
+        // in the commands: their freshness follows worktreeHeads().
+        return true;
 
     default:
         return false;

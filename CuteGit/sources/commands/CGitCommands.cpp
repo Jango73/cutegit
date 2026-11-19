@@ -1562,13 +1562,13 @@ static QStringList splitDecorations(const QString& sValue)
     Bare repositories hold no checkout and are skipped, prunable entries are
     kept so their lane stays labeled until the admin folder is pruned.
 */
-QMap<QString, QString> CGitCommands::parseWorktreeHeads(const QString& sWorktreeListOutput)
+QMap<QString, QStringList> CGitCommands::parseWorktreeHeads(const QString& sWorktreeListOutput)
 {
     static const QString sWorktreePrefix = "worktree ";
     static const QString sHeadPrefix = "HEAD ";
     static const QString sBareMarker = "bare";
 
-    QMap<QString, QString> hReturnValue;
+    QMap<QString, QStringList> hReturnValue;
     QString sPath;
     QString sHeadId;
     bool bBare = false;
@@ -1582,7 +1582,7 @@ QMap<QString, QString> CGitCommands::parseWorktreeHeads(const QString& sWorktree
             if (sName.isEmpty())
                 sName = sPath;
 
-            hReturnValue[sHeadId] = sName;
+            hReturnValue[sHeadId] << sName;
         }
 
         sPath.clear();
@@ -1618,6 +1618,13 @@ QMap<QString, QString> CGitCommands::parseWorktreeHeads(const QString& sWorktree
     flushWorktree();
 
     return hReturnValue;
+}
+
+/***************************************************************************/
+
+QMap<QString, QStringList> CGitCommands::worktreeHeads() const
+{
+    return m_mWorktreeHeads;
 }
 
 /***************************************************************************/
@@ -1663,9 +1670,16 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
 
     // Linked worktree heads carry no branch or tag decoration, so their lane
     // would show with no label: resolve them for this repository and mark the
-    // matching lines. Only undecorated lines are marked, decorated ones keep
-    // their branch or tag label.
-    QMap<QString, QString> hWorktreeHeads = parseWorktreeHeads(execNow(tResult.m_sPath, sCommandWorktreeList));
+    // matching lines. The worktree list is queried once per graph refresh (on
+    // the first page) and cached, so scrolling pages never block the UI thread
+    // on another process. Decorated lines still receive their worktree label
+    // alongside their branch or tag label.
+    int iFromIndex = iStartIndex;
+
+    if (m_mWorktreeHeads.isEmpty() || iFromIndex == 0)
+        m_mWorktreeHeads = parseWorktreeHeads(execNow(tResult.m_sPath, sCommandWorktreeList));
+
+    const QMap<QString, QStringList>& hWorktreeHeads = m_mWorktreeHeads;
 
     for (QString sLine : lStrings)
     {
@@ -1692,8 +1706,15 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
             pLine->setParents(splitParentIds(sValues[2]));
             pLine->setDecorations(splitDecorations(sValues[3]));
 
-            if (pLine->decorations().isEmpty() && hWorktreeHeads.contains(sCommitId))
-                pLine->setDecorations(QStringList() << CGraphLine::sWorktreeDecorationPrefix + hWorktreeHeads.value(sCommitId));
+            if (hWorktreeHeads.contains(sCommitId))
+            {
+                QStringList lDecorations = pLine->decorations();
+
+                for (const QString& sWorktreeName : hWorktreeHeads.value(sCommitId))
+                    lDecorations << (CGraphLine::sWorktreeDecorationPrefix + sWorktreeName);
+
+                pLine->setDecorations(lDecorations);
+            }
 
             pLine->setMessage(messageFromLogField(sValues[7]));
             pLine->setMessageIsComplete(true);
