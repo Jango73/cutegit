@@ -173,6 +173,9 @@ public:
     //! Returns true when the identifier is the working tree line
     bool isWorkingTreeCommit(const QString& sCommitId) const;
 
+    //! Returns true when a branch or tag model tracks a label of the same type and name
+    bool isManagedLabel(const CLabel* pLabel) const;
+
     //-------------------------------------------------------------------------------------------------
     // Invokable control methods
     //-------------------------------------------------------------------------------------------------

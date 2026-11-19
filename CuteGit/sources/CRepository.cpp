@@ -236,6 +236,29 @@ QList<CLabel*> CRepository::labelsForCommit(const QString& sCommitId) const
 
 //-------------------------------------------------------------------------------------------------
 
+bool CRepository::isManagedLabel(const CLabel* pLabel) const
+{
+    if (pLabel == nullptr)
+        return false;
+
+    switch (pLabel->type())
+    {
+    case CEnums::RemoteBranchLabel:
+        return m_pRemoteBranchModel->branchNames().contains(pLabel->name());
+
+    case CEnums::LocalBranchLabel:
+        return m_pLocalBranchModel->branchNames().contains(pLabel->name());
+
+    case CEnums::TagLabel:
+        return m_pTagModel->branchNames().contains(pLabel->name());
+
+    default:
+        return false;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
 QString CRepository::repositoryTypeString() const
 {
     switch(m_eRepositoryType)

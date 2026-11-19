@@ -7,6 +7,7 @@
 #include <QTemporaryDir>
 #include <QScopedPointer>
 #include <QProcess>
+#include <QProcessEnvironment>
 #include <QFile>
 #include <QTextStream>
 #include <QStandardPaths>
@@ -447,6 +448,55 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(graphRowHasLabel(sNewHead, "origin/" + sCurrent), s_iAsyncTimeoutMs);
     }
 
+    // A branch moved outside the application must move its label without a
+    // graph reload: the reloaded branch heads refresh the two touched rows,
+    // the stale line decorations must not resurrect the label on the old row
+    void graphLabels_followMovedBranchWithoutReload()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"config", "user.name", "probe"}, sUnused));
+        QVERIFY(gitOutput({"config", "user.email", "probe@local"}, sUnused));
+
+        QVERIFY(gitOutput({"add", "-A"}, sUnused));
+        QVERIFY(gitOutput({"commit", "-qm", "probe-label-base"}, sUnused));
+        QVERIFY(gitOutput({"commit", "--allow-empty", "-qm", "probe-label-middle"}, sUnused));
+        QVERIFY(gitOutput({"commit", "--allow-empty", "-qm", "probe-label-top"}, sUnused));
+
+        QString sOldHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD~2"}, sOldHead));
+
+        sOldHead = sOldHead.trimmed();
+
+        QString sNewHead;
+
+        QVERIFY(gitOutput({"rev-parse", "HEAD"}, sNewHead));
+
+        sNewHead = sNewHead.trimmed();
+
+        QVERIFY(not sOldHead.isEmpty());
+        QVERIFY(sOldHead != sNewHead);
+
+        QVERIFY(gitOutput({"branch", "probe-label", sOldHead}, sUnused));
+
+        m_pRepository->refresh();
+        m_pRepository->refreshGraph();
+
+        QTRY_VERIFY_WITH_TIMEOUT(graphRowHasLabel(sOldHead, "probe-label"), s_iAsyncTimeoutMs);
+
+        // Move the branch behind the graph back: only the status and branch
+        // batches reload, the loaded rows keep their decorations
+        QVERIFY(gitOutput({"update-ref", "refs/heads/probe-label", sNewHead}, sUnused));
+
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(branchCommitId(m_pRepository->localBranchModel(), "probe-label") == sNewHead, s_iAsyncTimeoutMs);
+
+        QTRY_VERIFY_WITH_TIMEOUT(graphRowHasLabel(sNewHead, "probe-label"), s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(not graphRowHasLabel(sOldHead, "probe-label"), s_iAsyncTimeoutMs);
+    }
+
     // A tag push publishes its ref on the remote: the tag context menu action
     // goes through the same path and origin ends up carrying refs/tags/<name>
     void pushTag_publishesOnRemote()
@@ -725,14 +775,20 @@ private slots:
 
         const int iCommitCount = 55;
 
+        // Fixed past committer dates keep the published chain strictly older
+        // than the rewritten one, with no same-second ties to interleave them
         for (int iCommit = 0; iCommit < iCommitCount; iCommit++)
         {
             tStream << "probe-line-" << iCommit << "\n";
             tStream.flush();
 
             QVERIFY(gitInDir(tSourceDir.path(), {"add", "probe.txt"}, sUnused));
-            QVERIFY(gitInDir(tSourceDir.path(),
-                             {"commit", "-qm", QString("probe-commit-%1").arg(iCommit)}, sUnused));
+
+            QString sDate = QString("@%1 +0100").arg(1700000000 + iCommit);
+
+            QVERIFY(gitInDirWithDate(tSourceDir.path(),
+                                     {"commit", "-qm", QString("probe-commit-%1").arg(iCommit)},
+                                     sDate, sUnused));
         }
 
         tFile.close();
@@ -1185,6 +1241,31 @@ private slots:
         QProcess tProcess;
 
         tProcess.setWorkingDirectory(sWorkDir);
+        tProcess.start("git", lArguments);
+
+        if (not tProcess.waitForFinished(10000))
+            return false;
+
+        if (tProcess.exitCode() != 0)
+            return false;
+
+        sOutput = QString::fromUtf8(tProcess.readAllStandardOutput());
+
+        return true;
+    }
+
+    // Runs git with fixed author and committer dates, for deterministic history order
+    static bool gitInDirWithDate(const QString& sWorkDir, const QStringList& lArguments, const QString& sDate, QString& sOutput)
+    {
+        QProcess tProcess;
+
+        tProcess.setWorkingDirectory(sWorkDir);
+
+        QProcessEnvironment tEnvironment = QProcessEnvironment::systemEnvironment();
+        tEnvironment.insert("GIT_AUTHOR_DATE", sDate);
+        tEnvironment.insert("GIT_COMMITTER_DATE", sDate);
+        tProcess.setProcessEnvironment(tEnvironment);
+
         tProcess.start("git", lArguments);
 
         if (not tProcess.waitForFinished(10000))

@@ -41,8 +41,8 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
 {
     setPotentialCount(iPotentialCount);
 
-    // Appended pages may overlap the loaded rows when history shifted since they arrived:
-    // drop leading duplicates so the combined sequence used for layout stays contiguous
+    // Appended pages may overlap already loaded rows when history shifted:
+    // drop every incoming row already present so the combined sequence stays contiguous
     if (iStartIndex > 0 && not m_lLines.isEmpty() && not lIncomingLines.isEmpty())
     {
         QSet<QString> sLoadedIds;
@@ -53,20 +53,31 @@ void CCommitLogModel::reconcileLines(QList<CLogLine*> lIncomingLines, int iStart
                 sLoadedIds << pLoadedLine->commitId();
         }
 
-        while (not lIncomingLines.isEmpty())
-        {
-            CLogLine* pFirstLine = lIncomingLines.first();
+        QList<CLogLine*> lKeptLines;
+        lKeptLines.reserve(lIncomingLines.count());
 
-            if (pFirstLine != nullptr && sLoadedIds.contains(pFirstLine->commitId()))
+        bool bCorruptTail = false;
+
+        for (CLogLine* pLine : lIncomingLines)
+        {
+            if (bCorruptTail || pLine == nullptr)
             {
-                delete pFirstLine;
-                lIncomingLines.removeFirst();
+                lKeptLines << pLine;
+                bCorruptTail = true;
+                continue;
             }
-            else
+
+            if (sLoadedIds.contains(pLine->commitId()))
             {
-                break;
+                delete pLine;
+                continue;
             }
+
+            sLoadedIds << pLine->commitId();
+            lKeptLines << pLine;
         }
+
+        lIncomingLines = lKeptLines;
     }
 
     int iIncomingCount = lIncomingLines.count();
@@ -571,6 +582,7 @@ bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
 
     // Lines may carry labels the repository models do not know, such as a
     // detached HEAD decoration: merge them, skipping duplicates already known
+    // and managed labels, whose stale line copies must not resurrect moved refs
     for (const CLogLine* pLine : m_lLines)
     {
         if (pLine == nullptr || pLine->commitId() != sCommitId)
@@ -582,6 +594,8 @@ bool CCommitLogModel::syncLabelsForCommit(const QString& sCommitId)
                 continue;
 
             if (sKnownSignatures.contains(CLabel::signature(pLabel)))
+                delete pLabel;
+            else if (m_pRepository->isManagedLabel(pLabel))
                 delete pLabel;
             else
             {
