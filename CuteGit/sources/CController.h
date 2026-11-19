@@ -82,6 +82,7 @@ class CController : public QObject
     Q_FAST_PROPERTY_NO_SET_IMPL(bool, b, showIgnored, ShowIgnored)
     Q_FAST_PROPERTY(bool, b, fetchPrune, FetchPrune)
     Q_FAST_PROPERTY(bool, b, toolBarVisible, ToolBarVisible)
+    Q_FAST_PROPERTY(bool, b, windowMaximized, WindowMaximized)
 
 public:
 

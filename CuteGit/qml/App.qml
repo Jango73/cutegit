@@ -29,6 +29,13 @@ ApplicationWindow {
 
         Material.theme = Material.Dark  // This is to force material change (else font is white in light theme)
         setTheme(ctrl.theme === Const.themeMaterialLight ? Material.Light : Material.Dark)
+
+        if (ctrl.windowMaximized)
+            root.showMaximized()
+    }
+
+    onClosing: {
+        ctrl.windowMaximized = (root.visibility === Window.Maximized)
     }
 
     //--------------------------------------------------------------------------------

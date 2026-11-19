@@ -82,6 +82,7 @@ const QString sParameterSettings = "Settings";
 const QString sParameterMaxLoadedRepositories = "MaxLoadedRepositories";
 const QString sParameterFetchPrune = "FetchPrune";
 const QString sParameterToolBarVisible = "ToolBarVisible";
+const QString sParameterWindowMaximized = "WindowMaximized";
 const QString sThemeMaterialDark = "MaterialDark";
 const QString sThemeMaterialLight = "MaterialLight";
 const QString sParameterTabPosition = "TabPosition";
@@ -120,6 +121,7 @@ CController::CController(QString sStubFileName, QObject* parent)
     , m_bShowIgnored(false)
     , m_bFetchPrune(false)
     , m_bToolBarVisible(true)
+    , m_bWindowMaximized(false)
     , m_bMasterMode(true)
     , m_tShared(m_sSharedKey, this)
     , m_tSharedTimer(this)
@@ -201,6 +203,7 @@ CController::CController(QString sStubFileName, QString sSequenceFileName, QObje
     , m_bShowIgnored(false)
     , m_bFetchPrune(false)
     , m_bToolBarVisible(true)
+    , m_bWindowMaximized(false)
     , m_bMasterMode(false)
     , m_tShared(m_sSharedKey, this)
     , m_tSharedTimer(this)
@@ -820,6 +823,7 @@ void CController::saveConfiguration()
     xSettings.attributes()[sParameterMaxLoadedRepositories] = QString::number(m_iMaxLoadedRepositories);
     xSettings.attributes()[sParameterFetchPrune] = QString::number(m_bFetchPrune ? 1 : 0);
     xSettings.attributes()[sParameterToolBarVisible] = QString::number(m_bToolBarVisible ? 1 : 0);
+    xSettings.attributes()[sParameterWindowMaximized] = QString::number(m_bWindowMaximized ? 1 : 0);
     xConfig << xSettings;
 
     xConfig.saveXMLToFile(configFileName());
@@ -968,6 +972,7 @@ void CController::loadConfiguration()
         m_iMaxLoadedRepositories = iMaxLoadedRepositories;
     setFetchPrune(readBoolAttribute(xSettings.attributes(), sParameterFetchPrune, m_bFetchPrune));
     setToolBarVisible(readBoolAttribute(xSettings.attributes(), sParameterToolBarVisible, m_bToolBarVisible));
+    setWindowMaximized(readBoolAttribute(xSettings.attributes(), sParameterWindowMaximized, m_bWindowMaximized));
 }
 
 //-------------------------------------------------------------------------------------------------
