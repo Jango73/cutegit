@@ -420,4 +420,5 @@ protected:
 
     //! Cached worktree heads, refreshed on the first page of a graph load
     QMap<QString, QStringList> m_mWorktreeHeads;
+    bool m_bWorktreeHeadsResolved;
 };

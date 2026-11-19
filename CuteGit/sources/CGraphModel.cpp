@@ -227,7 +227,11 @@ void CGraphModel::setLines(CGraphLineCollection tCollection)
     // Selecting a dead row then diffs an unknown revision.
     if (iOriginalStartIndex == 0 && m_bWorkingTreePresent)
     {
-        trimTailToCount(iStartIndex + iIncomingCount);
+        // Only trim when the incoming page actually replaced rows: an all-
+        // duplicate refresh keeps the loaded rows and must not wipe them
+        if (iIncomingCount > 0)
+            trimTailToCount(iStartIndex + iIncomingCount);
+
         refreshWorkingTreeParent();
         layoutLoadedLines();
     }
@@ -529,6 +533,20 @@ void CGraphModel::layoutLoadedLines()
     if (lGraphLines.isEmpty())
         return;
 
+    // Snapshot the lane data before relayout so a no-op relayout does not
+    // notify the view: redundant dataChanged emissions are a flicker source
+    // during the first graph display
+    QList<QVariant> lPreviousLanes;
+    QList<QVariantList> lPreviousVerticals;
+    QList<QVariantList> lPreviousConnections;
+
+    for (const CGraphLine* pGraphLine : lGraphLines)
+    {
+        lPreviousLanes << QVariant(pGraphLine->graphLane());
+        lPreviousVerticals << pGraphLine->graphVerticals();
+        lPreviousConnections << pGraphLine->graphConnections();
+    }
+
     // The working tree line already reserves lane 0 for its head parent
     QString sHeadSeed;
 
@@ -545,6 +563,19 @@ void CGraphModel::layoutLoadedLines()
 
     CGraphLayout::layoutLines(lGraphLines, sHeadSeed);
 
-    if (m_lLines.count() > 0)
+    bool bChanged = false;
+
+    for (int iIndex = 0; iIndex < lGraphLines.count(); iIndex++)
+    {
+        if (lGraphLines[iIndex]->graphLane() != lPreviousLanes[iIndex].toInt()
+                || lGraphLines[iIndex]->graphVerticals() != lPreviousVerticals[iIndex]
+                || lGraphLines[iIndex]->graphConnections() != lPreviousConnections[iIndex])
+        {
+            bChanged = true;
+            break;
+        }
+    }
+
+    if (bChanged && m_lLines.count() > 0)
         emit dataChanged(index(0), index(m_lLines.count() - 1), {eGraphCommitLaneRole, eGraphVerticalsRole, eGraphConnectionsRole});
 }

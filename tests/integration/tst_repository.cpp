@@ -744,6 +744,80 @@ private slots:
         QCOMPARE(tModel.data(tModel.index(0, 0), CGraphModel::eIsWorkingTreeRole).toBool(), true);
     }
 
+    // An all-duplicate refresh on a dirty repository must keep the loaded
+    // rows instead of trimming them down to the working tree line alone
+    void graphRefresh_allDuplicateRefresh_preservesLoadedRows()
+    {
+        CGraphModel tModel(nullptr);
+
+        tModel.setWorkingTreePresent(true);
+
+        QCOMPARE(tModel.rowCount(), 1);
+
+        CGraphLineCollection tFull;
+        tFull.setStartIndex(0);
+        tFull.setPotentialCount(4);
+        tFull.add(makeGraphLine("commit-A", QStringList() << "commit-B", "feat A"));
+        tFull.add(makeGraphLine("commit-B", QStringList() << "commit-C", "feat B"));
+        tFull.add(makeGraphLine("commit-C", QStringList() << "commit-D", "feat C"));
+        tFull.add(makeGraphLine("commit-D", QStringList(), "feat D"));
+
+        tModel.setLines(tFull);
+
+        QCOMPARE(tModel.rowCount(), 5);
+        QVERIFY(tModel.findLine("commit-D") != nullptr);
+
+        // Repeat the identical page: every incoming row is a duplicate of an
+        // already loaded row, so the filtered incoming count is zero
+        CGraphLineCollection tDuplicate;
+        tDuplicate.setStartIndex(0);
+        tDuplicate.setPotentialCount(4);
+        tDuplicate.add(makeGraphLine("commit-A", QStringList() << "commit-B", "feat A"));
+        tDuplicate.add(makeGraphLine("commit-B", QStringList() << "commit-C", "feat B"));
+        tDuplicate.add(makeGraphLine("commit-C", QStringList() << "commit-D", "feat C"));
+        tDuplicate.add(makeGraphLine("commit-D", QStringList(), "feat D"));
+
+        tModel.setLines(tDuplicate);
+
+        QCOMPARE(tModel.rowCount(), 5);
+        QVERIFY(tModel.findLine("commit-A") != nullptr);
+        QVERIFY(tModel.findLine("commit-D") != nullptr);
+        QCOMPARE(tModel.data(tModel.index(0, 0), CGraphModel::eIsWorkingTreeRole).toBool(), true);
+    }
+
+    // An identical refresh must not re-emit dataChanged for unchanged rows:
+    // redundant emissions are the flicker source during the first display
+    void graphRefresh_identicalRefresh_emitsNoDataChanged()
+    {
+        CGraphModel tModel(nullptr);
+
+        tModel.setWorkingTreePresent(true);
+
+        CGraphLineCollection tFull;
+        tFull.setStartIndex(0);
+        tFull.setPotentialCount(4);
+        tFull.add(makeGraphLine("commit-A", QStringList() << "commit-B", "feat A"));
+        tFull.add(makeGraphLine("commit-B", QStringList() << "commit-C", "feat B"));
+        tFull.add(makeGraphLine("commit-C", QStringList() << "commit-D", "feat C"));
+        tFull.add(makeGraphLine("commit-D", QStringList(), "feat D"));
+
+        tModel.setLines(tFull);
+
+        CGraphLineCollection tDuplicate;
+        tDuplicate.setStartIndex(0);
+        tDuplicate.setPotentialCount(4);
+        tDuplicate.add(makeGraphLine("commit-A", QStringList() << "commit-B", "feat A"));
+        tDuplicate.add(makeGraphLine("commit-B", QStringList() << "commit-C", "feat B"));
+        tDuplicate.add(makeGraphLine("commit-C", QStringList() << "commit-D", "feat C"));
+        tDuplicate.add(makeGraphLine("commit-D", QStringList(), "feat D"));
+
+        QSignalSpy tSpy(&tModel, &CGraphModel::dataChanged);
+
+        tModel.setLines(tDuplicate);
+
+        QCOMPARE(tSpy.count(), 0);
+    }
+
     // A pushed main rewritten locally (reword of an old pushed commit) then
     // scrolled down without an intermediate refresh: the appended page is
     // read from the shifted history on top of the stale first page and must

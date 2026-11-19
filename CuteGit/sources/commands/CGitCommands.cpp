@@ -152,6 +152,7 @@ CGitCommands::CGitCommands(CController* pController)
     : CCommands(pController)
     , m_eRebaseType(eRTReword)
     , m_eRebaseStep(eRSChangeCommitEditSequence)
+    , m_bWorktreeHeadsResolved(false)
 {
     connect(this, &CCommands::execFinished, this, &CGitCommands::onExecFinished);
 }
@@ -367,6 +368,16 @@ void CGitCommands::graph(const QString& sPath, int iFrom, int iCount)
 
         if (iThirdExitCode == 0 && not sThirdParent.isEmpty())
             lHiddenIds << sThirdParent;
+    }
+
+    // Resolve linked worktree heads once per refresh (first page) so the
+    // graph output handler never blocks the UI thread on another process.
+    // The result is cached and reused by every scrolled page. The resolved
+    // flag keeps an empty result from triggering a query on every page.
+    if (iFrom == 0 || not m_bWorktreeHeadsResolved)
+    {
+        m_mWorktreeHeads = parseWorktreeHeads(execNow(sPath, sCommandWorktreeList));
+        m_bWorktreeHeadsResolved = true;
     }
 
     QString sCommand = QString(sCommandGraph).arg(iFrom).arg(iCount);
@@ -1671,14 +1682,9 @@ void CGitCommands::handleGraphOutput(const CProcessResult& tResult)
     // Linked worktree heads carry no branch or tag decoration, so their lane
     // would show with no label: resolve them for this repository and mark the
     // matching lines. The worktree list is queried once per graph refresh (on
-    // the first page) and cached, so scrolling pages never block the UI thread
-    // on another process. Decorated lines still receive their worktree label
-    // alongside their branch or tag label.
-    int iFromIndex = iStartIndex;
-
-    if (m_mWorktreeHeads.isEmpty() || iFromIndex == 0)
-        m_mWorktreeHeads = parseWorktreeHeads(execNow(tResult.m_sPath, sCommandWorktreeList));
-
+    // the first page) in graph() and cached, so this handler never blocks the
+    // UI thread on another process. Decorated lines still receive their
+    // worktree label alongside their branch or tag label.
     const QMap<QString, QStringList>& hWorktreeHeads = m_mWorktreeHeads;
 
     for (QString sLine : lStrings)
