@@ -195,6 +195,11 @@ public:
     //!
     Q_INVOKABLE bool can(CEnums::ECapability eWhat);
 
+    //! True when the force push action may run: either commits are ahead of
+    //! the upstream, or the branch has no upstream yet (the remote branch may
+    //! still exist under the same name and need overwriting)
+    Q_INVOKABLE bool canForcePush();
+
     //! Checks the status of the repo at sPath
     Q_INVOKABLE void checkRepositoryStatus(QString sPath = "");
 

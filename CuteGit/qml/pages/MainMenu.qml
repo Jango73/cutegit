@@ -159,7 +159,7 @@ MenuBar {
             id: forcePush
             text: Const.forcePushMenuText
             shortcut: "Ctrl+Shift+P"
-            enabled: root.repository ? root.repository.can(CEnums.ForcePush) && root.repository.hasPushableCommits : false
+            enabled: root.repository ? root.repository.can(CEnums.ForcePush) && (root.repository.hasPushableCommits || !root.repository.hasUpstreamBranch) : false
             onTriggered: root.requestForcePush()
         }
 

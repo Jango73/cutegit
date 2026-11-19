@@ -552,6 +552,21 @@ private slots:
         QCOMPARE(m_pRepository->commitCountAhead(), 0);
     }
 
+    // A branch without upstream tracking may still need a force push when the
+    // remote branch exists under the same name: the action must stay enabled
+    void forcePush_enabledWithoutUpstream()
+    {
+        QString sUnused;
+
+        QVERIFY(gitOutput({"checkout", "-B", "force-push-probe"}, sUnused));
+
+        m_pRepository->refresh();
+
+        QTRY_VERIFY_WITH_TIMEOUT(m_pRepository->currentBranch() == "force-push-probe", s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(not m_pRepository->hasUpstreamBranch(), s_iAsyncTimeoutMs);
+        QVERIFY(m_pRepository->canForcePush());
+    }
+
     // The working tree line shows on top of the graph when the tree is dirty,
     // with its parent on the current head and its message showing the diff state
     void workingTreeLine_showsOnTopWhenDirty()

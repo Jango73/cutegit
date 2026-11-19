@@ -358,6 +358,13 @@ bool CRepository::can(CEnums::ECapability eWhat)
 
 //-------------------------------------------------------------------------------------------------
 
+bool CRepository::canForcePush()
+{
+    return can(CEnums::ForcePush) && (m_bHasPushableCommits || !m_bHasUpstreamBranch);
+}
+
+//-------------------------------------------------------------------------------------------------
+
 void CRepository::checkRepositoryStatus(QString sPath)
 {
     if (sPath.isEmpty())
