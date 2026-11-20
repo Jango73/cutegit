@@ -38,16 +38,18 @@ Item {
             StandardLabel {
                 text: Const.commitIdText
             }
-            StandardText {
+            StandardSelectableText {
+                objectName: "commitIdValue"
                 Layout.fillWidth: true
                 text: root.isWorkingTree ? Const.workingTreeText : root.commitId
-                wrapMode: Text.WrapAnywhere
+                wrapMode: TextEdit.WrapAnywhere
             }
 
             StandardLabel {
                 text: Const.authorText
             }
-            StandardText {
+            StandardSelectableText {
+                objectName: "commitAuthorValue"
                 Layout.fillWidth: true
                 text: root.commitAuthor
             }
@@ -55,7 +57,8 @@ Item {
             StandardLabel {
                 text: Const.dateText
             }
-            StandardText {
+            StandardSelectableText {
+                objectName: "commitDateValue"
                 Layout.fillWidth: true
                 text: root.formattedDate()
             }
@@ -63,7 +66,8 @@ Item {
             StandardLabel {
                 text: Const.addedLinesText
             }
-            StandardText {
+            StandardSelectableText {
+                objectName: "addedLinesValue"
                 Layout.fillWidth: true
                 text: root.addedCount
             }
@@ -71,7 +75,8 @@ Item {
             StandardLabel {
                 text: Const.removedLinesText
             }
-            StandardText {
+            StandardSelectableText {
+                objectName: "removedLinesValue"
                 Layout.fillWidth: true
                 text: root.removedCount
             }
@@ -94,8 +99,9 @@ Item {
             ScrollBar.vertical: ScrollBar {
             }
 
-            StandardText {
+            StandardSelectableText {
                 id: commitMessageText
+                objectName: "commitMessageValue"
                 width: parent.width
                 text: root.commitMessage
             }

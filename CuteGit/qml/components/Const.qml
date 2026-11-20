@@ -485,7 +485,7 @@ Item {
         { name: qsTr("Stage selection"), sequence: "Control +" },
         { name: qsTr("Unstage selection"), sequence: "Control -" },
         { name: qsTr("Revert selection"), sequence: "Control Z" },
-        { name: qsTr("Commit"), sequence: "Control C" },
+        { name: qsTr("Commit"), sequence: "Control Return" },
         { name: qsTr("Amend"), sequence: "Control M" },
         { name: qsTr("Continue rebase"), sequence: "Control R" },
         { name: qsTr("Abort rebase"), sequence: "Control T" },

@@ -134,6 +134,62 @@ private slots:
         QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
     }
 
+    void commitDetails_valuesAreSelectable()
+    {
+        CController tController("");
+        QQmlApplicationEngine tEngine;
+        QStringList lWarnings;
+
+        prepareEngine(tController, tEngine, lWarnings);
+
+        QQmlComponent tRepositoryStub(&tEngine);
+        tRepositoryStub.setData(
+            "import QtQuick 2.12\n"
+            "QtObject {\n"
+            "    property string commitDetailsId: \"0123456789abcdef\"\n"
+            "    property string commitDetailsAuthor: \"Author\"\n"
+            "    property variant commitDetailsDate: new Date(2026, 0, 2)\n"
+            "    property int commitDetailsAddedCount: 3\n"
+            "    property int commitDetailsRemovedCount: 4\n"
+            "    property string commitDetailsMessage: \"Message\"\n"
+            "    property string workingTreeCommitId: \"working-tree\"\n"
+            "}\n",
+            QUrl(QStringLiteral("qrc:/commitDetailsRepositoryStub.qml")));
+        QVERIFY2(tRepositoryStub.isReady(), qPrintable(tRepositoryStub.errorString()));
+        QScopedPointer<QObject> pRepository(tRepositoryStub.create());
+        QVERIFY2(not pRepository.isNull(), "Repository stub produced no object");
+
+        QQmlComponent tPane(&tEngine, QUrl(QStringLiteral("qrc:/qml/pages/CommitDetailsPane.qml")));
+        QVERIFY2(tPane.isReady(), qPrintable(tPane.errorString()));
+
+        QVariantMap mInitialProperties;
+        mInitialProperties.insert("repository", QVariant::fromValue(pRepository.data()));
+        QScopedPointer<QObject> pPane(tPane.createWithInitialProperties(mInitialProperties));
+        QVERIFY2(not pPane.isNull(), "CommitDetailsPane.qml produced no object");
+
+        const QStringList lValueNames = QStringList()
+            << "commitIdValue"
+            << "commitAuthorValue"
+            << "commitDateValue"
+            << "addedLinesValue"
+            << "removedLinesValue"
+            << "commitMessageValue";
+        for (const QString& sValueName : lValueNames)
+        {
+            QObject* pValue = pPane->findChild<QObject*>(sValueName);
+            QVERIFY2(pValue != nullptr,
+                     qPrintable(QString("Missing commit details field: %1").arg(sValueName)));
+            QVERIFY2(pValue->inherits("QQuickTextEdit"),
+                     qPrintable(QString("Commit details field is not a selectable text: %1").arg(sValueName)));
+            QVERIFY2(pValue->property("readOnly").toBool(),
+                     qPrintable(QString("Commit details field is editable: %1").arg(sValueName)));
+            QVERIFY2(pValue->property("selectByMouse").toBool(),
+                     qPrintable(QString("Commit details field cannot be selected: %1").arg(sValueName)));
+        }
+
+        QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
+    }
+
     void startup_closingLastRepositoryTab_leavesEmptyWorkArea()
     {
         QTemporaryDir tParentDir;

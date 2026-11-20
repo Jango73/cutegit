@@ -253,7 +253,7 @@ MenuBar {
         Action {
             id: commit
             text: Const.commitMenuText
-            shortcut: "Ctrl+C"
+            shortcut: "Ctrl+Return"
             enabled: root.repository
                      ? root.repository.can(CEnums.Commit) && root.repository.hasCommitableFiles
                      : false
