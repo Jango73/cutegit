@@ -134,6 +134,115 @@ private slots:
         QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
     }
 
+    void startup_closingLastRepositoryTab_leavesEmptyWorkArea()
+    {
+        QTemporaryDir tParentDir;
+        QVERIFY2(tParentDir.isValid(), "Could not create temporary folder");
+        QString sClonePath = tParentDir.path() + "/repo";
+
+        QCOMPARE(cloneFixture(sClonePath), 0);
+
+        CController tController("");
+        QQmlApplicationEngine tEngine;
+        QStringList lWarnings;
+
+        prepareEngine(tController, tEngine, lWarnings);
+        tEngine.load(QUrl(QStringLiteral("qrc:/qml/App.qml")));
+
+        QVERIFY2(not tEngine.rootObjects().isEmpty(), "App.qml produced no root object");
+
+        QObject* pRoot = tEngine.rootObjects().first();
+
+        tController.openRepository(sClonePath);
+
+        CRepositoryModel* pModel = openRepositoryModel(tController);
+        QVERIFY2(pModel != nullptr, "Controller has no openRepositoryModel");
+        QTRY_VERIFY_WITH_TIMEOUT(pModel->rowCount() == 1, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(tController.currentRepository() != nullptr, s_iAsyncTimeoutMs);
+        QCOMPARE(tController.currentRepositoryIndex(), 0);
+
+        // The close button calls this controller slot with the tab index.
+        // Repeater delegates are not instantiated in the headless Qt 6.2
+        // engine, so the slot is invoked directly.
+        tController.removeRepository(0);
+
+        QTRY_VERIFY_WITH_TIMEOUT(pModel->rowCount() == 0, s_iAsyncTimeoutMs);
+        QVERIFY2(tController.currentRepository() == nullptr,
+                 "Closing the last tab left a dangling current repository");
+        QCOMPARE(tController.currentRepositoryIndex(), -1);
+
+        QObject* pTabBar = pRoot->findChild<QObject*>("mainTabBar");
+        QVERIFY2(pTabBar != nullptr, "The main tab bar disappeared");
+        QTRY_VERIFY_WITH_TIMEOUT(pTabBar->property("currentIndex").toInt() == -1,
+                                 s_iAsyncTimeoutMs);
+
+        QObject* pEmptyLabel = pRoot->findChild<QObject*>("emptyRepositoryLabel");
+        QVERIFY2(pEmptyLabel != nullptr, "The empty repository label disappeared");
+        QTRY_VERIFY_WITH_TIMEOUT(pEmptyLabel->property("visible").toBool(), s_iAsyncTimeoutMs);
+
+        QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
+    }
+
+    void startup_closingSelectedRepositoryTab_selectsRemainingTab()
+    {
+        QTemporaryDir tParentDir;
+        QVERIFY2(tParentDir.isValid(), "Could not create temporary folder");
+        QString sPathA = tParentDir.path() + "/repoA";
+        QString sPathB = tParentDir.path() + "/repoB";
+        QVERIFY2(initGitRepo(sPathA), "Could not init repoA");
+        QVERIFY2(initGitRepo(sPathB), "Could not init repoB");
+
+        CController tController("");
+        QQmlApplicationEngine tEngine;
+        QStringList lWarnings;
+
+        prepareEngine(tController, tEngine, lWarnings);
+        tEngine.load(QUrl(QStringLiteral("qrc:/qml/App.qml")));
+
+        QVERIFY2(not tEngine.rootObjects().isEmpty(), "App.qml produced no root object");
+
+        QObject* pRoot = tEngine.rootObjects().first();
+
+        tController.openRepository(sPathA);
+        tController.openRepository(sPathB);
+
+        CRepositoryModel* pModel = openRepositoryModel(tController);
+        QVERIFY2(pModel != nullptr, "Controller has no openRepositoryModel");
+        QTRY_VERIFY_WITH_TIMEOUT(pModel->rowCount() == 2, s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(tController.currentRepositoryIndex() == 1, s_iAsyncTimeoutMs);
+        QVERIFY2(tController.currentRepository() != nullptr, "No repository is selected");
+
+        QObject* pTabBar = pRoot->findChild<QObject*>("mainTabBar");
+        QObject* pSwipeView = pRoot->findChild<QObject*>("mainSwipeView");
+        QVERIFY2(pTabBar != nullptr, "The main tab bar disappeared");
+        QVERIFY2(pSwipeView != nullptr, "The main swipe view disappeared");
+        QTRY_VERIFY_WITH_TIMEOUT(pTabBar->property("currentIndex").toInt() == 1,
+                                 s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(pSwipeView->property("currentIndex").toInt() == 1,
+                                 s_iAsyncTimeoutMs);
+
+        // The close button calls this controller slot with the tab index.
+        tController.removeRepository(1);
+
+        QTRY_VERIFY_WITH_TIMEOUT(pModel->rowCount() == 1, s_iAsyncTimeoutMs);
+        QVERIFY2(tController.currentRepository() != nullptr,
+                 "Closing the selected tab left no repository selected");
+        QCOMPARE(tController.currentRepositoryIndex(), 0);
+        QVERIFY2(tController.currentRepository()->repositoryPath().endsWith("repoA"),
+                 qPrintable(tController.currentRepository()->repositoryPath()));
+        QTRY_VERIFY_WITH_TIMEOUT(pTabBar->property("currentIndex").toInt() == 0,
+                                 s_iAsyncTimeoutMs);
+        QTRY_VERIFY_WITH_TIMEOUT(pSwipeView->property("currentIndex").toInt() == 0,
+                                 s_iAsyncTimeoutMs);
+
+        QObject* pEmptyLabel = pRoot->findChild<QObject*>("emptyRepositoryLabel");
+        QVERIFY2(pEmptyLabel != nullptr, "The empty repository label disappeared");
+        QVERIFY2(not pEmptyLabel->property("visible").toBool(),
+                 "The work area is empty while a repository remains open");
+
+        QVERIFY2(not hasLoadError(lWarnings), qPrintable(formatWarnings(lWarnings)));
+    }
+
     void settingsPopup_resolvesLanguageIndex()
     {
         CController tController("");

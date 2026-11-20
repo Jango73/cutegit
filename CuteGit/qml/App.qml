@@ -209,6 +209,8 @@ ApplicationWindow {
                 var indexToSet = root.ctrl.currentRepositoryIndexToSet()
                 if (indexToSet !== -1)
                     mainTabBar.currentIndex = indexToSet
+                else
+                    mainTabBar.currentIndex = root.ctrl.currentRepositoryIndex
 
                 root.ctrl.currentRepositoryIndex = mainTabBar.currentIndex
             }
@@ -216,6 +218,7 @@ ApplicationWindow {
 
         StandardTabView {
             id: mainSwipeView
+            objectName: "mainSwipeView"
             anchors.top: mainTabBar.bottom
             anchors.bottom: parent.bottom
             anchors.left: parent.left
@@ -235,6 +238,7 @@ ApplicationWindow {
         }
 
         StandardLabel {
+            objectName: "emptyRepositoryLabel"
             anchors.fill: parent
             visible: root.ctrl.openRepositoryModel.count === 0
             text: Const.emptyRepositoryTabText

@@ -306,7 +306,8 @@ void CController::setCurrentRepositoryIndex(int iValue)
         m_iCurrentRepositoryIndex = iValue;
         emit currentRepositoryIndexChanged();
 
-        if (m_iCurrentRepositoryIndex != -1 && m_pOpenRepositoryModel->rowCount() > 0)
+        if (m_iCurrentRepositoryIndex >= 0
+                && m_iCurrentRepositoryIndex < m_pOpenRepositoryModel->rowCount())
         {
             CRepository* pRepository = m_pOpenRepositoryModel->repositories()[m_iCurrentRepositoryIndex];
 
@@ -1131,16 +1132,63 @@ void CController::openRepository(QString sRepositoryPath)
 
 void CController::removeRepository(int iRepositoryIndex)
 {
-    if (iRepositoryIndex < m_pOpenRepositoryModel->repositories().count())
+    const QList<CRepository*> lRepositories = m_pOpenRepositoryModel->repositories();
+
+    if (iRepositoryIndex < 0 || iRepositoryIndex >= lRepositories.count())
+        return;
+
+    CRepository* pRepository = lRepositories[iRepositoryIndex];
+    QString sName = pRepository->repositoryName();
+    setStatusText(Strings::objectClosed(sName));
+
+    removeRecentRepositoryPath(pRepository->repositoryPath());
+
+    if (m_sCurrentRepositoryPath == pRepository->repositoryPath())
+        m_sCurrentRepositoryPath.clear();
+
+    const int iPreviousIndex = m_iCurrentRepositoryIndex;
+    const bool bRemovedCurrentRepository = pRepository == m_pCurrentRepository;
+    int iIndexAfterRemoval = iPreviousIndex;
+    CRepository* pNextRepository = m_pCurrentRepository;
+
+    if (bRemovedCurrentRepository)
     {
-        CRepository* pRepository = m_pOpenRepositoryModel->repositories()[iRepositoryIndex];
-        QString sName = pRepository->repositoryName();
-        setStatusText(Strings::objectClosed(sName));
+        iIndexAfterRemoval = lRepositories.count() == 1
+            ? -1
+            : (iRepositoryIndex == 0 ? 0 : iRepositoryIndex - 1);
 
-        removeRecentRepositoryPath(pRepository->repositoryPath());
+        // The repository is deleted below: point at a surviving repository
+        // before the model removes the row.
+        pNextRepository = nullptr;
 
-        m_pOpenRepositoryModel->removeRepository(iRepositoryIndex);
+        if (iIndexAfterRemoval >= 0)
+        {
+            const int iNextPreviousIndex = iIndexAfterRemoval < iRepositoryIndex
+                ? iIndexAfterRemoval
+                : iIndexAfterRemoval + 1;
+            pNextRepository = lRepositories[iNextPreviousIndex];
+        }
     }
+    else if (iRepositoryIndex < iIndexAfterRemoval)
+    {
+        iIndexAfterRemoval--;
+    }
+
+    // The tab view reads the selection while the model removes the row.
+    m_iCurrentRepositoryIndex = iIndexAfterRemoval;
+
+    if (bRemovedCurrentRepository)
+        setCurrentRepository(pNextRepository);
+
+    m_pOpenRepositoryModel->removeRepository(iRepositoryIndex);
+
+    if (m_iCurrentRepositoryIndex != iPreviousIndex)
+        emit currentRepositoryIndexChanged();
+
+    if (m_pCurrentRepository != nullptr)
+        touchRecentRepositoryPath(m_pCurrentRepository->repositoryPath());
+
+    enforceLoadedRepositoryLimit();
 }
 
 //-------------------------------------------------------------------------------------------------
