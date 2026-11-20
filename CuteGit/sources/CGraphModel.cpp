@@ -30,7 +30,7 @@ static QString headCommitIdInLines(const QList<CLogLine*>& lLines)
 static QString headLaneSeed(const QList<CGraphLine*>& lCombinedLines, bool bWorkingTreePresent, const QString& sStoredHeadCommitId)
 {
     if (bWorkingTreePresent || lCombinedLines.isEmpty())
-        return sStoredHeadCommitId;
+        return QString();
 
     QList<CLogLine*> lLogLines;
     lLogLines.reserve(lCombinedLines.count());
@@ -350,7 +350,7 @@ void CGraphModel::prepareLines(QList<CLogLine*>& lLoadedLines, QList<CLogLine*>&
         {
             QList<CGraphLine*> lRefreshLines;
             lRefreshLines << lLoadedGraphLines.first() << lIncomingGraphLines;
-            CGraphLayout::layoutLines(lRefreshLines, m_sHeadCommitId);
+            CGraphLayout::layoutLines(lRefreshLines);
             return;
         }
     }

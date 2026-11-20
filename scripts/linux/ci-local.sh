@@ -63,12 +63,16 @@ TESTS_FOLDER="${PROJECT_ROOT_FOLDER}/tests"
 TESTS_BUILD_FOLDER="${TESTS_FOLDER}/build-${BUILD_TYPE,,}"
 TESTS_BIN_FOLDER="${TESTS_FOLDER}/bin"
 FIXTURE_REPO="${TESTS_FOLDER}/fixtures/diff/repo"
+GRAPH_FIXTURE_REPO="${TESTS_FOLDER}/fixtures/graph/repo"
 LOG_FILE="${PROJECT_ROOT_FOLDER}/tmp/ci-local.log"
 
 mkdir -p "$(dirname "${LOG_FILE}")"
 
 echo "[ci-local] Creating diff fixture repository..."
 "${TESTS_FOLDER}/create-diff-fixture.sh" > /dev/null
+
+echo "[ci-local] Creating graph fixture repository..."
+"${TESTS_FOLDER}/create-graph-fixture.sh" > /dev/null
 
 echo "[ci-local] Building test sections (${BUILD_TYPE,,})..."
 mkdir -p "${TESTS_BUILD_FOLDER}"
@@ -91,7 +95,7 @@ echo "[ci-local] Running checks (logging to ${LOG_FILE})..."
   DIFF_FIXTURE_REPO="${FIXTURE_REPO}" QT_QPA_PLATFORM=offscreen \
     "${TESTS_BIN_FOLDER}/tst_startup"
   echo "[ci-local] Running tst_repository..."
-  DIFF_FIXTURE_REPO="${FIXTURE_REPO}" QT_QPA_PLATFORM=offscreen \
+  DIFF_FIXTURE_REPO="${FIXTURE_REPO}" GRAPH_FIXTURE_REPO="${GRAPH_FIXTURE_REPO}" QT_QPA_PLATFORM=offscreen \
     "${TESTS_BIN_FOLDER}/tst_repository"
 } 2>&1 | tee "${LOG_FILE}"
 

@@ -44,6 +44,7 @@ public:
 
     tst_Repository()
         : m_sFixtureRepo(qgetenv("DIFF_FIXTURE_REPO"))
+        , m_sGraphFixtureRepo(qgetenv("GRAPH_FIXTURE_REPO"))
     {
         // No parameters needed to run the binary directly: fall back to the
         // fixture shipped next to it (tests/bin -> tests/fixtures/diff/repo)
@@ -53,6 +54,14 @@ public:
 
             if (QDir(sFallback).exists())
                 m_sFixtureRepo = QDir(sFallback).canonicalPath();
+        }
+
+        if (m_sGraphFixtureRepo.isEmpty())
+        {
+            QString sFallback = QCoreApplication::applicationDirPath() + "/../fixtures/graph/repo";
+
+            if (QDir(sFallback).exists())
+                m_sGraphFixtureRepo = QDir(sFallback).canonicalPath();
         }
     }
 
@@ -1000,6 +1009,51 @@ private slots:
                             .arg(sHealedCut).arg(pModel->rowCount()).arg(pModel->potentialCount())));
     }
 
+    // Ghost commit lanes stay clean after scrolling down to the initial commit
+    // and back up: only its own lane ends at the dot, no other lane branches
+    void graphGhostCommitLanes_scrollDownThenUp_areClean()
+    {
+        if (m_sGraphFixtureRepo.isEmpty())
+            QSKIP("GRAPH_FIXTURE_REPO is not set");
+
+        cloneGraphFixture();
+        appendWorktreeLines();
+
+        QScopedPointer<CRepository> pRepo(new CRepository(m_sClonePath, nullptr));
+        pRepo->refresh();
+        pRepo->refreshGraph();
+
+        CGraphModel* pModel = pRepo->graphModel();
+
+        QTRY_VERIFY_WITH_TIMEOUT(pModel->rowCount() > 1, s_iAsyncTimeoutMs);
+
+        // Scroll down to the initial commit
+        scrollGraphToQuiescence(pModel);
+
+        // Scroll back to the top: the ghost commit is row 0
+        const QString sGhostId = pRepo->workingTreeCommitId();
+        const CLogLine* pGhostLine = pModel->findLine(sGhostId);
+        QVERIFY(pGhostLine != nullptr);
+
+        const CGraphLine* pGhostGraphLine = qobject_cast<const CGraphLine*>(pGhostLine);
+        QVERIFY(pGhostGraphLine != nullptr);
+
+        QVariantList lVerticals = pGhostGraphLine->graphVerticals();
+
+        // The ghost owns its lane: no pass-through lane may run beside it
+        QCOMPARE(lVerticals.count(), 1);
+
+        QVariantList lGhostVertical = lVerticals.first().toList();
+
+        QCOMPARE(lGhostVertical.count(), 3);
+        QCOMPARE(lGhostVertical[0].toInt(), pGhostGraphLine->graphLane());
+        QVERIFY(lGhostVertical[1].toBool());
+        QVERIFY(not lGhostVertical[2].toBool());
+
+        QVariantList lConnections = pGhostGraphLine->graphConnections();
+        QCOMPARE(lConnections.count(), 0);
+    }
+
     // Rewording a commit rewrites its hash and every descendant hash: the
     // details pane must follow the new commit instead of going empty on the
     // dead identifier
@@ -1641,6 +1695,7 @@ private slots:
     }
 
     QString m_sFixtureRepo;
+    QString m_sGraphFixtureRepo;
     QScopedPointer<QTemporaryDir> m_pWorkDir;
     QString m_sClonePath;
     QScopedPointer<CRepository> m_pRepository;
@@ -1657,6 +1712,23 @@ private slots:
         m_sClonePath = m_pWorkDir->path() + "/work";
 
         QCOMPARE(QProcess::execute("git", {"clone", "--quiet", m_sFixtureRepo, m_sClonePath}), 0);
+
+        m_sRelativeName = "source/module-7.txt";
+        m_sFullName = m_sClonePath + "/" + m_sRelativeName;
+
+        QVERIFY2(QFile::exists(m_sFullName), qPrintable(m_sFullName));
+    }
+
+    // Clones the graph fixture to a private folder so tests never touch it
+    void cloneGraphFixture()
+    {
+        m_pWorkDir.reset(new QTemporaryDir());
+
+        QVERIFY(m_pWorkDir->isValid());
+
+        m_sClonePath = m_pWorkDir->path() + "/work";
+
+        QCOMPARE(QProcess::execute("git", {"clone", "--quiet", m_sGraphFixtureRepo, m_sClonePath}), 0);
 
         m_sRelativeName = "source/module-7.txt";
         m_sFullName = m_sClonePath + "/" + m_sRelativeName;
