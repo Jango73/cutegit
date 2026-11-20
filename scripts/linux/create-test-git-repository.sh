@@ -42,7 +42,7 @@ Usage: ./create-test-git-repository.sh [TARGET_FOLDER] [options]
     Create a fictive git repository with branches, merges and tags.
 
 Arguments:
-    TARGET_FOLDER                 Target folder (default: ./test)
+    TARGET_FOLDER                 Target folder (required)
 
 Options:
     --target FOLDER               Same as TARGET_FOLDER argument
@@ -112,6 +112,11 @@ read_count() {
     fi
     printf '%s' "${value}"
 }
+
+if [[ $# -eq 0 ]]; then
+    usage
+    exit "${EXIT_SUCCESS}"
+fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
