@@ -9,8 +9,8 @@
 
 ## Strictly forbidden actions
 - It is STRICTLY FORBIDDEN TO :
-  - say "it's not me" or "not in my scope" or "it was there before" : you're working on a project, not having fun, and EVERYTHING is your responsibility. when something goes wrong, you ask the user whether you should fix it or not and NEVER throw responsibility on anyone/anything else but you.
-  - execute more than one command per tool call : NO &&
+  - say "it's not me" or "not in my scope" or "it was there before" : you're working on a project, you are not in a trial. EVERYTHING is your responsibility. when something goes wrong, you ask the user whether you should fix it or not and NEVER throw responsibility on anyone/anything else but you.
+  - execute more than one command per tool call : NO && or ;
   - execute more than on sub-agent at once
   - redirect command output
   - cut lines at 80 (or 100, or whatever character count) when writing plain text documents such as markdown. This does NOT apply to code.
@@ -61,14 +61,12 @@ Fresh clones have an empty `qt-plus/` until submodules are initialized
 - Languages: C++ for the application, QML for the UI, avoid Python.
 - Unused parameters: Use `Q_UNUSED()` to suppress the "unused parameter" warning.
 - Clean code: No duplicate code. Create intermediate functions to avoid it. This also applies to data: create intermediate structures to avoid duplicating data.
-- Functions: Add a doxygen header to functions and separate all functions with a 75 character line such as : //
+- Functions: Add a doxygen header to functions and separate all functions with "//-------------------------------------------------------------------------------------------------"
 - File size: Keep source files under 1000 lines; split by responsibility before crossing this limit.
 - Tests: when waiting for an event, never use an arbitrary fixed delay or sleep; poll the expected event (for example with QTRY_VERIFY/QTRY_COMPARE or an explicit condition loop) until it occurs or times out.
 - Vocabulary:
   - NEVER use abbreviations; ALWAYS use full words (acronyms are OK, `RegExp` is allowed as the standard short form of `RegularExpression`).
-  - No figurative language: respect the repository vocabulary, use every word
-    in its primary (literal) sense. Name things for what they are, not for
-    what they resemble.
+  - NO figurative language: respect the repository vocabulary, use every word in its primary (literal) sense. Name things for what they are, not for what they resemble.
   - No "directory" : use "folder".
 
 ### Header format
@@ -167,38 +165,40 @@ Never leave a blank line in the commit message: lines follow each other directly
   (logs to `tmp/run.log`).
 
 ## Release Procedure
-- Releases must follow Semantic Versioning (`major.minor.patch`).
-- Before creating a release, inspect the commits since the last tag:
+Releases must follow Semantic Versioning (`major.minor.patch`).
+
+1. Inspect the commits since the last tag:
   ```bash
   git describe --tags --abbrev=0
   git log --oneline <last-tag>..HEAD
   ```
-- Determine the next version number from the actual changes:
+2. Determine the next version number from the actual changes:
   - increment `major` for breaking changes
   - increment `minor` for backward-compatible new features
   - increment `patch` for backward-compatible fixes only
-- Update `CHANGELOG.md` first. Add a new section for the new version at the top, with the release date, and make sure the content matches the commits since the last tag.
-- Update the project version only with the dedicated script:
+3. Update `CHANGELOG.md`. Add a new section for the new version at the top, with the release date, and make sure the content matches the commits since the last tag.
+4. Update the project version only with the dedicated script:
   ```bash
   ./scripts/linux/set-version.sh x.y.z
   ```
-- Commit the release changes before tagging them.
-- Create an annotated Git tag, not a lightweight tag:
+5. Commit the release changes.
+6. Create an annotated Git tag, not a lightweight tag:
   ```bash
   git tag -a "vx.y.z" -m "Version x.y.z"
   ```
-- Build the package with:
+7. Build the package with:
   ```bash
   ./scripts/linux/package.sh
   ```
-- `scripts/linux/package.sh` reads the version from `VERSION`, builds the package, and creates `dist/` automatically if it does not exist.
-- After packaging, verify that the expected artifacts for the current version are present in `dist/`.
-- Create the GitHub release with:
+`scripts/linux/package.sh` reads the version from `VERSION`, builds the package, and creates `dist/` automatically if it does not exist.
+
+8. Verify that the expected artifacts for the current version are present in `dist/`.
+9. Create the GitHub release with:
   - name: `Version x.y.z`
   - tag: `vx.y.z`
   - description: the content of the latest `CHANGELOG.md` entry only
   - binary asset: the package generated in `dist/`
-- If `gh` is available, it can be used to create the GitHub release. If not, create the release manually in the GitHub web interface.
+10. If `gh` is available, it can be used to create the GitHub release. If not, create the release manually in the GitHub web interface.
 
 ## Tool Execution Policy
 - `tmp/` at the repo root is the folder for temporary/scratch files. It is
