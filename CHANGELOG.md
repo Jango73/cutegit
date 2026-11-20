@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-11-20
+
+### Added
+- Tab bar position and toolbar visibility settings, with fetch prune under Layout.
+- Ctrl+A toggles select all and deselect all in list views.
+- Linked worktree heads labeled in the graph with the head lane ordered by date.
+- Tag context menu with a push action, plus a delete tag command.
+- Commit checkout from the history context menu.
+- Force push enabled on branches without an upstream.
+- Remembered and restored maximized main window state.
+- Argument usage shown by the test repository creation script without arguments.
+
+### Changed
+- Executable renamed to CuteGit, with the application icon embedded and settings migrated from the former names.
+- Reset menu label changed to "Reset to here (mixed)" to match its behavior.
+
+### Fixed
+- Repository tab selection moves to a surviving tab when the selected tab is closed, and closing the last tab clears the current repository.
+- Ghost working tree line keeps one clean lane after graph pagination.
+- Graph lanes stay stable across first load, redundant merges, shifted-history scrolling, moved references and refresh.
+- External commit hash rewrites and amended commits keep details and history in sync.
+- Virtual commit rows read the correct change information.
+- Text edit content stays inside a clipped flickable with cursor tracking.
+- File selection highlight and selection fade behavior.
+- Flaky reword details test and settings migration stabilized.
+
 ## [2.2.0] - 2026-11-08
 
 ### Added
